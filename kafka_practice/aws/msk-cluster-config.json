@@ -1,0 +1,15 @@
+{
+  "ClusterName": "kafka-practice-msk",
+  "KafkaVersion": "3.7.x",
+  "NumberOfBrokerNodes": 2,
+  "BrokerNodeGroupInfo": {
+    "InstanceType": "kafka.t3.small",
+    "ClientSubnets": ["<SUBNET_1>", "<SUBNET_2>"],
+    "SecurityGroups": ["<SG_ID>"],
+    "StorageInfo": {"EbsStorageInfo": {"VolumeSize": 100}},
+    "ConnectivityInfo": {"PublicAccess": {"Type": "SERVICE_PROVIDED_EIPS"}}
+  },
+  "ClientAuthentication": {
+    "Sasl": {"Iam": {"Enabled": true}}
+  }
+}
