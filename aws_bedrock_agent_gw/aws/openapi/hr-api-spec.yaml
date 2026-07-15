@@ -1,0 +1,90 @@
+openapi: "3.0.3"
+info:
+  title: Enterprise HR API
+  version: "1.0.0"
+  description: >
+    Internal HR system API. Use getEmployee to look up a specific person by
+    their unique employee ID. Use listDepartment to get headcount and manager
+    for a department. All employee IDs follow the format E followed by 3 digits.
+
+paths:
+  /employee/{employeeId}:
+    get:
+      operationId: getEmployee
+      summary: Look up a single employee by their unique employee ID
+      description: >
+        Returns name, department, title, and email for the employee matching
+        the given ID. Use this when you need information about a specific person
+        and you have their ID. Do NOT use for department-level queries.
+      parameters:
+        - name: employeeId
+          in: path
+          required: true
+          description: >
+            Unique employee identifier. Always in format E + 3 digits (e.g. E001).
+            This is never a name or email address — only an ID string.
+          schema:
+            type: string
+            pattern: "^E[0-9]{3}$"
+            example: "E001"
+      responses:
+        "200":
+          description: Employee record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Employee ID
+                  name:
+                    type: string
+                    description: Full name
+                  department:
+                    type: string
+                  title:
+                    type: string
+                  email:
+                    type: string
+        "404":
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  /department/{department}/summary:
+    get:
+      operationId: listDepartment
+      summary: Get headcount and manager for a department
+      description: >
+        Returns the total number of employees and the manager's name for the
+        given department. Use this for department-level questions, not individual
+        employee lookups. Department names are case-insensitive.
+      parameters:
+        - name: department
+          in: path
+          required: true
+          description: >
+            Department name, e.g. "Engineering", "Finance", "HR". Case-insensitive.
+          schema:
+            type: string
+            example: "Engineering"
+      responses:
+        "200":
+          description: Department summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  department:
+                    type: string
+                  headcount:
+                    type: integer
+                  manager:
+                    type: string
