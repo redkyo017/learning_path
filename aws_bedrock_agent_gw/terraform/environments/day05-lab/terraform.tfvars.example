@@ -1,0 +1,18 @@
+aws_region       = "us-east-1"
+name_prefix      = "bgw"
+foundation_model = "anthropic.claude-3-haiku-20240307-v1:0"
+
+tool_configs = [
+  {
+    name        = "hr-tool"
+    lambda_zip  = "../../../aws/lambda/hr-tool/hr-tool.zip"
+    handler     = "main"
+    description = "HR employee and department lookup. Use for questions about employees, departments, and org structure."
+  }
+]
+
+tags = {
+  project     = "bgw"
+  team        = "integration"
+  cost-center = "ai-platform"
+}

@@ -1,0 +1,114 @@
+name: Deploy AgentCore Gateway
+
+on:
+  push:
+    branches: [main]
+    paths: ['aws_bedrock_agent_gw/terraform/**']
+  pull_request:
+    branches: [main]
+    paths: ['aws_bedrock_agent_gw/terraform/**']
+
+env:
+  TF_WORKING_DIR: aws_bedrock_agent_gw/terraform/environments/day05-lab
+  AWS_REGION: us-east-1
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.5"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Post Plan as PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const plan = `${{ steps.plan.outputs.stdout }}`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `### Terraform Plan\n\`\`\`hcl\n${plan}\n\`\`\``
+            });
+
+      - name: Fail if Plan Failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Promote Agent Alias to LIVE
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          AGENT_ID=$(terraform output -raw agent_id)
+          ALIAS_ID=$(terraform output -raw agent_alias_id)
+
+          echo "Preparing agent $AGENT_ID..."
+          aws bedrock-agent prepare-agent \
+            --agent-id "$AGENT_ID" \
+            --region "$AWS_REGION"
+
+          for i in $(seq 1 12); do
+            STATUS=$(aws bedrock-agent get-agent \
+              --agent-id "$AGENT_ID" \
+              --query 'agent.agentStatus' \
+              --output text \
+              --region "$AWS_REGION")
+            echo "Status: $STATUS (attempt $i/12)"
+            [ "$STATUS" = "PREPARED" ] && break
+            sleep 5
+          done
+
+          if [ "$STATUS" != "PREPARED" ]; then
+            echo "ERROR: Agent did not reach PREPARED state after 60s."
+            exit 1
+          fi
+
+          AGENT_VERSION=$(aws bedrock-agent list-agent-versions \
+            --agent-id "$AGENT_ID" \
+            --query 'agentVersionSummaries[0].agentVersion' \
+            --output text \
+            --region "$AWS_REGION")
+
+          aws bedrock-agent update-agent-alias \
+            --agent-id "$AGENT_ID" \
+            --agent-alias-id "$ALIAS_ID" \
+            --agent-alias-name "live" \
+            --routing-configuration "[{\"agentVersion\": \"$AGENT_VERSION\"}]" \
+            --region "$AWS_REGION"
+
+          echo "Done. Agent $AGENT_ID version $AGENT_VERSION is now LIVE."
