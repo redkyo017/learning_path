@@ -15,3 +15,11 @@ Ask me questions before answering it.
 7. Beyond provable discrete-time quantum computation
 Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 15-day aggreesive practive plan the fast-tracks real results.
 Ask me questions before answering it. -->
+
+I want to master all AWS network skills as fast as humanly possible.
+Skip the traditional learning path, give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 5-day aggreesive practive plan the fast-tracks real results.(the hands on lab could be in oth type: console and terraform, which is mainly using in my team stack)
+Ask me questions before answering it.
+
+I want to master all Toefl ibt skills as fast as humanly possible.
+Skip the traditional learning path, give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 45-day aggreesive practive plan the fast-tracks real results.(alongside with that, should generate a vocabulary of around at least 3000 words with the fastest way to learn and repeatedly learn everyday)
+Ask me questions before answering it.
