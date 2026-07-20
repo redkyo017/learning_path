@@ -16,6 +16,10 @@ Ask me questions before answering it.
 Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 15-day aggreesive practive plan the fast-tracks real results.
 Ask me questions before answering it. -->
 
+I want to master data structure and algorithm as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 30-day (or you can give me a suitable number) aggreesive practive plan the fast-tracks real results.
+i'm familiar with golang so can use golang for solving problems, can refer to the format as in this project (which I got some progress but not yet finished since it seem not efficient )
+
 I want to master all AWS network skills as fast as humanly possible.
 Skip the traditional learning path, give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 5-day aggreesive practive plan the fast-tracks real results.(the hands on lab could be in oth type: console and terraform, which is mainly using in my team stack)
 Ask me questions before answering it.
