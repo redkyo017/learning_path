@@ -27,3 +27,8 @@ Ask me questions before answering it.
 I want to master all Toefl ibt skills as fast as humanly possible.
 Skip the traditional learning path, give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 45-day aggreesive practive plan the fast-tracks real results.(alongside with that, should generate a vocabulary of around at least 3000 words with the fastest way to learn and repeatedly learn everyday)
 Ask me questions before answering it.
+
+I want to master Golang as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 15-day aggreesive practive plan the fast-tracks real results.
+Focus mainly on golang strength's (concurrency, build performmance app, insfrastructure app, system app), particularly in microservices and cloud native. Given i was a senior softwar engineer in BE, Golang, but had to switch to management for a long time and now i want to go back to SE
+Ask me questions before answering it.

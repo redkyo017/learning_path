@@ -1,0 +1,8 @@
+go 1.22
+
+use (
+	./phase1_cli
+	./phase2_rest
+	./phase3_grpc
+	./phase4_gateway
+)

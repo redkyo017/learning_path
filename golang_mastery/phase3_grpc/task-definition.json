@@ -1,0 +1,39 @@
+{
+  "family": "phase3-grpc-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "grpc-server",
+      "image": "YOUR_ACCOUNT.dkr.ecr.YOUR_REGION.amazonaws.com/phase3-grpc:latest",
+      "portMappings": [
+        {"containerPort": 50051, "protocol": "tcp"},
+        {"containerPort": 9090, "protocol": "tcp"}
+      ],
+      "environment": [
+        {"name": "JWT_SECRET", "value": "replace-with-ssm-in-prod"}
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD", "grpc-health-probe",
+          "-addr=:50051",
+          "-service=task.v1.TaskService"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 3
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/phase3-grpc",
+          "awslogs-region": "YOUR_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
