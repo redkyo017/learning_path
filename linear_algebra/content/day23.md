@@ -593,6 +593,89 @@ of components kept, and read off, just as in Exercise 6, the smallest
 number of components needed to explain at least $95\%$ of Iris's total
 variance.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $X$ | "the centered data matrix" | $n$ samples (rows) $\times$ $p$ features (columns), each column shifted to mean $0$ |
+| $w$ | "a unit direction in feature space" | the line we project the data onto |
+| $Xw$ | "the projections onto $w$" | the $n$ shadows of the samples on the line through $w$ |
+| $C = \frac{1}{n-1}X^TX$ | "the sample covariance matrix" | $p\times p$; entry $(i,j)$ is the covariance of features $i$ and $j$ |
+| $w^TCw$ | "$w$-transpose-$C$-$w$" | the variance of the data measured along direction $w$ |
+| $\lambda_i,\ q_i$ | "the eigenvalues and eigenvectors of $C$" | $q_i$ is the $i$-th principal direction; $\lambda_i$ is the variance along it |
+| $\text{EVR}_k$ | "the explained variance ratio" | $\lambda_k/\sum_j\lambda_j$, the fraction of total variance captured by component $k$ |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Measuring how spread the centered data is along a unit direction $w$ gives
+  exactly $w^TCw$, where $C$ is the covariance matrix — variance becomes a
+  quadratic form.
+- $C$ is symmetric and positive semidefinite, so the Spectral Theorem
+  (Day 19) hands it an orthonormal eigenbasis with real, non-negative
+  eigenvalues.
+- The direction of maximum variance is the top eigenvector $q_1$ of $C$, and
+  the variance it achieves is the top eigenvalue $\lambda_1$; each next
+  principal direction is the next eigenvector.
+- Because $C = \frac{1}{n-1}X^TX$, its eigenvectors are exactly the right
+  singular vectors of $X$ — so running PCA is running the SVD of the data.
+- PCA has no separate theory: it is the Spectral Theorem aimed at the
+  covariance matrix, with "principal components" just its eigenvectors
+  sorted by eigenvalue.
+
+### Proof sketches
+
+**Theorem 23.1 — key trick: centering turns variance into a plain squared
+length.**
+Each column of $X$ has mean $0$, so any combination $Xw$ of those columns is
+mean-zero too. For a mean-zero vector, variance is just
+$\frac{1}{n-1}\|Xw\|^2$ — no mean to subtract. Expand that squared norm as
+$w^TX^TXw$, pull out the $\frac{1}{n-1}$, and it is precisely $w^TCw$. Full
+version: Theorem 23.1 above.
+
+**Theorem 23.2 — key trick: the same identity, with the unit-length
+assumption dropped.**
+Symmetry is one line of transpose algebra on $\frac{1}{n-1}X^TX$. For
+semidefiniteness, notice the variance identity $w^TCw = \frac{1}{n-1}\|Xw\|^2$
+never actually used $\|w\|=1$ — the algebra is scale-free. Since a squared
+norm is $\ge 0$ and $\frac{1}{n-1}>0$, $w^TCw \ge 0$ for every $w$. Full
+version: Theorem 23.2 above.
+
+**Theorem 23.3 — key trick: Lagrange multipliers turn "maximize $w^TCw$ on
+the sphere" into the eigenvector equation $Cw=\mu w$.**
+The unit sphere is compact and $w^TCw$ is continuous, so a maximizer exists.
+Setting the Lagrangian's gradient to zero gives $Cw^* = \mu w^*$ (the
+gradient of $w^TCw$ is $2Cw$ because $C$ is symmetric), so the maximizer is
+a unit eigenvector, and its objective value equals its own eigenvalue. Since
+it out-scores every basis eigenvector $q_j$ — each worth $\lambda_j$ — its
+eigenvalue must be the largest, $\lambda_1$, achieved at $q_1$. Full
+version: Theorem 23.3 above.
+
+**Corollary 23.3.1 — key trick: add orthogonality constraints and the extra
+multipliers all vanish.**
+To find the next component, maximize $w^TCw$ over directions orthogonal to
+$q_1,\dots,q_{k-1}$. The Lagrangian picks up one multiplier $\nu_j$ per new
+constraint, but dotting the stationarity equation with $q_j$ kills each one
+(because $Cq_j=\lambda_jq_j$ and $w\perp q_j$), collapsing back to
+$Cw=\mu w$. The eligible eigenvectors are now $q_k,\dots,q_p$, so the winner
+is $q_k$ with value $\lambda_k$ — which is why sorting $C$'s single
+eigenbasis by eigenvalue hands you every principal component at once. Full
+version: Corollary 23.3.1 above.
+
+### If you remember only 3 things
+
+1. The variance of the data along a direction $w$ is $w^TCw$, with $C$ the
+   covariance matrix — and centering the data is exactly what makes this
+   identity hold.
+2. The maximum-variance direction is the top eigenvector of $C$ and the
+   maximum variance is the top eigenvalue; the principal components are
+   $C$'s eigenvectors sorted by eigenvalue.
+3. PCA *is* the Spectral Theorem applied to the covariance matrix
+   (equivalently the SVD of $X$) — a relabeling of things you already know,
+   not a new algorithm.
+
 ## Journal template
 
 ```

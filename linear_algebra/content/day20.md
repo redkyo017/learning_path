@@ -416,6 +416,67 @@ matrix's level curves are hyperbolas that never close up — the exact
 pictures from today's primer, now generated from real eigenvalue
 computations instead of hand sketches.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $Q(x) = x^TAx$ | "the quadratic form of $A$" | a pure quadratic function of $x$ built from symmetric $A$ |
+| $x^TAx > 0$ | "the form is positive for every nonzero $x$" | the definition of positive definite |
+| definite / semidefinite / indefinite | "the sign behavior of the form" | always $>0$; always $\ge 0$; or mixed signs |
+| $\lambda_i$ | "the eigenvalues of $A$" | their signs decide the definiteness class |
+| $y = Q^Tx$ | "the rotated coordinates" | orthogonal change of variables that diagonalizes the form; here $Q$ is Day 19's orthogonal eigenvector matrix, not the quadratic form $Q(x)$ |
+| $\sum_i \lambda_i y_i^2$ | "the form in rotated coordinates" | a plain weighted sum of squares |
+| $\lambda_{\min}$ | "the smallest eigenvalue" | controls the bound $Q(x) \ge \lambda_{\min}\Vert x\Vert^2$ |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- A quadratic form $Q(x) = x^TAx$ (with $A$ symmetric) is positive definite
+  exactly when every eigenvalue of $A$ is positive.
+- The other four classes read off the same list of signs: negative definite
+  (all $< 0$), positive/negative semidefinite (all $\ge 0$ / all $\le 0$),
+  and indefinite (both a positive and a negative eigenvalue present).
+- The whole classification comes from one move: rotate by $Q$ so the form
+  becomes a weighted sum of squares $\sum_i \lambda_i y_i^2$, whose sign is
+  then obvious.
+- Positive diagonal entries do **not** imply positive definite — a large
+  off-diagonal entry can hide a negative eigenvalue.
+- For a positive-definite form the sublevel sets are bounded ellipsoids,
+  with size controlled by the smallest eigenvalue $\lambda_{\min}$.
+
+### Proof sketches
+
+**Theorem 20.1 — key trick: rotate coordinates by $Q$ so the form becomes
+$\sum_i \lambda_i y_i^2$, where the signs are laid bare.**
+Spectral-decompose $A = Q\Lambda Q^T$ and substitute $y = Q^Tx$. Since $Q$ is
+a bijection sending only the origin to the origin, "$x \neq 0$" and "$y \neq
+0$" match up, and the form turns into $\sum_i \lambda_i y_i^2$. If every
+$\lambda_i > 0$, any nonzero $y$ makes this a sum of nonnegative terms with
+at least one strictly positive, so the form is $> 0$. If some $\lambda_k \le
+0$, plug in $y = e_k$ (i.e. $x$ = that eigenvector) to get value $\lambda_k
+\le 0$, breaking positive definiteness. Full version: Theorem 20.1 above.
+
+**Corollary 20.1 — key trick: same rotation, just track a different sign
+pattern.**
+Once the form is written as $\sum_i \lambda_i y_i^2$, every definiteness
+class is simply a statement about the signs of the $\lambda_i$: all negative
+gives negative definite, all $\ge 0$ gives positive semidefinite, all $\le
+0$ gives negative semidefinite, and having both a positive and a negative
+eigenvalue gives indefinite (test $y = e_j$ and $y = e_k$ to exhibit each
+sign). No new argument is needed — only the bookkeeping of signs changes.
+Full version: Corollary 20.1 above.
+
+### If you remember only 3 things
+
+1. Definiteness = the signs of the eigenvalues: all positive $\Rightarrow$
+   positive definite, mixed signs $\Rightarrow$ indefinite, and so on.
+2. The one move behind all of it is rotating to $\sum_i \lambda_i y_i^2$ via
+   the Spectral Theorem, where every sign is visible at a glance.
+3. Trap: positive diagonal entries do **not** guarantee positive definite —
+   always check the eigenvalues, never the diagonal alone.
+
 ## Journal template
 
 ```

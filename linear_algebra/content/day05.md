@@ -488,6 +488,72 @@ rank-deficient — a genuinely singular case, unlike the worked example) and
 confirm the ranks you got by hand match what your code and
 `np.linalg.matrix_rank` report.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $R_i \leftrightarrow R_j$ | "swap rows $i$ and $j$" | the first elementary row operation |
+| $R_i \to R_i + cR_j$ | "replace row $i$ by itself plus $c$ times row $j$" | the third (and most-used) row operation |
+| $[A \mid b]$ | "the augmented matrix" | the coefficients $A$ with the right-hand side $b$ tacked on |
+| $\operatorname{rank}(A)$ | "the rank of $A$" | the number of pivots (nonzero rows) in any echelon form |
+| $\operatorname{Row}(A)$ | "the row space of $A$" | the span of $A$'s rows |
+| $\operatorname{Sol}(E)$ | "the solution set of equation $E$" | all $x$ that satisfy that one equation |
+| $\cap$, $\bigcap$ | "intersection (of many sets)" | the system's solution set = intersection of each equation's solutions |
+| $\subseteq$, $\supseteq$ | "is contained in / contains" | the two halves of proving two sets equal |
+| $\neq$ | "is not equal to" | a scale factor $c \neq 0$; pivots are nonzero |
+| $\dim$ | "dimension" | rank equals the dimension of the row space |
+| $\lambda_i$, $\rho_i$ | "lambda-i, rho-i — just names for scalars and rows" | coefficients and rows inside the independence argument (not eigenvalues yet) |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- The three elementary row operations never change a system's solution set —
+  they only re-describe it.
+- Gaussian elimination is therefore always solving the *same* system, just in
+  an easier-to-read form.
+- A matrix's rank — its number of pivots — is the same no matter which legal
+  sequence of row operations you use.
+- Rank equals the dimension of the row space, which is exactly why it cannot
+  depend on the path taken to echelon form.
+- Reading the echelon form tells you the outcome: a contradictory row means no
+  solution; a pivotless column means a free variable and infinitely many
+  solutions.
+
+### Proof sketches
+
+**Theorem 5.1 — key trick: view the solution set as the intersection of each
+equation's solutions, and note every operation is reversible.**
+Write the whole system's solution set as the intersection of the solution
+sets of the individual equations. A swap just reorders that intersection.
+Scaling an equation by a nonzero $c$ gives an equation with identical
+solutions (divide by $c$ to undo it). Adding $c$ times one equation to
+another can be undone by subtracting, so it too preserves the solutions.
+Since each single move preserves the intersection, so does any finite
+sequence. Full version: Theorem 5.1 above.
+
+**Theorem 5.2 — key trick: row operations preserve the row space, and the
+nonzero echelon rows are a basis of it, so their count is pinned down.**
+Two supporting facts. First (Lemma A), each row operation is reversible and
+only replaces rows by combinations of rows, so the row space never changes.
+Second (Lemma B), in any echelon form the nonzero rows are independent — the
+staircase of pivots lets you knock out one coefficient per column — so they
+form a basis of the row space. Any two echelon forms of $A$ are therefore
+bases of the *same* subspace, and all bases of a space have the same size
+(Day 2), so their nonzero-row counts must match. Full version: Theorem 5.2
+above.
+
+### If you remember only 3 things
+
+1. Every elementary row operation keeps the solution set identical — that
+   single fact is *why* elimination is valid.
+2. Rank = number of pivots = dimension of the row space, and it is
+   independent of how you reduce.
+3. Read the echelon form: a row saying $0 = (\text{nonzero})$ means no
+   solution; a column with no pivot means a free variable and infinitely many
+   solutions.
+
 ## Journal template
 
 ```

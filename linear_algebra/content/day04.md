@@ -397,6 +397,76 @@ matrices with `np.random.default_rng()` and confirm `rank_nullity_holds`
 returns `True` for all of them (it always should — rank-nullity is an
 identity, not a special case that only holds for hand-picked matrices).
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\ker T$ | "the kernel of $T$" | all inputs that $T$ sends to $0$ |
+| $\operatorname{im} T$ | "the image of $T$" | all outputs $T$ can actually produce |
+| $\{v \in V : T(v)=0\}$ | "the set of $v$ in $V$ such that $T(v)=0$" | the set-builder definition of the kernel |
+| $\{0\}$ | "the zero subspace — only the zero vector" | a trivial kernel; means $T$ is injective |
+| $\dim(\ker T)$ | "the nullity — dimension of the kernel" | how many independent directions collapse to $0$ |
+| $\dim(\operatorname{im} T)$ | "the rank — dimension of the image" | how many independent directions survive |
+| $\operatorname{id}_V$ | "the identity map on $V$" | leaves every vector unchanged; what $T^{-1}\circ T$ equals |
+| $T^{-1}$ | "$T$ inverse" | the linear map that reverses $T$ |
+| $S \circ T$ | "$S$ after $T$" | composition (from Day 3) |
+| $\iff$ | "if and only if" | injective $\iff$ trivial kernel |
+| $\implies$ | "implies" | $T(u)=T(v) \implies u=v$ (injectivity) |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- The kernel collects everything a map crushes to zero; the image collects
+  everything the map can reach.
+- A linear map is injective exactly when its kernel is trivial — just the
+  zero vector.
+- Rank-nullity: the input dimension always splits cleanly into "dimension
+  collapsed" (nullity) plus "dimension surviving" (rank).
+- Between spaces of equal finite dimension, injective, surjective, and
+  invertible are all the very same condition.
+- You cannot linearly inject a bigger space into a smaller one, nor surject a
+  smaller one onto a bigger one — rank-nullity forbids both.
+
+### Proof sketches
+
+**Lemma 4.1 — key trick: injectivity applied to $T(v)=T(0)$, and linearity
+turning $T(u)=T(v)$ into $T(u-v)=0$.**
+If $T$ is injective and $T(v)=0=T(0)$, then $v=0$, so the kernel is just
+$\{0\}$. Conversely, if the kernel is trivial and $T(u)=T(v)$, linearity
+gives $T(u-v)=0$, so $u-v$ lies in the kernel, hence equals $0$, hence
+$u=v$. Full version: Lemma 4.1 above.
+
+**Theorem 4.1 — key trick: start from a basis of the kernel, extend it to a
+basis of the whole space, and watch what $T$ does to the new vectors.**
+Pick a basis of the kernel and extend it to a basis of $V$. The kernel
+vectors all map to zero, so only the images of the *added* vectors can span
+the image — and they do. Those images are also independent: any relation
+among them pulls back to a combination landing in the kernel, which the full
+basis's independence forces to be trivial. So they form a basis of the image,
+giving rank $=$ $\dim V$ minus nullity. Full version: Theorem 4.1 above.
+
+**Theorem 4.2 — key trick: rank-nullity ties injective and surjective
+together, and an inverse map delivers both at once.**
+By Lemma 4.1, injective means zero nullity, which by rank-nullity means full
+rank, which — since the dimensions are equal — means the image fills the
+codomain, i.e. surjective; and every step reverses, so injective and
+surjective are equivalent here. An inverse map forces both injectivity and
+surjectivity directly; conversely, a bijection's set-theoretic inverse turns
+out to be linear, so it is a genuine inverse. Full version: Theorem 4.2
+above.
+
+### If you remember only 3 things
+
+1. Injective $\iff$ $\ker T = \{0\}$ — check one set, not all pairs of
+   inputs.
+2. Rank-nullity: $\dim(\ker T) + \dim(\operatorname{im} T) = \dim V$. Know
+   either piece plus the domain, and the other comes for free.
+3. Equal finite dimensions: injective, surjective, invertible collapse into
+   one property — and you can never grow or shrink dimension linearly (no
+   injection into a smaller space, no surjection onto a bigger one).
+
 ## Journal template
 
 ```

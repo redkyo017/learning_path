@@ -117,6 +117,43 @@ so the eigenvectors of $X^TX$ would no longer correspond to directions of
 maximum *variance* — they'd be contaminated by the offset of the data
 cloud from the origin.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A = Q\Lambda Q^T$ | "the spectral decomposition" | symmetric $A$ rebuilt from orthonormal eigenvectors ($Q$) and real eigenvalues ($\Lambda$) — Day 19 |
+| $x^TAx$ | "the quadratic form of $A$" | its sign for all $x$ classifies $A$ as (semi)definite or indefinite — Day 20 |
+| $A = U\Sigma V^T,\ \sigma_i$ | "the SVD; the singular values" | every real matrix factors as rotate-stretch-rotate — Day 21 |
+| $A_k,\ \Vert A-A_k\Vert_F$ | "the rank-$k$ truncation and its Frobenius error" | best low-rank approximation and how far off it is — Day 22 |
+| $C$ | "the covariance matrix" | $\frac{1}{n-1}X^TX$; its eigenvectors are the principal components — Day 23 |
+
+### The big ideas (conclusions)
+
+- Spectral theorem: every symmetric matrix has an orthonormal basis of
+  eigenvectors with real eigenvalues, so $A = Q\Lambda Q^T$.
+- A symmetric matrix's definiteness is read straight off the signs of its
+  eigenvalues — positive definite means every eigenvalue is positive.
+- Every real matrix has an SVD; the singular values are the square roots of
+  the eigenvalues of $A^TA$, and the count of nonzero ones is the rank.
+- The rank-$k$ SVD truncation is the provably best rank-$k$ approximation
+  (Eckart–Young), with error the root-sum-of-squares of the dropped
+  singular values.
+- PCA is the spectral theorem applied to the covariance matrix: principal
+  directions are $C$'s eigenvectors and the variance along each is its
+  eigenvalue.
+
+### If you remember only 3 things
+
+1. Spectral theorem — symmetric $\Rightarrow$ orthonormal eigenbasis with
+   real eigenvalues — is the single engine behind definiteness, SVD, and
+   PCA.
+2. The SVD $A = U\Sigma V^T$ exists for every matrix, and truncating to the
+   top $k$ singular values is the best possible rank-$k$ approximation.
+3. PCA is just the spectral theorem on the covariance matrix: variance
+   along $w$ is $w^TCw$, maximized by $C$'s top eigenvector.
+
 ## Journal template
 
 ```

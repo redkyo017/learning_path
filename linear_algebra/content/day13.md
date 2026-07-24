@@ -302,6 +302,46 @@ $$A^{-1}(AB) = A^{-1}(AC) \implies (A^{-1}A)B = (A^{-1}A)C
 \implies IB = IC \implies B = C,$$
 using associativity of matrix multiplication and $A^{-1}A=I$. $\blacksquare$
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\det A$ | "the determinant of $A$" | zero $\iff$ $A$ is singular; multiplicative; product of the pivots |
+| $p_A(\lambda) = \det(A - \lambda I)$ | "the characteristic polynomial" | its roots are the eigenvalues |
+| $A = PDP^{-1}$ | "$A$ diagonalized" | makes powers, inverses, and recurrences easy |
+| $m$ vs $g$ | "algebraic vs geometric multiplicity" | diagonalizable $\iff$ they match at every eigenvalue |
+| $A = LU$ | "$A$ as lower-times-upper" | records the multipliers of Gaussian elimination |
+| $[A \mid I]$ | "the augmented matrix for Gauss-Jordan" | row-reduce until the left block is $I$; the right block is then $A^{-1}$ |
+
+Nothing new is introduced today — the table above is a recall of the symbols
+from Days 8–12 that a returning learner most wants back at their fingertips.
+
+### The big ideas (conclusions)
+
+- A square matrix is invertible exactly when its determinant is nonzero — the
+  single thread linking singularity, the eigenvalue $0$, and dependent
+  columns.
+- Eigenvalues are the roots of $\det(A - \lambda I) = 0$; a matrix is
+  diagonalizable exactly when geometric multiplicity equals algebraic
+  multiplicity at every eigenvalue.
+- Diagonalization is the workhorse: $A^k = PD^kP^{-1}$ makes matrix powers,
+  closed-form recurrence solutions, and long-run limits cheap.
+- Gaussian elimination is the common engine underneath determinants (product
+  of pivots), the inverse (Gauss-Jordan on $[A \mid I]$), and the $LU$
+  factorization.
+
+### If you remember only 3 things
+
+1. Invertible $\iff$ $\det \neq 0$ $\iff$ $0$ is not an eigenvalue $\iff$
+   columns independent — Days 8–10 keep saying the same thing four ways.
+2. Diagonalizable $\iff$ $g_i = m_i$ at every eigenvalue; then $A^k =
+   PD^kP^{-1}$ powers everything cheaply.
+3. This is retrieval, not rereading: the miss you now label a *concept gap*
+   (rather than an arithmetic slip) is exactly the one worth re-studying
+   before Week 4.
+
 ## Journal template
 
 ```

@@ -381,6 +381,74 @@ range in practice, e.g. $1.0000000002$, which would otherwise make
 `np.arccos` return `nan`). Test it on the vector pairs from Exercises 6 and
 7 and confirm your hand-computed angles match.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\langle u, v \rangle$ | "the inner product of $u$ and $v$" | a generalized dot product: symmetric, bilinear, positive-definite |
+| $\Vert v\Vert = \sqrt{\langle v, v \rangle}$ | "the norm (length) of $v$" | well-defined because $\langle v, v \rangle \ge 0$ |
+| $\langle v, v \rangle$ | "$v$ paired with itself" | $\ge 0$, and $= 0$ only when $v = 0$ (positive-definiteness) |
+| $\cos\theta = \frac{\langle u,v\rangle}{\Vert u\Vert\Vert v\Vert}$ | "the cosine of the angle between $u$ and $v$" | lands in $[-1,1]$ thanks to Cauchy-Schwarz |
+| $B^2 - 4AC$ | "the discriminant of the quadratic $f(t)$" | forced $\le 0$ because $f(t) = \Vert u - tv\Vert^2 \ge 0$ |
+| $\langle \cdot,\cdot\rangle_w$ | "a weighted inner product" | e.g. $2x_1y_1 + 3x_2y_2$ — a different but valid inner product |
+| $\Vert x\Vert_1 = \lvert x_1\rvert + \lvert x_2\rvert$ | "the $\ell_1$ (taxicab) norm" | a genuine norm that is NOT induced by any inner product |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- An inner product is any symmetric, bilinear, positive-definite pairing; it
+  induces a length $\|v\| = \sqrt{\langle v,v\rangle}$ and, through that,
+  angles.
+- Cauchy-Schwarz $|\langle u,v\rangle| \le \|u\|\|v\|$ holds in every inner
+  product space — that is what keeps $\cos\theta$ inside $[-1,1]$ so "angle"
+  makes sense in any dimension.
+- The triangle inequality $\|u+v\| \le \|u\| + \|v\|$ follows directly from
+  Cauchy-Schwarz.
+- The parallelogram law $\|u+v\|^2 + \|u-v\|^2 = 2\|u\|^2 + 2\|v\|^2$ is an
+  exact identity every inner-product norm obeys — so a norm that fails it
+  (like $\ell_1$) cannot come from any inner product.
+
+### Proof sketches
+
+**Theorem 14.1 — key trick: $f(t) = \|u - tv\|^2$ is never negative, and an
+upward quadratic that never dips below zero must have discriminant $\le 0$.**
+Handle $v = 0$ separately (both sides are $0$). For $v \neq 0$, expand $f(t) =
+\|v\|^2 t^2 - 2\langle u,v\rangle\, t + \|u\|^2$, an upward-opening quadratic
+that positive-definiteness keeps $\ge 0$ for every real $t$. Completing the
+square, its minimum value is $\ge 0$ exactly when the discriminant $B^2 - 4AC
+\le 0$, i.e. $4\langle u,v\rangle^2 - 4\|u\|^2\|v\|^2 \le 0$. Rearrange and
+take square roots to get $|\langle u,v\rangle| \le \|u\|\|v\|$. Full version:
+Theorem 14.1 above.
+
+**Theorem 14.2 — key trick: expand $\|u+v\|^2$ and bound its one cross term
+with Cauchy-Schwarz to complete a perfect square.**
+Bilinearity gives $\|u+v\|^2 = \|u\|^2 + 2\langle u,v\rangle + \|v\|^2$. The
+middle term is at most $|\langle u,v\rangle| \le \|u\|\|v\|$ by Theorem 14.1,
+so $\|u+v\|^2 \le \|u\|^2 + 2\|u\|\|v\| + \|v\|^2 = (\|u\| + \|v\|)^2$. Both
+sides are nonnegative, so taking square roots preserves the inequality:
+$\|u+v\| \le \|u\| + \|v\|$. Full version: Theorem 14.2 above.
+
+**Theorem 14.3 — key trick: expand both $\|u+v\|^2$ and $\|u-v\|^2$ and add —
+the $\pm 2\langle u,v\rangle$ cross terms cancel.**
+Each side expands by bilinearity to $\|u\|^2 \pm 2\langle u,v\rangle +
+\|v\|^2$. Adding the two lines, the cross terms with opposite signs vanish,
+leaving $2\|u\|^2 + 2\|v\|^2$. Notice no positive-definiteness and no
+inequality is used — it is an exact identity, which is exactly why a norm
+that violates it (like $\ell_1$) cannot have come from an inner product. Full
+version: Theorem 14.3 above.
+
+### If you remember only 3 things
+
+1. $\|v\| = \sqrt{\langle v,v\rangle}$: an inner product gives length, and
+   Cauchy-Schwarz $|\langle u,v\rangle| \le \|u\|\|v\|$ gives well-defined
+   angles in any dimension.
+2. Cauchy-Schwarz $\Rightarrow$ triangle inequality; both are inequalities
+   proved from positive-definiteness via the discriminant trick.
+3. The parallelogram law is an exact identity for inner-product norms — fail
+   it (e.g. $\ell_1$) and no inner product could have produced that norm.
+
 ## Journal template
 
 ```

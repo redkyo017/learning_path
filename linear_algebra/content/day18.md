@@ -346,6 +346,46 @@ direct check that `numpy.linalg.qr`'s $Q,R$ (up to column sign) and
 `numpy.linalg.solve` on the normal equations agree with these hand
 computations to floating-point precision.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\langle u, v\rangle$ | "the inner product of $u$ and $v$" | the dot product; measures length and angle |
+| $\Vert u\Vert$ | "the norm of $u$" | its length, $\sqrt{\langle u,u\rangle}$ |
+| $\lvert\langle u,v\rangle\rvert \le \Vert u\Vert\Vert v\Vert$ | "Cauchy-Schwarz" | equality exactly when $u, v$ are parallel |
+| $W^\perp$ | "$W$-perp, the orthogonal complement" | everything perpendicular to all of $W$ |
+| $\operatorname{proj}_W(v)$ | "the projection of $v$ onto $W$" | the closest point of $W$ to $v$ |
+| $A^TA\hat x = A^Tb$ | "the normal equations" | solve for the least-squares best fit $\hat x$ |
+| $A = QR$ | "A as Q times R" | orthonormal $Q$, upper-triangular $R$ (Gram-Schmidt, packaged) |
+
+Nothing new is introduced today — the table above recalls the symbols from
+Days 14–17 a returning learner most wants back at their fingertips.
+
+### The big ideas (conclusions)
+
+- Cauchy-Schwarz $\lvert\langle u,v\rangle\rvert \le \|u\|\|v\|$ underwrites
+  the whole week's geometry: it is what lets you define the angle between
+  vectors, with equality exactly when they are parallel.
+- Gram-Schmidt turns any linearly independent set into an orthonormal one
+  spanning the same subspaces, one vector at a time.
+- The orthogonal projection onto $W$ is the closest point in $W$, and least
+  squares is precisely that projection onto a column space $C(A)$.
+- $A = QR$ packages Gram-Schmidt as a factorization; $Q$'s orthonormal
+  columns preserve lengths and give a numerically stable least-squares solve.
+- These four days are one cumulative chain — Gram-Schmidt feeds projection,
+  which feeds least squares, which feeds QR — not four independent topics.
+
+### If you remember only 3 things
+
+1. Cauchy-Schwarz and the closest-point (projection) picture are the two
+   load-bearing ideas of the week; nearly everything else hangs off them.
+2. Gram-Schmidt $\to$ projection $\to$ least squares $\to$ QR is a single
+   connected chain — trace it end to end and the four days lock together.
+3. This is retrieval, not rereading: a miss you label a *concept gap*
+   (rather than an arithmetic slip) is the one worth re-studying now.
+
 ## Journal template
 
 ```

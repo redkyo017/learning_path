@@ -532,6 +532,79 @@ not unique.
 If you get stuck for more than ~10 minutes, check
 `solutions/day19_spectral_theorem.py` — but only after a real attempt.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A = A^T$ | "A equals its transpose" | the definition of a symmetric matrix |
+| $A = Q\Lambda Q^T$ | "A as Q, Lambda, Q-transpose" | the spectral decomposition: orthogonal $Q$, diagonal $\Lambda$ |
+| $\Lambda$ | "capital lambda — the diagonal of eigenvalues" | eigenvalues of $A$ down the diagonal, zeros elsewhere |
+| $Q$ | "the orthogonal eigenvector matrix" | columns are orthonormal eigenvectors; $Q^{-1} = Q^T$ |
+| $v^*$ | "v-star, the conjugate transpose" | transpose $v$, then conjugate every entry |
+| $\bar\lambda$ | "lambda-bar, the complex conjugate" | equals $\lambda$ exactly when $\lambda$ is real |
+| $\langle Ax, y\rangle = \langle x, Ay\rangle$ | "slide a symmetric $A$ across the dot product" | the key self-adjoint move |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Every eigenvalue of a real symmetric matrix is real — complex eigenvalues
+  simply never occur.
+- Eigenvectors of a symmetric matrix for different eigenvalues are
+  automatically *perpendicular*, not merely linearly independent.
+- Every real symmetric matrix factors as $A = Q\Lambda Q^T$ with $Q$
+  orthogonal and $\Lambda$ real diagonal — the Spectral Theorem.
+- The upgrade over ordinary diagonalization (Day 11) is that the
+  change-of-basis matrix can be chosen orthogonal, so $Q^{-1} = Q^T$ comes
+  for free — inversion becomes transposition.
+- Symmetric matrices are never defective: geometric multiplicity always
+  equals algebraic multiplicity, so there are always enough orthonormal
+  eigenvectors to fill $Q$.
+
+### Proof sketches
+
+**Theorem 19.1 — key trick: compute the sandwich $v^*Av$ two ways and force
+$\bar\lambda = \lambda$.**
+Allow a possibly-complex eigenpair $Av = \lambda v$. Compute $v^*Av$
+left-to-right using $Av = \lambda v$: you get $\lambda\, v^*v$. Now
+conjugate-transpose the eigen-equation — using $A^* = A$ because $A$ is real
+and symmetric — and multiply by $v$: you get $\bar\lambda\, v^*v$ for the
+same quantity. The two must agree, and $v^*v = \|v\|^2 > 0$ divides out,
+leaving $\bar\lambda = \lambda$. A number equal to its own conjugate is
+real. Full version: Theorem 19.1 above.
+
+**Theorem 19.2 — key trick: compute $\langle Av_1, v_2\rangle$ two ways; the
+eigenvalue gap forces the dot product to zero.**
+Evaluate $\langle Av_1, v_2\rangle$ once with $Av_1 = \lambda_1 v_1$, giving
+$\lambda_1\langle v_1, v_2\rangle$. Then slide the symmetric $A$ onto the
+other slot, $\langle v_1, Av_2\rangle = \lambda_2\langle v_1, v_2\rangle$.
+Subtracting the two, $(\lambda_1 - \lambda_2)\langle v_1, v_2\rangle = 0$;
+since the eigenvalues differ, the front factor is nonzero, so the dot
+product itself must vanish — the eigenvectors are orthogonal. Full version:
+Theorem 19.2 above.
+
+**Theorem 19.3 — key trick: peel off one real eigenvector, rotate it to be
+the first axis, and recurse on the smaller symmetric block.**
+Induct on size. A symmetric matrix always has a real eigenvalue (Theorem
+19.1), so grab one unit eigenvector $v_1$ and extend it to an orthonormal
+basis $V$. In those coordinates $B = V^TAV$ is still symmetric, and its first
+row and column are clean — a lone $\lambda_1$ with zeros beside it — leaving
+a smaller symmetric block $C$ in the corner. Apply the theorem to $C$ by the
+inductive hypothesis, then reassemble the orthogonal pieces ($Q = VQ''$, and
+a product of orthogonal matrices is orthogonal). Because each step asks for
+only *one* eigenvector, repeated eigenvalues never cause trouble. Full
+version: Theorem 19.3 above.
+
+### If you remember only 3 things
+
+1. Symmetric matrices have real eigenvalues and perpendicular eigenvectors —
+   the two facts that make everything else fall into place.
+2. Spectral Theorem: $A = Q\Lambda Q^T$ with $Q$ orthogonal, so inversion
+   becomes transposition ($Q^{-1} = Q^T$) — that is the gift over Day 11.
+3. The induction peels off one eigenvector at a time, so a symmetric matrix
+   is never defective — no repeated-eigenvalue trap here, unlike Day 11.
+
 ## Journal template
 
 ```

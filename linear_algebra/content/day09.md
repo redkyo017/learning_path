@@ -526,6 +526,102 @@ by (near-)zero pivot — and add a check that raises a clear error if the
 chosen pivot's absolute value is below some small tolerance (e.g. `1e-10`)
 instead of silently producing garbage or `inf`/`nan`.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A^{-1}$ | "$A$ inverse" | the unique matrix that undoes $A$: $AA^{-1}=A^{-1}A=I$ |
+| $E_{\mathrm{swap}},\ E_{\mathrm{scale}},\ E_{\mathrm{add}}$ | "the elementary matrices" | $I$ with one row operation applied |
+| $[A \mid I]$ | "$A$ augmented with the identity" | the block Gauss-Jordan turns into $[I \mid A^{-1}]$ |
+| $A = LU$ | "$A$ factors as lower times upper" | elimination-without-swaps splits $A$ this way |
+| $L$ | "unit lower triangular factor" | records the elimination multipliers, $1$'s on the diagonal |
+| $U$ | "upper triangular factor" | the echelon form elimination leaves behind |
+| $\operatorname{rank}(A) = n$ | "full rank — $n$ pivots" | the invertibility test used here |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Multiplying by an elementary matrix on the left performs one row operation,
+  so row reduction is the same thing as multiplying by a chain of these
+  matrices.
+- The inverse of a matrix is unique, and a product inverts in reverse order:
+  $(AB)^{-1} = B^{-1}A^{-1}$.
+- Every invertible matrix is a product of elementary matrices — which is
+  exactly why running Gauss-Jordan on $[A \mid I]$ hands you $A^{-1}$.
+- Elimination with no row swaps and no scaling factors $A$ into $LU$: a unit
+  lower-triangular $L$ times an upper-triangular $U$.
+- The entries of $L$ are just the elimination multipliers (negated), so you
+  read $L$ straight off the elimination rather than inverting anything.
+
+### Proof sketches
+
+**Lemma 9.1 — key trick: each row of $EM$ is a recipe read off a row of
+$E$.**
+Row $i$ of the product $EM$ is the combination of $M$'s rows weighted by row
+$i$ of $E$. Since $E$ is the identity with one row operation applied, its
+rows are exactly the basis rows that reproduce that operation — pulling out
+row $j$ for a swap, scaling a row, or adding one row to another. Checking the
+three types confirms $EM$ is $M$ with the operation applied. Full version:
+Lemma 9.1 above.
+
+**Theorem 9.1 — key trick: sandwich one inverse between the other two
+factors, and cancel a product from the inside out.**
+If $B$ and $C$ are both inverses of $A$, then $B = B(AC) = (BA)C = C$ by
+associativity, so the inverse is unique. For a product, test $B^{-1}A^{-1}$:
+multiplying it against $AB$ on either side lets the inner pair cancel to $I$,
+then the outer pair cancels too. So $B^{-1}A^{-1}$ satisfies the definition,
+and uniqueness makes it *the* inverse $(AB)^{-1}$. Full version: Theorem 9.1
+above.
+
+**Lemma 9.2 — key trick: every row operation is undone by an operation of the
+same kind.**
+A swap undoes itself when repeated; scaling by $c$ is undone by scaling by
+$1/c$; adding $c$ times a row is undone by adding $-c$ times it. Each of
+these undo-operations is itself an elementary matrix, and Lemma 9.1 shows
+their product with the original gives $I$ both ways. So every elementary
+matrix is invertible with an elementary inverse of the same type. Full
+version: Lemma 9.2 above.
+
+**Theorem 9.2 — key trick: row-reduce all the way to $I$, then read the
+recipe backward.**
+An invertible matrix has trivial null space, so by Day 6's dimension formula
+it has $n$ pivots, and its reduced echelon form can only be $I$. So some
+chain of elementary matrices $E_k \cdots E_1$ times $A$ equals $I$. Inverting
+that chain — each factor's inverse is again elementary (Lemma 9.2) — expresses
+$A$ itself as a product of elementary matrices. This is the exact mechanism
+that makes Gauss-Jordan on $[A \mid I]$ compute $A^{-1}$. Full version:
+Theorem 9.2 above.
+
+**Lemma 9.3 — key trick: an index chase shows the triangular, unit-diagonal
+shape survives both multiplication and inversion.**
+For a product $PQ$ with $i < j$, a nonzero term would need an index $k$ with
+both $k \le i$ and $k \ge j$, which is impossible, so $PQ$ stays lower
+triangular; the diagonal terms collapse to $1 \cdot 1 = 1$. For the inverse,
+a unit lower-triangular matrix already has $1$'s on its diagonal, so you can
+clear everything below the diagonal using only add-a-lower-row steps — each
+itself unit lower triangular — reaching $I$. Their product is that shape and
+equals the inverse. Full version: Lemma 9.3 above.
+
+**Theorem 9.3 — key trick: no-swap elimination is multiplication by unit
+lower-triangular matrices, and that shape is closed under inverting.**
+Each "add a multiple of an upper row to a lower row" step is an elementary
+matrix that is unit lower triangular. Their product $M$ satisfies $MA = U$
+and, by Lemma 9.3(a), is itself unit lower triangular and invertible. So
+$A = M^{-1}U$, and by Lemma 9.3(b) the factor $L = M^{-1}$ is again unit
+lower triangular — giving $A = LU$. Full version: Theorem 9.3 above.
+
+### If you remember only 3 things
+
+1. Left-multiplying by an elementary matrix does one row operation, so every
+   invertible matrix is a product of them — that's why Gauss-Jordan on
+   $[A \mid I]$ produces $A^{-1}$.
+2. Inverses are unique and reverse under products: $(AB)^{-1} =
+   B^{-1}A^{-1}$.
+3. Swap-free elimination factors $A = LU$, and $L$'s entries are just the
+   negated multipliers you already used — no extra computation.
+
 ## Journal template
 
 ```

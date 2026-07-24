@@ -128,6 +128,52 @@ def change_of_basis(T_matrix, P):
 Solution is in `solutions/day25_change_of_basis.py` — check only after
 attempting.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $[v]_B$ | "the coordinates of $v$ in basis $B$" | the list of weights that rebuilds $v$ from $B$'s vectors |
+| $P$ | "the change-of-basis matrix" | its columns are $B'$'s vectors written in $B$-coordinates; $[v]_B = P[v]_{B'}$ |
+| $[T]_B$ | "the matrix of $T$ in basis $B$" | how $T$ acts once everything is written in $B$-coordinates |
+| $P^{-1}[T]_BP$ | "conjugate $[T]_B$ by $P$" | the same map $T$ re-expressed in the basis $B'$ |
+| $B = P^{-1}AP$ | "$A$ and $B$ are similar" | same transformation, two different bases |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- A vector's coordinates depend entirely on the chosen basis; the
+  change-of-basis matrix $P$ translates coordinates from one basis to
+  another via $[v]_B = P[v]_{B'}$.
+- A linear map has no single "true" matrix — its matrix is always relative
+  to a basis, and switching bases conjugates it: $[T]_{B'} = P^{-1}[T]_BP$.
+- Matrices related by $P^{-1}AP$ are called similar, and similar matrices
+  share eigenvalues, trace, determinant, and rank.
+- Diagonalization is just the special case of change of basis where the new
+  basis is an eigenvector basis, making the map's matrix diagonal.
+
+### Proof sketches
+
+**Theorem 25.1 — key trick: translate into $B$-coordinates, apply $T$, then
+translate back.**
+Start with a vector's $B'$-coordinates. Convert them to $B$-coordinates with
+$P$, act by $[T]_B$, and convert back — but converting back is the *same*
+relation $[T(v)]_B = P[T(v)]_{B'}$ read in reverse. Setting the two
+expressions for $[T(v)]_B$ equal and multiplying by $P^{-1}$ gives
+$[T(v)]_{B'} = P^{-1}[T]_BP\,[v]_{B'}$. Since this holds for every
+coordinate vector, the matrices themselves must match. Full version:
+Theorem 25.1 above.
+
+### If you remember only 3 things
+
+1. A vector's (or map's) matrix is always relative to a basis; $P$ converts
+   coordinates via $[v]_B = P[v]_{B'}$.
+2. Changing basis conjugates the matrix: $[T]_{B'} = P^{-1}[T]_BP$ — this is
+   exactly what "$A$ and $B$ are similar" means.
+3. Similar matrices share eigenvalues, trace, determinant, and rank; and
+   diagonalization is just change of basis into the eigenvector basis.
+
 ## Journal template
 
 ```

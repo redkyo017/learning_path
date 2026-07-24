@@ -415,6 +415,84 @@ a linear combination of the other three, by your own explicit construction),
 and verify with `np.linalg.matrix_rank` that the rank drops by exactly 1
 relative to 4 independent vectors.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\iff$ | "if and only if — each side forces the other" | independence $\iff$ no vector is a combination of the others |
+| $\Rightarrow$, $\Leftarrow$ | "the forward / backward half of an 'if and only if' proof" | the two directions proved separately |
+| $\{v_1,\dots,v_n\}$ | "the set of these vectors" | the collection whose independence we test |
+| $\setminus$ | "set minus — remove these" | $\{v_1,\dots,v_n\}\setminus\{v_i\}$ = all the vectors except $v_i$ |
+| $\neq$ | "is not equal to" | a nonzero coefficient, e.g. $a_k \neq 0$ |
+| $\dim V$ | "the dimension of $V$" | the number of vectors in any basis of $V$ |
+| $\lvert S\rvert$ | "the size of $S$ — how many vectors" | $\lvert S_1\rvert = n-1$ after removing one vector |
+| $\le$ | "is less than or equal to" | $m \le n$ in the Exchange Lemma |
+| $\operatorname{span}(B) = V$ | "$B$ spans $V$" | $B$'s combinations fill all of $V$ |
+| $\in$, $\subseteq$ | "is in; is a subset of" | the basic membership and containment symbols |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- A set of vectors is linearly independent when the only way to combine them
+  to zero uses all-zero coefficients; if any nonzero combination gives zero,
+  the set is dependent.
+- Independence says the same thing as "no vector in the set is a linear
+  combination of the others."
+- Every finite spanning set can be trimmed down to a basis by discarding
+  redundant vectors one at a time.
+- No linearly independent set is ever larger than a spanning set (the
+  Steinitz Exchange Lemma) — this is the engine behind dimension.
+- All bases of a space have the same size, so "dimension" is a single
+  well-defined number.
+
+### Proof sketches
+
+**Theorem 2.1 — key trick: a dependence relation and "one vector = a
+combination of the rest" are the same equation, rearranged.**
+Both directions are algebra on a single equation. If some $v_i$ equals a
+combination of the others, move it to the same side and you get a dependence
+relation whose $v_i$-coefficient is $1$ (nonzero) — so the set is dependent.
+Conversely, if a nontrivial relation exists, grab any vector with a nonzero
+coefficient, divide through by it, and solve for that vector as a combination
+of the rest. Full version: Theorem 2.1 above.
+
+**Theorem 2.2 — key trick: repeatedly delete a redundant vector; the span
+never changes and the set keeps shrinking.**
+If the spanning set is already independent, it is a basis. If not, some
+vector is a combination of the others; deleting it leaves the span unchanged
+(substitute its expression into any combination). Each deletion shrinks a
+finite set, so the process must stop — and it stops exactly when the
+survivors are independent, i.e. a basis. Full version: Theorem 2.2 above.
+
+**Lemma 2.3 — key trick: feed the independent vectors in one at a time, each
+time trading out a spanning vector it can replace.**
+Induct on how many $w$'s you have swapped in. At each stage the current mixed
+set still spans, so the next $w$ is a combination of it — and that
+combination must genuinely use a leftover $v$ (otherwise $w$ would depend on
+earlier $w$'s, impossible for an independent set). Swap that $v$ out for the
+$w$; the set still spans. You never run out of $v$'s to trade before all $m$
+of the $w$'s are placed, which forces $m \le n$. Full version: Lemma 2.3
+above.
+
+**Theorem 2.3 — key trick: apply the Exchange Lemma both ways.**
+Take two bases. The first spans and the second is independent, so Exchange
+gives (size of second) $\le$ (size of first). Swap their roles — now the
+second spans and the first is independent — to get the reverse inequality.
+Two $\le$'s force equality, so both bases have the same size. Full version:
+Theorem 2.3 above.
+
+### If you remember only 3 things
+
+1. Independent = "only the all-zero combination gives zero." Equivalently, no
+   vector is a combination of the others.
+2. Basis = independent + spanning; every finite spanning set already contains
+   one.
+3. The Exchange Lemma (independent $\le$ spanning) makes dimension
+   well-defined — and instantly rules out 3 independent vectors in
+   $\mathbb{R}^2$.
+
 ## Journal template
 
 ```

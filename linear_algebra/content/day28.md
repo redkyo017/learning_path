@@ -63,6 +63,43 @@ No separate starter/skeleton today — Day 23 already built and verified this
 function from a blank TODO; today is about re-applying and annotating it,
 not re-deriving the code.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $C = \frac{1}{n-1}X^TX$ | "the sample covariance matrix" | built from the centered data; symmetric and PSD |
+| $w^T C w$ | "the variance of the data projected onto direction $w$" | the quantity PCA maximizes |
+| $w$ | "a unit direction to project onto" | a candidate principal component |
+| top eigenvector | "the eigenvector of the largest eigenvalue" | the first principal component |
+| $\lambda_i / \sum_j \lambda_j$ | "explained-variance ratio" | fraction of total variance captured by component $i$ |
+| symmetric PSD | "$C = C^T$ and $w^T C w \ge 0$" | what guarantees real eigenvalues and orthogonal components |
+
+### The big ideas (conclusions)
+
+- PCA is nothing more than the spectral theorem applied to the covariance
+  matrix: diagonalize $C$ and read the principal directions straight off
+  its eigenvectors.
+- The variance captured by a unit direction $w$ is $w^T C w$; maximizing
+  it over all unit vectors lands exactly on the top eigenvector of $C$.
+- Because $C$ is symmetric, its eigenvectors are automatically
+  orthogonal, so the principal components form an orthonormal frame with
+  no extra work.
+- The eigenvalues *are* the variances along each component; dividing each
+  by their total gives the explained-variance ratios.
+- The same six-line routine runs unchanged on 4-feature Iris or
+  13-feature Wine — the theorem does not care about the dimension.
+
+### If you remember only 3 things
+
+1. PCA = the spectral theorem on the covariance matrix; everything else
+   is bookkeeping.
+2. Maximizing $w^T C w$ over unit vectors is an eigenvalue problem, and
+   the answer is the top eigenvector of $C$.
+3. Symmetry of $C$ is what makes it all work — real eigenvalues,
+   orthogonal components — which is why you call `eigh`, not `eig`.
+
 ## Journal template
 
 ```

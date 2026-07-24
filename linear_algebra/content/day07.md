@@ -357,6 +357,47 @@ coefficient to vanish: $y_i = 0$ for all $i = 1, \dots, m$, i.e. $y = 0$.
 Hence $N(A^T) = \{0\}$. $\blacksquare$ (Cross-check via the Fundamental
 Theorem: $\dim N(A^T) = m - r = m - m = 0$, consistent.)
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\ker T$, $\operatorname{im} T$ | "the kernel and image of $T$" | what dies (maps to $0$) and what's reached |
+| $\operatorname{rank}(A)$ | "the rank of $A$" | pivot count — recurs in almost every problem here |
+| $N(A)$, $N(A^T)$ | "null space and left null space" | the two 'nothing gets through' subspaces |
+| $C(A)$, $C(A^T)$ | "column space and row space" | reachable outputs, and span of the rows |
+| $\operatorname{span}$ | "all combinations of" | the set a handful of vectors generates |
+| $S \circ T$ | "$S$ after $T$" | do $T$ first, then $S$ — its matrix is $M_S M_T$ |
+| $\iff$ | "is exactly the same statement as" | how the if-and-only-if proofs chain steps |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- This is a retrieval day, not a reading day: the value comes from
+  reproducing Days 1–6 from memory, so the gaps surface while they're still
+  cheap to fix.
+- A map is linear exactly when it respects addition and scalar multiplication
+  — any squared or constant term (like the $y^2$ in Problem 1) breaks it.
+- Rank is the single number that ties the week together: it counts pivots,
+  fixes all four subspace dimensions, and decides invertibility and
+  surjectivity.
+- Rank–nullity ($\dim\ker + \dim\operatorname{im} = \dim V$) is the workhorse
+  — it turns a kernel question into a rank question and vice versa without
+  new computation.
+- When you miss a problem, name the cause: a concept gap (you misremembered
+  the theorem) needs re-study, an arithmetic slip needs slower hand-checking
+  — they are not the same failure.
+
+### If you remember only 3 things
+
+1. Retrieve before you reread: struggling to reproduce a result from memory
+   is what actually moves it into long-term memory.
+2. Rank decides everything this week — pivots, the four subspace dimensions,
+   invertibility, surjectivity — so find $r$ first.
+3. Sort every mistake into concept gap vs arithmetic slip; only the first
+   means you don't yet understand the material.
+
 ## Journal template
 
 ```

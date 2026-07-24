@@ -423,6 +423,76 @@ instead of a hypothetical sequence), and find the smallest $k$ that captures
 rank) to see just how much compression Eckart–Young-optimal truncation
 buys you here.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\sum_i \sigma_i u_i v_i^T$ | "$A$ as a sum of rank-1 pieces" | the SVD rewritten as a weighted sum, heaviest piece first |
+| $u_i v_i^T$ | "$u_i$ times $v_i$-transpose — an outer product" | a rank-1 matrix (a column times a row); the $i$-th building block of $A$ |
+| $A_k$ | "$A$-sub-$k$ — the rank-$k$ truncation" | keep only the top $k$ pieces, drop the rest |
+| $\Vert X\Vert_F$ | "the Frobenius norm of $X$" | root of the sum of all squared entries; equals $\sqrt{\sum_i\sigma_i^2}$ |
+| $\Vert M\Vert_{\text{op}}$ | "the operator norm of $M$" | the most $M$ can stretch a unit vector; equals $M$'s largest singular value |
+| $\min_{\operatorname{rank}(B)\le k}$ | "the smallest over all rank-$\le k$ matrices $B$" | the competition $A_k$ wins in Eckart–Young |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Any rank-$r$ matrix is a sum of $r$ rank-1 pieces $\sigma_i u_i v_i^T$,
+  ordered heaviest first; keeping only the top $k$ gives the truncation
+  $A_k$.
+- The Frobenius error of that truncation is exactly the root-sum-of-squares
+  of the singular values you threw away: $\sqrt{\sigma_{k+1}^2 + \cdots +
+  \sigma_r^2}$.
+- Eckart–Young: $A_k$ is the *best possible* rank-$\le k$ approximation of
+  $A$ — no other rank-$\le k$ matrix is closer in Frobenius norm.
+- What you can safely discard is a *small singular value* (a direction $A$
+  barely stretches), not a small matrix *entry* — the two are unrelated.
+- This optimality is why PCA (Day 23), image/data compression, and
+  SVD denoising are principled, not lucky heuristics.
+
+### Proof sketches
+
+**Lemma 22.1 — key trick: orthonormal outer products are Pythagorean, so
+the cross terms die.**
+Measure size with $\|X\|_F^2 = \operatorname{trace}(X^TX)$ and expand
+$X^TX$ from the double sum. Every cross term carries a factor $w_i^Tw_j$,
+which is $0$ unless $i=j$ (orthonormality), so the whole thing collapses to
+the diagonal terms $c_i^2\, z_iz_i^T$. Taking the trace turns each
+$z_iz_i^T$ into $\|z_i\|^2 = 1$, leaving just $\sum_i c_i^2$. Full version:
+Lemma 22.1 above.
+
+**Theorem 22.1 — key trick: $A - A_k$ is nothing but the leftover tail of
+the SVD sum.**
+Subtracting the first $k$ pieces from all $r$ pieces leaves exactly the
+pieces $\sigma_{k+1}u_{k+1}v_{k+1}^T,\dots,\sigma_ru_rv_r^T$. Those $u$'s
+and $v$'s are still orthonormal, so this leftover is precisely the
+orthonormal-sum shape Lemma 22.1 handles: its squared Frobenius norm is the
+sum of the leftover $\sigma_i^2$. Square-root both sides. Full version:
+Theorem 22.1 above.
+
+**Theorem 22.2 — key trick: any low-rank $B$ has a kernel too big to avoid
+$A$'s top singular directions.**
+For the operator-norm case (fully proved): a rank-$\le k$ matrix $B$ has a
+kernel of dimension $\ge n-k$, which must intersect the $(k+1)$-dimensional
+span of $v_1,\dots,v_{k+1}$ in a nonzero vector. Take a unit $x$ there:
+$Bx=0$, so $(A-B)x = Ax$, and because $x$ lives among the top singular
+directions, $\|Ax\| \ge \sigma_{k+1}$ — exactly the error $A_k$ itself
+achieves, so nothing beats $A_k$. The Frobenius upgrade repeats this on
+nested subspaces and then cites the min-max (Courant–Fischer)
+characterization of singular values, which is quoted rather than re-proved.
+Full version: Theorem 22.2 above.
+
+### If you remember only 3 things
+
+1. Write $A$ as a sum of rank-1 pieces $\sigma_i u_i v_i^T$ ordered
+   heaviest first; $A_k$ keeps the top $k$.
+2. The truncation error is $\sqrt{\sigma_{k+1}^2 + \cdots + \sigma_r^2}$ —
+   the root-sum-of-squares of the dropped singular values.
+3. Eckart–Young makes $A_k$ *provably* the best rank-$\le k$ approximation
+   in Frobenius norm — the foundation under PCA and compression.
+
 ## Journal template
 
 ```

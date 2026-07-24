@@ -428,6 +428,72 @@ null spaces you'd expect to be trivial actually comes out empty—width-0.)
 If you get stuck for more than ~10 minutes, check
 `solutions/day06_four_subspaces.py` — but only after a real attempt.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A$ is $m \times n$ | "$A$ has $m$ rows and $n$ columns" | inputs live in $\mathbb{R}^n$, outputs in $\mathbb{R}^m$ |
+| $C(A)$ | "the column space of $A$" | everything reachable as $Ax$ — a subspace of $\mathbb{R}^m$ |
+| $C(A^T)$ | "the row space of $A$" | the span of $A$'s rows — a subspace of $\mathbb{R}^n$ |
+| $N(A)$ | "the null space of $A$" | all $x$ with $Ax = 0$ — a subspace of $\mathbb{R}^n$ |
+| $N(A^T)$ | "the left null space of $A$" | all $y$ with $y^T A = 0$ — a subspace of $\mathbb{R}^m$ |
+| $r = \operatorname{rank}(A)$ | "the rank — the number of pivots" | the one number that sizes all four subspaces |
+| $U$ | "the row-echelon form of $A$" | what row reduction turns $A$ into |
+| $\ker T,\ \operatorname{im} T$ | "the kernel and image of a map $T$" | $\ker T_A = N(A)$, $\operatorname{im} T_A = C(A)$ |
+| $\dim$ | "the dimension of — size of a basis" | the count each formula predicts |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- One matrix hands you four subspaces, and they pair off by where they live:
+  column space and left null space sit in $\mathbb{R}^m$, row space and null
+  space sit in $\mathbb{R}^n$.
+- Row rank and column rank are the same number $r$ — the two counts fall out
+  of a single row reduction, so they can't disagree.
+- Once you know $r$, every dimension is fixed: row space and column space are
+  $r$, the null space is $n - r$, the left null space is $m - r$.
+- None of this is new machinery: it's Day 4's rank–nullity theorem applied
+  twice, glued to Day 5's pivot count.
+- The dimensions of each pair always add back to their ambient space:
+  $r + (n - r) = n$ and $r + (m - r) = m$, nothing lost.
+
+### Proof sketches
+
+**Lemma 6.1 — key trick: row reduction never moves the row space and never
+changes which columns are dependent.**
+Row operations only replace rows with combinations of rows and are
+reversible, so the span of the rows — the row space — is exactly preserved;
+the $r$ nonzero rows of $U$ are independent (read off each pivot column in
+turn) and spanning, so the row space has dimension $r$. For the columns, the
+key is that $A$ and $U$ share a null space (since $U = EA$ with $E$
+invertible), and a null-space vector is precisely a recipe of column
+dependence — so the pivot columns of $A$ are independent and every other
+column of $A$ copies the same combination its counterpart in $U$ does. That
+makes the $r$ pivot columns of $A$ a basis for $C(A)$. Full version: Lemma
+6.1 above.
+
+**Theorem 6.1 — key trick: feed $A$ and then $A^T$ into rank–nullity, and
+read off Lemma 6.1 for the leftover dimension.**
+Treat $A$ as the map $x \mapsto Ax$: its kernel is $N(A)$ and its image is
+$C(A)$, so Day 4's rank–nullity on a domain of dimension $n$ gives
+$\dim N(A) + \dim C(A) = n$, and since $\dim C(A) = r$ by Lemma 6.1, the null
+space has dimension $n - r$. Now run the identical argument on the map
+$y \mapsto A^T y$, whose domain is $\mathbb{R}^m$: its kernel is $N(A^T)$ and
+its image is the row space of dimension $r$, so $\dim N(A^T) = m - r$. Both
+null-space formulas are just rank–nullity with Lemma 6.1's $r$ plugged in.
+Full version: Theorem 6.1 above.
+
+### If you remember only 3 things
+
+1. Four subspaces, two ambient homes: column space and left null space in
+   $\mathbb{R}^m$; row space and null space in $\mathbb{R}^n$.
+2. One number $r$ runs everything: row space and column space are $r$-dim,
+   null space is $n - r$, left null space is $m - r$.
+3. It's not new math — it's rank–nullity (Day 4) applied twice on top of one
+   pivot count (Day 5), so never re-derive it from scratch.
+
 ## Journal template
 
 ```

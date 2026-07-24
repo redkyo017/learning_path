@@ -532,6 +532,116 @@ numerically that $\det(AA^T) = \det(A)\det(A^T)$ — a direct check of both
 Theorem 8.1 (multiplicativity) and Exercise 7 ($\det(A^T)=\det(A)$) on the
 same matrix.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\det(A)$ | "the determinant of $A$" | one number that measures signed volume scaling |
+| $M_n(\mathbb{R})$ | "the $n \times n$ real matrices" | the inputs the determinant eats |
+| $A_{(i,j)}$ | "the $(i,j)$ minor of $A$" | $A$ with row $i$ and column $j$ deleted |
+| $C_{ij} = (-1)^{i+j}\det(A_{(i,j)})$ | "the $(i,j)$ cofactor" | signed minor used in the expansion |
+| $P_{ik},\ S_i(c),\ T_{ik}(c)$ | "swap / scale / add-multiple matrices" | $I$ with one row operation baked in |
+| $\det(AB)$ | "determinant of the product" | equals $\det(A)\det(B)$ — the day's headline |
+| $\operatorname{rank}(A)$ | "the rank — pivot count" | full rank $n$ is the invertibility test |
+| $\iff$ | "is exactly the same statement as" | how the invertibility chain links up |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- The determinant is a signed volume-scaling factor, not just a formula:
+  $|\det(A)|$ is how much $A$ stretches volume, and the sign says whether it
+  flips orientation.
+- The three elementary row operations change the determinant in fixed ways:
+  a swap negates it, scaling a row by $c$ multiplies it by $c$, and adding a
+  multiple of one row to another leaves it unchanged.
+- The determinant is multiplicative: $\det(AB) = \det(A)\det(B)$ for every
+  pair of $n \times n$ matrices.
+- A square matrix is invertible exactly when its determinant is nonzero,
+  tying the determinant directly to Day 5's rank and Day 6's subspaces.
+- For a triangular matrix the determinant is just the product of the diagonal
+  entries — which is why row-reducing to triangular form is the fast way to
+  compute one.
+
+### Proof sketches
+
+**Lemma 8.1 — key trick: expand along the row that's all zeros.**
+Cofactor expansion along the zero row multiplies each cofactor by that row's
+entries, and those entries are all $0$. So every term in the sum is zero and
+the whole determinant is zero. Full version: Lemma 8.1 above.
+
+**Lemma 8.2 — key trick: multilinearity plus "equal rows give zero" handle
+all three operations.**
+Scaling a row by $c$ is just linearity in that row, so the determinant
+scales by $c$. For a swap, put $u+v$ in both the $i$ and $k$ rows: the matrix
+now has two equal rows so its determinant is zero, and expanding by
+linearity leaves $\det(A) + \det(A') = 0$, giving the sign flip. For adding
+$c$ times row $k$ to row $i$, linearity splits the result into $\det(A)$ plus
+$c$ times a determinant with two equal rows, and that second piece is zero.
+Full version: Lemma 8.2 above.
+
+**Lemma 8.3 — key trick: each row of $EB$ is a recipe read off a row of
+$E$.**
+Row $m$ of any product $EB$ is the combination of $B$'s rows weighted by row
+$m$ of $E$. Each elementary matrix is the identity with one row operation
+applied, so its rows are exactly the basis rows needed to reproduce that same
+operation on $B$ — swapping, scaling, or adding. Reading the three cases off
+directly shows $EB$ is $B$ with the operation applied. Full version: Lemma
+8.3 above.
+
+**Corollary 8.1 — key trick: $\det E$ is the very factor that row operation
+introduces.**
+Because $E$ is the identity with one operation applied, Lemma 8.2 gives its
+determinant outright: $-1$ for a swap, $c$ for a scaling, $1$ for an
+add-multiple. Lemma 8.3 says $EB$ is $B$ with that same operation, and Lemma
+8.2 again says the operation multiplies $\det(B)$ by that same factor. So
+$\det(EB) = \det(E)\det(B)$. Full version: Corollary 8.1 above.
+
+**Lemma 8.4 — key trick: row-reduce, then find the guaranteed zero row.**
+Row reduction only multiplies the determinant by nonzero factors, so $A$ and
+its echelon form $R$ are zero or nonzero together. Since $A$ is singular its
+rank is below $n$, so $R$ has fewer than $n$ pivots and at least one all-zero
+row. By Lemma 8.1 that forces $\det(R) = 0$, hence $\det(A) = 0$. Full
+version: Lemma 8.4 above.
+
+**Theorem 8.1 — key trick: split on invertibility; when $A$ is invertible,
+break it into elementary pieces and telescope.**
+If either factor is singular, then $AB$ is singular too (its column or row
+space can't exceed the singular factor's), so both sides are zero by Lemma
+8.4. If $A$ is invertible it row-reduces to $I$, so $A$ is a product of
+elementary matrices. Peeling those factors off one at a time with Corollary
+8.1 turns $\det(AB)$ into $\det(E_1)\cdots\det(E_m)\det(B)$, and the same
+peeling on $A$ alone shows that leading product is exactly $\det(A)$. Full
+version: Theorem 8.1 above.
+
+**Lemma 8.5 — key trick: expand down the first column, where only the corner
+survives.**
+Expanding down column $1$ of an upper triangular matrix, every entry below
+the top is zero, so only the top-left term $T_{11}$ contributes. Its minor is
+again upper triangular with diagonal $T_{22}, \dots, T_{nn}$, so induction
+gives its determinant as that product. Multiplying back in $T_{11}$ yields
+the full diagonal product. Full version: Lemma 8.5 above.
+
+**Theorem 8.2 — key trick: reduce to triangular form and read invertibility
+off the diagonal.**
+Row reduction changes the determinant only by nonzero factors, so $\det(A)$
+is nonzero exactly when $\det(R)$ is, for the echelon form $R$. Being echelon
+makes $R$ upper triangular, so by Lemma 8.5 its determinant is the product of
+its diagonal entries, which is nonzero exactly when every diagonal entry is a
+pivot — that is, when $R$ has full rank $n$. Full rank is preserved by row
+operations and means invertibility, so chaining the equivalences gives
+$\det(A) \neq 0 \iff A$ invertible. Full version: Theorem 8.2 above.
+
+### If you remember only 3 things
+
+1. $\det(AB) = \det(A)\det(B)$: the determinant turns matrix products into
+   plain number products.
+2. $\det(A) \neq 0$ is exactly the test for $A$ being invertible (equivalently
+   full rank).
+3. A row swap flips the sign of the determinant, and scaling the whole matrix
+   gives $\det(cA) = c^n\det(A)$, not $c\det(A)$ — the volume picture is why.
+
 ## Journal template
 
 ```

@@ -437,6 +437,77 @@ $(R S) T = R (S T)$ as matrices — i.e. that composition of linear
 transformations is associative, which follows immediately from Theorem 3.2
 applied twice plus the associativity of matrix multiplication.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $T: V \to W$ | "$T$, a map from $V$ into $W$" | a linear transformation sending vectors of $V$ to vectors of $W$ |
+| $\mapsto$ | "maps to / gets sent to" | $(x,y) \mapsto (x,-y)$ describes what a map does to a point |
+| $S \circ T$ | "$S$ after $T$ — do $T$ first, then $S$" | the composition of two linear maps |
+| $[T]_{\mathcal B}^{\mathcal C}$ | "the matrix of $T$ with input basis $\mathcal B$, output basis $\mathcal C$" | the matrix depends on both chosen bases |
+| $\mathcal B, \mathcal C, \mathcal D$ | "ordered bases (a fixed list of basis vectors)" | coordinate systems for $V$, $W$, $U$ |
+| $[x]_{\mathcal B}$ | "the coordinate vector of $x$ in basis $\mathcal B$" | the column of numbers you multiply the matrix by |
+| $a_{ij}$ | "the entry in row $i$, column $j$" | the $(i,j)$ entry of the matrix |
+| $BA$ | "$B$ times $A$ (matrix product)" | the matrix of the composition $S \circ T$ |
+| $\delta_{ij}$ | "$1$ if $i=j$, else $0$ (the Kronecker delta)" | picks out a basis vector's coefficient in its own expansion |
+| $\sum_{i=1}^{m} a_{ij} w_i$ | "the sum over $i$ of $a_{ij} w_i$" | how $T(v_j)$ is rebuilt from the output basis |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- A linear transformation respects addition and scaling — so it sends every
+  linear combination to that same combination of the images, and always sends
+  $0$ to $0$.
+- Once you fix ordered bases, a linear map is captured exactly by one matrix
+  whose columns are the images of the input basis vectors, written in the
+  output basis.
+- A linear map is completely determined by where it sends a basis — and you
+  may send those basis vectors anywhere, each choice giving exactly one linear
+  map (existence and uniqueness).
+- Composing two linear maps corresponds to multiplying their matrices in the
+  same order: the matrix of $S \circ T$ is $BA$.
+- "The matrix of $T$" is not intrinsic to $T$ — change the basis and the very
+  same map gets a different-looking matrix.
+
+### Proof sketches
+
+**Lemma 3.1 — key trick: induction, peeling off one term at a time.**
+The two-vector rules (additivity and homogeneity) are the base case. To
+handle a $k$-term sum, split off the last term: additivity turns $T$ of the
+whole into $T$ of the first $k-1$ terms plus $T$ of the last. The inductive
+hypothesis handles the first chunk, homogeneity handles the last, and they
+reassemble into the fully pulled-through sum. Full version: Lemma 3.1 above.
+
+**Theorem 3.1 — key trick: write any vector in the basis, then push $T$
+through the combination.**
+For uniqueness (a): any $x$ is a unique combination of basis vectors, so
+applying Lemma 3.1 to two maps that agree on every basis vector yields the
+same output — they agree everywhere. For existence (b): *define* $T(x)$ to be
+the matching combination of the chosen target vectors; this is well-defined
+because basis coordinates are unique, and a short check shows it is linear and
+hits each prescribed value. Full version: Theorem 3.1 above.
+
+**Theorem 3.2 — key trick: track a single input basis vector through both
+maps and read off its coordinates.**
+First, a composition of linear maps is linear (routine). Then take an input
+basis vector $v_j$: applying $T$ gives its output coordinates (column $j$ of
+$A$), applying $S$ expands each output basis vector (columns of $B$), and
+Lemma 3.1 lets you pull $S$ through the sum. Collecting terms, the coordinate
+of the result is exactly the $(i,j)$ entry of $BA$ — the row-times-column
+rule falls out. Full version: Theorem 3.2 above.
+
+### If you remember only 3 things
+
+1. Linear = preserves $+$ and scaling (hence all combinations, and
+   $T(0)=0$). A map that shifts the origin, like $T(x,y)=(x+1,y)$, is not
+   linear.
+2. Fix bases → the matrix's $j$-th column is the image of the $j$-th input
+   basis vector, written in output-basis coordinates.
+3. Compose maps = multiply matrices ($S \circ T \leftrightarrow BA$), and the
+   matrix always depends on the chosen bases.
+
 ## Journal template
 
 ```

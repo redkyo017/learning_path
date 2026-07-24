@@ -388,6 +388,54 @@ $a_n = 2^n$ for a few values of $n$ — this checks your by-hand derivation
 in Exercise 5 against the computer, the same verify-what-you-solved pattern
 as every other code lab this month.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A^k = PD^kP^{-1}$ | "the $k$-th power, computed the cheap way" | diagonalize once, then only $D^k$ changes with $k$ |
+| $D^k = \operatorname{diag}(\lambda_1^k,\dots,\lambda_n^k)$ | "raise each diagonal eigenvalue to the $k$" | the only real work left in computing $A^k$ |
+| $x_n = Ax_{n-1}$ | "one step of the recurrence is one matrix multiply" | stacking consecutive terms turns a recurrence into this |
+| $\varphi,\ \psi$ | "phi and psi — the roots $\tfrac{1\pm\sqrt5}{2}$" | eigenvalues of the Fibonacci matrix; $\varphi$ is the golden ratio |
+| $F_n$ | "the $n$-th Fibonacci number" | its closed form is Binet's formula |
+| $\lambda_{\max}$ | "the dominant (largest-magnitude) eigenvalue" | its size alone decides growth, decay, or steady state |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Once $A = PDP^{-1}$, every power is $A^k = PD^kP^{-1}$: you diagonalize
+  once, then just raise the diagonal eigenvalues to the $k$-th power.
+- That converts expensive repeated matrix multiplication into a closed form
+  you can evaluate at any $k$ — even symbolic $k$, or $k \to \infty$.
+- Any linear recurrence becomes $x_n = Ax_{n-1}$ by stacking the last few
+  terms into a vector, so diagonalization solves it in closed form (Binet's
+  formula for Fibonacci is the poster child).
+- The long-run behavior of $x_n$ is governed entirely by the dominant
+  eigenvalue: magnitude $>1$ blows up, $<1$ decays to zero, $=1$ settles —
+  which is why a Markov chain reaches a stationary distribution.
+
+### Proof sketches
+
+**Theorem 12.1 — key trick: in $A^{k+1} = A\cdot A^k = (PDP^{-1})(PD^kP^{-1})$,
+the inner $P^{-1}P$ collapses to $I$.**
+Induct on $k$. The base case $A^1 = PD^1P^{-1}$ is just the definition of
+diagonalizability. Assuming $A^k = PD^kP^{-1}$, write $A^{k+1} =
+(PDP^{-1})(PD^kP^{-1})$; the adjacent $P^{-1}P$ in the middle is $I$, leaving
+$PDD^kP^{-1} = PD^{k+1}P^{-1}$, using that diagonal matrices multiply
+entrywise so $D\,D^k = D^{k+1}$. That is exactly the claim for $k+1$. Full
+version: Theorem 12.1 above.
+
+### If you remember only 3 things
+
+1. $A^k = PD^kP^{-1}$ — diagonalize once, then each power costs only $n$
+   scalar exponentiations down the diagonal.
+2. Stack a recurrence's terms into a vector to get $x_n = Ax_{n-1} = A^n x_0$,
+   then diagonalize for a closed form (Binet: $F_n = (\varphi^n -
+   \psi^n)/\sqrt5$).
+3. The dominant eigenvalue's magnitude alone tells you the long run: $>1$
+   grows, $<1$ decays, $=1$ holds steady (the Markov-chain case).
+
 ## Journal template
 
 ```

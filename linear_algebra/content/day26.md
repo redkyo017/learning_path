@@ -119,6 +119,60 @@ def trace_det_match_eigenvalues(A):
 Solution is in `solutions/day26_trace_det_cholesky.py` — check only after
 attempting.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\operatorname{trace}(A)$ | "the trace — sum of the diagonal entries" | today it also equals the sum of the eigenvalues |
+| $\sum_i \lambda_i$, $\prod_i \lambda_i$ | "add up / multiply together all the eigenvalues" | the two things trace and determinant secretly are |
+| $p(\lambda) = \det(A - \lambda I)$ | "the characteristic polynomial" | the one object whose coefficients hide both trace and determinant |
+| $A = LL^T$ | "$A$ splits into a lower-triangular $L$ times its own transpose" | the Cholesky factorization |
+| $L$ | "the Cholesky factor" | a lower-triangular square root of $A$ |
+| positive definite | "$x^T A x > 0$ for every nonzero $x$" | the condition a matrix must meet before Cholesky applies |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- The trace is the sum of the eigenvalues and the determinant is their
+  product — both are just coefficients of the one characteristic
+  polynomial you have been computing since Day 10.
+- That hands you a free consistency check: eigenvalues you found by hand
+  must sum to the trace and multiply to the determinant, or you slipped.
+- Every symmetric positive definite matrix has a unique Cholesky
+  factorization $A = LL^T$ with $L$ lower triangular and positive
+  diagonal — a triangular "square root" of $A$.
+- Cholesky needs *strict* positive definiteness; a single zero eigenvalue
+  (only semidefinite) breaks it, so always check definiteness first.
+- Cholesky is really the spectral theorem's square root $Q\sqrt\Lambda$
+  (Day 20) repackaged into triangular form.
+
+### Proof sketches
+
+**Theorem 26.1 — key trick: read trace and determinant off the two ends
+of the characteristic polynomial.**
+Factor the characteristic polynomial as $(-1)^n\prod_i(\lambda -
+\lambda_i)$; its coefficients are then built entirely from the
+eigenvalues — the $\lambda^{n-1}$ coefficient is, up to sign, their sum
+and the constant term is their product. Now expand that *same*
+determinant straight from the matrix: only the product of diagonal
+entries can reach degree $n-1$, so that coefficient is the sum of the
+diagonal entries, the trace. Match the two expressions coefficient by
+coefficient to get the sum, and set $\lambda = 0$ to read off $\det(A) =
+p(0) = \prod_i\lambda_i$ for the product. Full version: Theorem 26.1
+above.
+
+### If you remember only 3 things
+
+1. Trace = sum of eigenvalues, determinant = product of eigenvalues —
+   two coefficients of the same characteristic polynomial.
+2. Use it as a sanity check: hand-computed eigenvalues must add up to the
+   trace and multiply to the determinant.
+3. Cholesky $A = LL^T$ exists only for symmetric positive definite $A$; a
+   zero eigenvalue (merely semidefinite) kills it, so check definiteness
+   before you factor.
+
 ## Journal template
 
 ```

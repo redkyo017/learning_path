@@ -384,6 +384,68 @@ $\kappa(A^TA) \approx \kappa(A)^2$, which is the concrete evidence behind
 today's "Unconventional edge" claim that normal equations amplify
 ill-conditioning while QR does not.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $Q$ | "an orthogonal matrix" | square matrix with orthonormal columns; a rotation/reflection |
+| $Q^TQ = I$ | "Q-transpose Q is the identity" | the defining property; equivalently $Q^{-1} = Q^T$ |
+| $\delta_{ij}$ | "the Kronecker delta" | $1$ when $i = j$, $0$ otherwise — the entries of $I$ |
+| $A = QR$ | "A factored as Q times R" | orthonormal columns $Q$ times upper-triangular $R$ |
+| $R$, $r_{ik}$ | "the upper-triangular factor and its entries" | the Gram-Schmidt coefficients recorded as a matrix |
+| $\langle Qu, Qv\rangle$ | "the dot product after applying $Q$" | equals $\langle u,v\rangle$; $Q$ leaves it unchanged |
+| $\kappa(A)$ | "the condition number of $A$" | error-amplification factor; $\kappa(A^TA) = \kappa(A)^2$ |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- An orthogonal matrix is exactly a square matrix with orthonormal columns
+  — the compact statement of that is $Q^TQ = I$.
+- Orthogonal matrices are the rigid motions: they preserve every inner
+  product, and therefore every length and every angle.
+- Any matrix with linearly independent columns factors as $A = QR$
+  (orthonormal $Q$, upper-triangular $R$) — this is just Gram-Schmidt with
+  its arithmetic written down instead of thrown away.
+- Fixing Gram-Schmidt's sign convention makes $R$'s diagonal entries
+  strictly positive, which pins down a *unique* pair $Q, R$.
+- Least squares can be solved by $R\hat x = Q^Tb$ instead of the normal
+  equations, avoiding $A^TA$ and its squared condition number — numerically
+  safer.
+
+### Proof sketches
+
+**Theorem 17.1 — key trick: slide $Q^TQ$ into the middle of the dot product,
+then test the leftover on basis vectors.**
+Forward: $\langle Qu, Qv\rangle = u^TQ^TQv$, and if $Q^TQ = I$ this is just
+$u^Tv = \langle u,v\rangle$. Backward: if the dot products always match, then
+$u^T(Q^TQ - I)v = 0$ for all $u, v$; feeding in $u = e_i$, $v = e_j$ reads
+off entry $(i,j)$ of $Q^TQ - I$ as zero, so the whole matrix is zero and
+$Q^TQ = I$. Setting $u = v$ recovers length preservation, and lengths plus
+inner products give angle preservation (the folded-in corollary). Full
+version: Theorem 17.1 above.
+
+**Theorem 17.2 — key trick: QR *is* Gram-Schmidt; $R$ just stores the
+coefficients you already computed.**
+Run Gram-Schmidt on $A$'s columns to get orthonormal $q_1, \dots, q_n$ with
+the same running spans at every stage. Because $a_k$ lives in
+$\operatorname{span}\{q_1,\dots,q_k\}$, it is a combination of only the first
+$k$ of the $q$'s — collect those coefficients as column $k$ of $R$, which is
+automatically upper triangular, and by construction $QR = A$. Dotting $a_k$
+with $q_k$ shows the diagonal entry $r_{kk} = \|v_k\| > 0$ once you take
+Gram-Schmidt's $+$ sign, and that sign choice is exactly what makes $Q, R$
+unique. Full version: Theorem 17.2 above.
+
+### If you remember only 3 things
+
+1. $Q^TQ = I$ means orthonormal columns, and that one fact makes $Q$
+   preserve every length and angle — plus $Q^{-1} = Q^T$ for free.
+2. $A = QR$ is Gram-Schmidt in matrix form: $Q$'s columns are the
+   orthonormalized vectors, $R$ records the projection coefficients.
+3. For least squares, prefer $R\hat x = Q^Tb$ over the normal equations —
+   forming $A^TA$ squares the condition number and amplifies rounding error.
+
 ## Journal template
 
 ```

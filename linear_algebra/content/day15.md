@@ -502,6 +502,79 @@ answer to Exercise 2 (the $\mathbb{R}^4$ basis) and confirm the columns of
 $Q$ match your hand computation from Exercise 2/3 (up to sign), the same
 way the file already checks the Worked Example against `numpy.linalg.qr`.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $W^\perp$ | "$W$-perp — the orthogonal complement of $W$" | every vector orthogonal to all of $W$ |
+| $V = W \oplus W^\perp$ | "$V$ splits as $W$ direct-sum its complement" | every $v$ is uniquely $w + w'$ with $w \in W$, $w' \in W^\perp$ |
+| $\delta_{ij}$ | "Kronecker delta: $1$ if $i=j$, else $0$" | the defining condition $\langle e_i,e_j\rangle = \delta_{ij}$ of an orthonormal set |
+| $u_k = v_k - \sum_{i<k}\frac{\langle v_k,u_i\rangle}{\langle u_i,u_i\rangle}u_i$ | "next vector minus its projections onto the earlier ones" | the Gram-Schmidt step |
+| $\frac{\langle v_k,u_i\rangle}{\langle u_i,u_i\rangle}u_i$ | "the projection of $v_k$ onto $u_i$" | the part of $v_k$ already pointing along $u_i$ |
+| $e_i = u_i / \Vert u_i\Vert$ | "$u_i$ rescaled to unit length" | normalizing to turn orthogonal into orthonormal |
+| $(W^\perp)^\perp$ | "the complement of the complement" | equals $W$ again |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- The orthogonal complement $W^\perp$ collects every vector perpendicular to
+  all of $W$, and it is itself a subspace.
+- Orthogonal decomposition: in a finite-dimensional inner product space every
+  vector splits *uniquely* as a part in $W$ plus a part in $W^\perp$ ($V = W
+  \oplus W^\perp$), so $\dim W + \dim W^\perp = \dim V$.
+- Gram-Schmidt turns any basis into an orthonormal one spanning the same
+  space, by subtracting off each new vector's projections onto the directions
+  already fixed.
+- Crucially, Gram-Schmidt preserves every intermediate span: the first $k$
+  orthonormal vectors span the same space as the first $k$ originals — the
+  property QR later leans on.
+
+### Proof sketches
+
+**Lemma 15.1 — key trick: orthogonality to a fixed $w$ is a linear
+condition, so it survives addition and scaling.**
+First, $0 \in W^\perp$ since $\langle 0, w\rangle = 0$. If $u_1, u_2$ are each
+orthogonal to every $w \in W$, bilinearity gives $\langle u_1 + u_2, w\rangle
+= 0 + 0 = 0$, and $\langle cu, w\rangle = c\cdot 0 = 0$. So $W^\perp$ contains
+$0$ and is closed under addition and scalar multiplication — a subspace. Full
+version: Lemma 15.1 above.
+
+**Theorem 15.1 — key trick: project $v$ onto an orthonormal basis of $W$;
+what is left is automatically perpendicular to $W$, and $W \cap W^\perp =
+\{0\}$ forces uniqueness.**
+Gram-Schmidt gives an orthonormal basis $e_1,\dots,e_k$ of $W$; set $w =
+\sum_i \langle v, e_i\rangle e_i$ and $w' = v - w$. Checking $\langle w',
+e_j\rangle$, orthonormality collapses the sum to one term and it cancels, so
+$w' \perp$ every $e_j$, hence $w' \in W^\perp$ — that is existence. For
+uniqueness, two such decompositions would differ by a vector lying in both
+$W$ and $W^\perp$; such a vector is orthogonal to itself, so
+positive-definiteness makes it $0$. Full version: Theorem 15.1 above.
+
+**Theorem 15.2 — key trick: at step $k$ you subtract exactly the projections
+onto $u_1,\dots,u_{k-1}$, so each inner product $\langle u_k,u_j\rangle$
+cancels term-by-term to zero.**
+Induct on $k$. Since $u_k$ is $v_k$ minus a combination of the earlier $u_i$
+(which span $\{v_1,\dots,v_{k-1}\}$), the spans $\{u_1,\dots,u_k\}$ and
+$\{v_1,\dots,v_k\}$ agree, and $u_k \neq 0$ — otherwise $v_k$ would lie in the
+earlier span, breaking independence. Computing $\langle u_k, u_j\rangle$ for
+$j < k$, pairwise orthogonality of the earlier $u_i$ kills every term but
+$i = j$, which is $\langle v_k,u_j\rangle - \frac{\langle
+v_k,u_j\rangle}{\langle u_j,u_j\rangle}\langle u_j,u_j\rangle = 0$.
+Normalizing $e_i = u_i/\|u_i\|$ then yields an orthonormal basis of the same
+span. Full version: Theorem 15.2 above.
+
+### If you remember only 3 things
+
+1. $V = W \oplus W^\perp$: every vector splits uniquely into a $W$-part and a
+   perpendicular part, and $\dim W + \dim W^\perp = \dim V$.
+2. Gram-Schmidt = "subtract off what the earlier directions already explain";
+   the leftover $u_k$ is orthogonal to all of them, then normalize to $e_k =
+   u_k/\|u_k\|$.
+3. It preserves every intermediate span — the first $k$ outputs use only the
+   first $k$ inputs — which is exactly why QR (Day 17) works.
+
 ## Journal template
 
 ```

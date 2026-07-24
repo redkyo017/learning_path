@@ -265,6 +265,70 @@ $\mathbb{R}^4$, and construct a third vector you can *prove* by hand is
 outside their span (same technique as Exercise 7), then confirm your code
 agrees.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $V$, $W$ | "a vector space $V$; a subset/subspace $W$" | $V$ is the big space, $W$ a piece of it |
+| $\in$ | "is in / is an element of" | $v \in V$ means $v$ is a vector of $V$ |
+| $\notin$ | "is not in" | $(1,1,1) \notin \operatorname{span}(S)$ |
+| $\subseteq$ | "is a subset of" | $W \subseteq V$: every vector of $W$ is also in $V$ |
+| $\mathbb{R}$, $\mathbb{R}^n$ | "the real numbers; lists of $n$ real numbers" | scalars live in $\mathbb{R}$; the running example space is $\mathbb{R}^n$ |
+| $0$ | "the zero vector" | the one vector every subspace must contain |
+| $\emptyset$ | "the empty set" | the set with no vectors in it |
+| $\{\,x : \text{condition}\,\}$ | "the set of all $x$ such that …" | set-builder notation, e.g. $\{(x,0):x\in\mathbb{R}\}$ = the $x$-axis |
+| $V \times V \to V$ | "takes two vectors of $V$ and returns one vector of $V$" | the type of the addition operation |
+| $\operatorname{span}(S)$ | "the span of $S$" | all finite linear combinations of vectors in $S$ |
+| $\cap$ | "intersection — the overlap" | $W_1 \cap W_2$: vectors lying in both subspaces |
+| $\cup$ | "union — thrown together" | $W_1 \cup W_2$: vectors lying in either subspace |
+| $\implies$ | "implies / leads to" | $u,v \in W \implies u+v \in W$ (closure) |
+| $\sum_{i=1}^{m} a_i s_i$ | "the sum $a_1 s_1 + \dots + a_m s_m$" | a finite linear combination |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- A vector space is any set where you can add vectors and scale them by real
+  numbers, obeying eight familiar arithmetic rules.
+- A subspace is a subset that is itself a vector space, and you only need to
+  check three things: it contains $0$, and it is closed under addition and
+  under scalar multiplication.
+- The span of any set of vectors is always a subspace — the smallest one
+  containing all of them.
+- The intersection of two subspaces is again a subspace, but their union
+  usually is not.
+- A vector lies in a span exactly when you can actually solve for the
+  combination coefficients; if the coordinate equations clash, it does not.
+
+### Proof sketches
+
+**Theorem 1.1 — key trick: run down the three-item subspace checklist; a
+combination of combinations is still a combination.**
+To show $\operatorname{span}(S)$ is a subspace, check Definition 1.2's three
+conditions. It contains $0$ (the empty sum, or $0$ times any vector). Add two
+spanning vectors: rewrite both over the shared list of vectors they use, then
+add coefficient by coefficient — still one finite combination. Scale a
+spanning vector: multiply every coefficient — still a finite combination. All
+three conditions hold. Full version: Theorem 1.1 above.
+
+**Theorem 1.2 — key trick: whatever holds in both places holds in the
+overlap.**
+Check the same three conditions on $W_1 \cap W_2$. Zero is in both
+subspaces, so it is in the overlap. If two vectors are in the overlap, they
+lie in $W_1$ (closed, so their sum is in $W_1$) and in $W_2$ (sum in $W_2$),
+hence the sum is in the overlap; scaling works the same way. The union, by
+contrast, fails: pick one vector from each axis and their sum lands on
+neither. Full version: Theorem 1.2 above.
+
+### If you remember only 3 things
+
+1. Subspace test = three checks: contains $0$, closed under $+$, closed under
+   scaling. If $0$ is missing, stop — it is not a subspace.
+2. $\operatorname{span}(S)$ is always a subspace, no matter what $S$ is.
+3. Intersection of subspaces: yes, a subspace. Union: usually not — always
+   check closure instead of assuming it.
+
 ## Journal template
 
 ```

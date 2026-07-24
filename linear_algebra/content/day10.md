@@ -405,6 +405,65 @@ from Exercises 5 and 6 (the second has complex eigenvalues — `np.roots` will
 happily return complex numbers, and `np.linalg.eigvals` will too) and
 confirm your hand-computed eigenvalues from the Solutions section match.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\lambda$ | "lambda — the stretch factor" | how much $A$ scales an eigenvector |
+| $Av = \lambda v$ | "$A$ acting on $v$ is just $v$ scaled by $\lambda$" | the defining equation of an eigenpair |
+| $\det(A - \lambda I)$ | "the determinant test for $\lambda$" | equals zero exactly when $\lambda$ is an eigenvalue |
+| $p_A(\lambda)$ | "the characteristic polynomial of $A$" | its roots are the eigenvalues |
+| $\iff$ | "is exactly the same statement as" | eigenvalue $\iff$ determinant test gives zero |
+| $(*)$, $(**)$, $(\dagger)$ | "nicknames for equations, to refer back to them" | labels used inside the independence proof |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- An eigenvector is a direction the matrix does not turn: $A$ only
+  stretches, shrinks, or flips it, by the factor $\lambda$.
+- You never find eigenvalues by searching vectors: $\lambda$ is an
+  eigenvalue exactly when $\det(A - \lambda I) = 0$.
+- The characteristic polynomial of an $n \times n$ matrix has degree $n$,
+  so there are at most $n$ eigenvalues (exactly $n$ over the complex
+  numbers, counting repeats).
+- A perfectly real matrix can have complex eigenvalues — rotations are the
+  classic example.
+- Eigenvectors belonging to different eigenvalues are automatically
+  linearly independent — no extra check ever needed.
+
+### Proof sketches
+
+**Theorem 10.1 — key trick: turn "does a special vector exist?" into "is
+one number zero?".**
+Saying $\lambda$ is an eigenvalue means $(A - \lambda I)v = 0$ has a
+nonzero solution. A homogeneous system has a nonzero solution exactly when
+its matrix is singular — otherwise you could multiply by the inverse and
+force $v = 0$. And singular means determinant zero (Day 8). Chain the three
+equivalences and the infinite vector search collapses into finding roots of
+one polynomial. Full version: Theorem 10.1 above.
+
+**Theorem 10.2 — key trick: apply $A$, multiply by $\lambda_k$, subtract —
+the last vector cancels.**
+Assume the smallest possible dependent set of eigenvectors for distinct
+eigenvalues. Feed the dependence relation through $A$ (each $v_i$ picks up
+its own $\lambda_i$), separately multiply the same relation by
+$\lambda_k$, and subtract: the last vector drops out, leaving a dependence
+among fewer eigenvectors. That contradicts "smallest", because the
+distinct-eigenvalue differences $\lambda_i - \lambda_k$ are nonzero and
+can't rescue the coefficients. So no dependent set exists at all. Full
+version: Theorem 10.2 above.
+
+### If you remember only 3 things
+
+1. $Av = \lambda v$ with $v \neq 0$: the matrix doesn't turn $v$, it only
+   scales it by $\lambda$.
+2. Eigenvalues are the roots of $\det(A - \lambda I) = 0$ — a polynomial
+   problem, not a vector search.
+3. Distinct eigenvalues give automatically independent eigenvectors, but a
+   repeated eigenvalue may not have enough eigenvectors (Exercise 4's trap).
+
 ## Journal template
 
 ```

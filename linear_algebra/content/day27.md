@@ -107,6 +107,47 @@ positive, one negative — **indefinite**.
 
 **16.** $\frac{9}{9+1} = 0.9$, i.e. 90%.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\operatorname{span}\{\dots\}$ | "all combinations of these vectors" | the membership test in problem 1 |
+| $\dim\ker T$, $\dim\operatorname{im}T$ | "dimensions of the null space and the image" | rank-nullity, the engine behind problem 3 |
+| $\operatorname{rank}(M)$ | "number of independent columns (pivots)" | problem 4 |
+| $\det(A - \lambda I) = 0$ | "the eigenvalue test" | problems 7, 14, 15 |
+| $PD^kP^{-1}$ | "diagonalize, power the diagonal, undo" | computing $E^3$ in problem 9 |
+| $\langle u, v\rangle$, $\Vert u\Vert$ | "inner product and length" | problems 10, 11, 14 |
+| $Q^TQ = I$ | "the columns are orthonormal" | orthogonal matrices, problem 13 |
+
+### The big ideas (conclusions)
+
+- The whole month is one dependency chain: span and independence feed
+  rank and nullity, which feed determinants, then eigenvalues,
+  diagonalization, orthogonality, the spectral theorem, and finally
+  SVD and PCA.
+- Rank-nullity ($\dim\ker T + \dim\operatorname{im}T = n$) is the master
+  counting law — it alone forces facts like "$\mathbb{R}^5 \to
+  \mathbb{R}^3$ can never be injective."
+- Diagonalization turns a matrix power into a scalar power: $E^3 =
+  PD^3P^{-1}$ costs three cubes of numbers, not three matrix products.
+- Symmetric matrices are the well-behaved case — real eigenvalues,
+  orthogonal eigenvectors, and a clean definite/indefinite
+  classification.
+- Later topics are earlier ones specialized: the spectral theorem is
+  eigenvalues for symmetric matrices, and PCA is the spectral theorem on
+  a covariance matrix.
+
+### If you remember only 3 things
+
+1. The month is a single chain — every later tool is an earlier one made
+   more specific, not a brand-new subject.
+2. Rank-nullity is the reusable accounting identity behind almost every
+   injective/surjective argument.
+3. The exam's real output is the triage list — what needs a full re-read
+   versus only more practice — not the raw score.
+
 ## Journal template
 
 ```

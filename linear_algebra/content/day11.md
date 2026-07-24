@@ -542,6 +542,118 @@ scalar multiple).
 If you get stuck for more than ~10 minutes, check
 `solutions/day11_diagonalization.py` — but only after a real attempt.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A = PDP^{-1}$ | "$A$ rebuilt from its eigenvectors and eigenvalues" | $P$'s columns are eigenvectors, $D$'s diagonal their eigenvalues |
+| $B = P^{-1}AP$ | "$B$ is $A$ rewritten in new coordinates ($A,B$ are *similar*)" | conjugating by $P$; keeps char. polynomial, det, trace |
+| $D = \operatorname{diag}(\lambda_1,\dots,\lambda_n)$ | "the diagonal matrix of eigenvalues" | the simple shape $A$ takes once diagonalized |
+| $E_{\lambda_0} = N(A-\lambda_0 I)$ | "the eigenspace of $\lambda_0$" | every eigenvector for $\lambda_0$, together with $0$ |
+| $m$ (algebraic mult.) | "how many times $\lambda_0$ is a root of $p_A$" | the exponent of $(\lambda-\lambda_0)$ in the char. polynomial |
+| $g$ (geometric mult.) | "how many independent eigenvectors $\lambda_0$ has" | $\dim E_{\lambda_0}$; always $\le m$ |
+| $\operatorname{trace}(A)$ | "the sum of the diagonal entries" | unchanged by similarity; equals the sum of eigenvalues |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Diagonalizing $A$ means finding a full set of eigenvectors: $A = PDP^{-1}$,
+  where $P$'s columns are eigenvectors and $D$ lists the matching
+  eigenvalues.
+- An $n \times n$ matrix is diagonalizable exactly when it has $n$ linearly
+  independent eigenvectors — no fewer will do.
+- For every eigenvalue, its geometric multiplicity (number of independent
+  eigenvectors) is at most its algebraic multiplicity (root order), and
+  diagonalizability is precisely the case where the two are equal for *every*
+  eigenvalue.
+- Similar matrices $B = P^{-1}AP$ are one map seen in two coordinate systems,
+  so they share characteristic polynomial, eigenvalues with multiplicity,
+  determinant, and trace — but generally not eigenvectors.
+- Distinct eigenvalues are sufficient but not necessary for
+  diagonalizability: a repeated eigenvalue may still be fine (the identity
+  $I_n$) or may fail (a Jordan block).
+
+### Proof sketches
+
+**Theorem 11.1 — key trick: conjugating by $P$ slides straight through
+$\det$, and $\det(P^{-1})\det(P) = 1$ erases $P$ entirely.**
+Insert $\lambda P^{-1}P$ to rewrite $B - \lambda I = P^{-1}(A - \lambda I)P$.
+Determinant is multiplicative, so $p_B(\lambda) = \det(P^{-1})\,p_A(\lambda)\,
+\det(P)$, and the two $P$-factors multiply to $\det(I) = 1$, leaving
+$p_B = p_A$ — identical polynomials, hence identical eigenvalues and
+multiplicities. Setting $\lambda = 0$ in that identity gives $\det B = \det
+A$. Trace needs one extra fact, $\operatorname{trace}(XY) =
+\operatorname{trace}(YX)$ (swap the order of a finite double sum), which lets
+you cycle $\operatorname{trace}(P^{-1}(AP)) = \operatorname{trace}((AP)P^{-1})
+= \operatorname{trace}(A)$. Full version: Theorem 11.1 above.
+
+**Theorem 11.2 — key trick: $A = PDP^{-1}$ is the same equation as $AP = PD$,
+which read one column at a time says "column $j$ of $P$ is an eigenvector."**
+Multiply $A = PDP^{-1}$ on the right by $P$ to get $AP = PD$. Column $j$ of
+$AP$ is $Ap_j$; column $j$ of $PD$ is $\lambda_j p_j$; so $Ap_j = \lambda_j
+p_j$. An invertible $P$ has nonzero, independent columns — exactly $n$
+independent eigenvectors. Run the same reading backwards: $n$ independent
+eigenvectors let you build an invertible $P$ and diagonal $D$ with $AP = PD$,
+i.e. $A = PDP^{-1}$. Full version: Theorem 11.2 above.
+
+**Lemma 11.1 — key trick: put a basis of the eigenspace first among $P$'s
+columns; the similar matrix $P^{-1}AP$ then opens with a $\lambda_0 I_g$
+block.**
+Take a basis $v_1,\dots,v_g$ of $E_{\lambda_0}$ and extend it to a basis of
+the whole space; these columns form an invertible $P$. Because $Av_j =
+\lambda_0 v_j$ for the first $g$ columns, $B = P^{-1}AP$ is block-upper-
+triangular with $\lambda_0 I_g$ in the top-left corner. Its characteristic
+polynomial therefore carries a factor $(\lambda_0 - \lambda)^g$, so $\lambda_0$
+is a root of $p_B$ at least $g$ times. Since $B$ is similar to $A$, $p_B =
+p_A$ (Theorem 11.1), so the algebraic multiplicity $m$ is at least $g$. Full
+version: Lemma 11.1 above.
+
+**Lemma 11.2 — key trick: if a sum of one-vector-per-eigenspace is zero, the
+surviving nonzero pieces would be dependent eigenvectors for distinct
+eigenvalues — which Day 10 forbids.**
+Suppose $v_1 + \cdots + v_k = 0$ with each $v_i \in E_{\lambda_i}$, and throw
+away every $v_i$ that is already $0$. If any survive, they are genuine
+eigenvectors for distinct eigenvalues, so by Day 10's theorem they are
+linearly independent — yet here they sum to $0$ with every coefficient equal
+to $1$, a contradiction. So none survive: every $v_i = 0$. Full version:
+Lemma 11.2 above.
+
+**Corollary 11.1 — key trick: sort any independent set of eigenvectors into
+its eigenspaces for the ceiling, then pool eigenspace bases to hit it.**
+Upper bound: every eigenvector lives in exactly one $E_{\lambda_i}$, so an
+independent set $S$ splits into the pieces $S_i = S \cap E_{\lambda_i}$; each
+$S_i$ is independent inside a $g_i$-dimensional space, hence has at most
+$g_i$ vectors, so $|S| \le \sum_i g_i$. Achievability: take a basis $B_i$ of
+each $E_{\lambda_i}$ and pool them into $S = B_1 \cup \cdots \cup B_k$ of
+size $\sum_i g_i$. If a combination of $S$ vanishes, grouping its terms by
+eigenspace gives $\sum_i w_i = 0$ with $w_i \in E_{\lambda_i}$, so Lemma 11.2
+forces each $w_i = 0$, and each $B_i$ being a basis forces its coefficients
+to $0$ — the pooled set is independent and reaches the ceiling. Hence the
+largest independent set of eigenvectors has exactly $\sum_i g_i$ vectors.
+Full version: Corollary 11.1 above.
+
+**Theorem 11.3 — key trick: the most independent eigenvectors you can gather
+is $\sum g_i$, so needing $n$ of them forces $\sum g_i = n$; with $g_i \le
+m_i$ and $\sum m_i = n$, every gap $m_i - g_i$ must be zero.**
+Statement (1) $\iff$ (2) is just Theorem 11.2. For (2) $\iff$ (3): Corollary
+11.1 says the most independent eigenvectors you can gather is exactly
+$\sum g_i$, so "$A$ has $n$ independent eigenvectors" means exactly
+$\sum g_i = n$. Since each $g_i \le
+m_i$ (Lemma 11.1) and the $m_i$ sum to $n$, the nonnegative gaps $m_i - g_i$
+sum to $n - \sum g_i$; that total is zero precisely when each $g_i = m_i$.
+Full version: Theorem 11.3 above.
+
+### If you remember only 3 things
+
+1. $A = PDP^{-1}$: columns of $P$ are eigenvectors, the diagonal of $D$ their
+   eigenvalues — and this exists iff $A$ has $n$ independent eigenvectors.
+2. Diagonalizable $\iff$ geometric multiplicity $=$ algebraic multiplicity
+   for every eigenvalue (and always $g \le m$).
+3. Trap: distinct eigenvalues *guarantee* diagonalizability but are only a
+   sufficient condition — test the multiplicity match, not distinctness.
+
 ## Journal template
 
 ```

@@ -386,6 +386,82 @@ least squares — the "linear" in "linear regression" refers to linearity in
 the parameters, not in $x$). Confirm your normal-equations solver still
 matches `np.linalg.lstsq` on this 3-column $A$.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $\operatorname{proj}_W(v)$ | "the projection of $v$ onto $W$" | the point of the subspace $W$ closest to $v$ |
+| $W^\perp$ | "$W$-perp, the orthogonal complement" | every vector perpendicular to all of $W$ |
+| $v - \operatorname{proj}_W(v)$ | "the residual" | the leftover, which points straight out of $W$ |
+| $\hat x$ | "x-hat, the least-squares solution" | best-fit unknowns when $Ax = b$ has no exact solution |
+| $A^TA\hat x = A^Tb$ | "the normal equations" | the always-solvable system whose solution is $\hat x$ |
+| $C(A)$ | "the column space of $A$" | all vectors $Ax$; the subspace we project $b$ onto |
+| $\Vert v - w\Vert$ | "the distance from $v$ to $w$" | the length least squares works to minimize |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- The orthogonal projection of $v$ onto $W$ is the single point of $W$
+  closest to $v$ — nothing in the subspace is nearer.
+- The line from $v$ to its projection is perpendicular to the entire
+  subspace $W$; that right angle is exactly what makes it the closest point.
+- Least squares is not a separate technique: solving $Ax = b$ approximately
+  *is* projecting $b$ onto the column space $C(A)$.
+- The best fit $\hat x$ is found by the normal equations $A^TA\hat x =
+  A^Tb$, which always have a solution even when $Ax = b$ has none.
+- The projected point $A\hat x$ is always unique, even in cases where the
+  coefficient vector $\hat x$ is not (dependent columns): geometry pins down
+  the point, not the coordinates.
+
+### Proof sketches
+
+**Lemma 16.1 — key trick: expand the squared length and watch the cross
+term die.**
+Write $\|a+b\|^2$ as the inner product $\langle a+b, a+b\rangle$ and expand
+into four pieces: $\|a\|^2$, $\|b\|^2$, and two copies of
+$\langle a,b\rangle$. When $a \perp b$ that cross term is zero, so only
+$\|a\|^2 + \|b\|^2$ survives — the Pythagorean theorem, now valid in any
+inner product space. Full version: Lemma 16.1 above.
+
+**Lemma 16.2 — key trick: only test against each basis vector; the
+projection formula cancels itself.**
+To show the residual $v - \operatorname{proj}_W(v)$ is perpendicular to all
+of $W$, it is enough to check it against each orthonormal basis vector $e_j$,
+since orthogonality to a spanning set spreads to the whole subspace. Dotting
+with $e_j$, the projection sum collapses because $\langle e_i, e_j\rangle$ is
+$0$ unless $i = j$, leaving $\langle v, e_j\rangle - \langle v, e_j\rangle =
+0$. So the residual lands in $W^\perp$. Full version: Lemma 16.2 above.
+
+**Theorem 16.1 — key trick: split $v - w$ into a perpendicular piece plus an
+in-subspace piece, then use Pythagoras.**
+For any competitor $w \in W$, write $v - w = (v - p) + (p - w)$, where $p$ is
+the projection. The first piece points out of $W$ (Lemma 16.2), the second
+lies inside $W$, so they are perpendicular and Lemma 16.1 gives $\|v-w\|^2 =
+\|v-p\|^2 + \|p-w\|^2$. That extra $\|p-w\|^2 \ge 0$ can only push $w$
+farther from $v$, and it vanishes only when $w = p$. So $p$ is the unique
+closest point. Full version: Theorem 16.1 above.
+
+**Theorem 16.2 — key trick: "closest point in the column space" plus
+"residual lands in $N(A^T)$".**
+As $x$ ranges over everything, $Ax$ sweeps out exactly the column space
+$C(A)$, so minimizing $\|Ax - b\|$ is just finding the point of $C(A)$
+closest to $b$. By the Best Approximation Theorem that point is the
+projection, characterized by the residual $b - A\hat x$ being perpendicular
+to $C(A)$. But "perpendicular to $C(A)$" means "inside $N(A^T)$" (Day 6),
+i.e. $A^T(b - A\hat x) = 0$ — rearrange to $A^TA\hat x = A^Tb$. Full version:
+Theorem 16.2 above.
+
+### If you remember only 3 things
+
+1. The projection is the closest point, and the residual is perpendicular to
+   the subspace — one right-angle picture sits behind everything today.
+2. Least squares = projection onto $C(A)$; solve the normal equations
+   $A^TA\hat x = A^Tb$ (always solvable) to get the best fit $\hat x$.
+3. The point $A\hat x$ is always unique; the coordinates $\hat x$ need not
+   be, if $A$'s columns are linearly dependent (Exercise 9's trap).
+
 ## Journal template
 
 ```

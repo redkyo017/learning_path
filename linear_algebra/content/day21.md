@@ -501,6 +501,68 @@ singular vectors $u_1, u_2$ (overlay them with `ax.arrow` or `ax.quiver` if
 you want to check this precisely rather than by eye) — this is Exercise 9's
 proof, made visible.
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A = U\Sigma V^T$ | "$A$ factors as: rotate, stretch, rotate" | the singular value decomposition |
+| $U$ | "the output-side rotation" | orthogonal $m\times m$; its columns $u_i$ are the left singular vectors (directions in $A$'s output space) |
+| $V^T$ | "$V$-transpose — the input-side rotation" | orthogonal; its rows are $v_i$, the right singular vectors (directions in $A$'s input space) |
+| $\Sigma$ | "the diagonal stretch box" | rectangular diagonal; its entries $\sigma_i$ are the stretch factors |
+| $\sigma_i$ | "sigma-$i$ — the $i$-th singular value" | how much $A$ stretches the $i$-th axis; $\sigma_i = \sqrt{\lambda_i}$ |
+| $A^TA$ | "$A$-transpose-$A$" | the symmetric $n\times n$ matrix whose eigenvectors give $V$ and whose eigenvalues give the $\sigma_i^2$ |
+| $\langle u,v\rangle,\ \delta_{ij}$ | "the inner product; the Kronecker delta (1 if $i=j$, else 0)" | orthonormality is exactly $\langle u_i,u_j\rangle = \delta_{ij}$ |
+| $\blacksquare$ | "end of proof" | — |
+
+### The big ideas (conclusions)
+
+- Every real matrix — any shape, any rank, no invertibility needed —
+  factors as $A = U\Sigma V^T$: rotate/reflect the input, stretch each axis
+  by a singular value, then rotate/reflect the output.
+- The singular values are the square roots of the eigenvalues of $A^TA$,
+  and those eigenvalues are always $\ge 0$, so the square roots are real.
+- SVD is not new machinery: it is the Spectral Theorem (Day 19) applied to
+  the symmetric positive semidefinite matrix $A^TA$ (Day 20), with the
+  eigenvectors carried through $A$ to build the second basis.
+- Geometrically, $A$ maps the unit sphere to an ellipsoid whose semi-axis
+  lengths are the singular values and whose axes point along the $u_i$.
+- The count of nonzero singular values is the rank of $A$; the largest is
+  $A$'s operator norm; the sum of their squares is the Frobenius norm
+  squared.
+
+### Proof sketches
+
+**Lemma 21.1 — key trick: $x^T(A^TA)x$ is secretly a squared length.**
+Symmetry is one line of transpose algebra: $(A^TA)^T = A^TA$. For
+semidefiniteness, feed any $x$ in and regroup: $x^T(A^TA)x = (Ax)^T(Ax) =
+\|Ax\|^2$, which can never be negative. Since that holds for every $x$,
+$A^TA$ fits Day 20's definition of positive semidefinite exactly. Full
+version: Lemma 21.1 above.
+
+**Theorem 21.1 — key trick: eigendecompose $A^TA$, then push its
+eigenvectors through $A$.**
+Because $A^TA$ is symmetric, the Spectral Theorem hands you an orthonormal
+eigenbasis $v_1,\dots,v_n$ with eigenvalues $\lambda_i \ge 0$ (nonnegative
+by the Lemma); these $v_i$ are the columns of $V$, and $\sigma_i =
+\sqrt{\lambda_i}$. For each positive $\sigma_i$, define $u_i = Av_i/\sigma_i$;
+a short inner-product computation collapses $\langle u_i,u_j\rangle$ down to
+$\delta_{ij}$, so the $u_i$ are orthonormal — pad them out to a full basis
+of $\mathbb{R}^m$ with Gram-Schmidt where needed, giving $U$. Assembling
+$U,\Sigma,V$ and checking $AV = U\Sigma$ one column at a time (each $Av_k$
+equals $\sigma_k u_k$, or $0$ when $\sigma_k=0$), then right-multiplying by
+$V^T$, yields $A = U\Sigma V^T$. Full version: Theorem 21.1 above.
+
+### If you remember only 3 things
+
+1. $A = U\Sigma V^T$ exists for *every* real matrix: rotate ($V^T$),
+   stretch by the $\sigma_i$ ($\Sigma$), rotate ($U$).
+2. Build it from $A^TA$: its eigenvectors are $V$'s columns, its
+   eigenvalues' square roots are the $\sigma_i$, and $u_i = Av_i/\sigma_i$.
+3. $A$ turns the unit sphere into an ellipsoid with semi-axes $\sigma_i$
+   pointing along $u_i$, and the number of nonzero $\sigma_i$ is the rank.
+
 ## Journal template
 
 ```

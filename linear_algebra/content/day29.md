@@ -50,6 +50,43 @@ print(f"singular values (first 6): {np.round(s[:6], 3)}")
 print(f"smallest k capturing 95% of energy: {k_95} out of {len(s)}")
 ```
 
+## Plain-language review
+
+### Notation decoder
+
+| Symbol | Read it as | In today's context |
+|--------|------------|--------------------|
+| $A = U\Sigma V^T$ | "the singular value decomposition" | orthonormal input frame $V$, scaling $\Sigma$, orthonormal output frame $U$ |
+| $\sigma_i$ | "the $i$-th singular value" | how strongly $A$ acts along its $i$-th principal direction |
+| $\sigma_i^2$ | "energy (a squared singular value)" | Eckart-Young measures approximation error in these squared units |
+| $\sum_{i\le k}\sigma_i^2 / \sum_i \sigma_i^2$ | "fraction of energy kept by the top $k$" | the 95% compression budget |
+| $k$ | "the truncation rank" | how many directions you keep in the approximation |
+
+### The big ideas (conclusions)
+
+- Any matrix at all — square or not, invertible or not — factors as an
+  SVD: pick the right orthonormal input and output bases and the map
+  becomes pure scaling by the singular values.
+- Squared singular values are "energy," and keeping the largest few
+  captures most of the matrix in a low-rank approximation.
+- Real data hugs a low-dimensional subspace, so a handful of singular
+  values dominate and a small $k$ already reaches 95% of the energy.
+- Truncated SVD is provably the *best* rank-$k$ approximation there is —
+  no other rank-$k$ matrix comes closer (Eckart-Young, Day 22).
+- The four fundamental subspaces, the spectral theorem, the SVD, and PCA
+  are one family: SVD is the spectral theorem applied to $A^TA$, and PCA
+  is that same move applied to a covariance matrix.
+
+### If you remember only 3 things
+
+1. SVD = two orthonormal bases in which any linear map is just scaling by
+   the singular values.
+2. Energy is the squared singular values; the smallest $k$ whose
+   cumulative energy reaches 95% is your compression rank.
+3. It all connects — SVD is the spectral theorem on $A^TA$, and PCA is
+   the spectral theorem on a covariance matrix: one trick, different
+   matrices.
+
 ## Journal template
 
 ```
