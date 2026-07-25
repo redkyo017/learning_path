@@ -1,0 +1,39 @@
+# Dynamic config — Traefik watches this file and hot-reloads on save.
+# EDIT THE WEIGHTS HERE to run the canary: 90/10 -> 50/50 -> 0/100 (promote),
+# or back to 100/0 (roll back). No restart needed.
+http:
+  routers:
+    orders:
+      rule: "PathPrefix(`/orders`)"
+      entryPoints: ["web"]
+      service: orders-canary
+
+  services:
+    # Weighted (WRR) parent: splits traffic across the two version pools.
+    orders-canary:
+      weighted:
+        services:
+          - name: orders-v1
+            weight: 90      # <-- canary knob #1: fraction of traffic
+          - name: orders-v2
+            weight: 10
+
+    # Each version pool has its OWN health check (canary knob #2: eligibility).
+    # If a pool's health check fails, Traefik drops it from the WRR and serves the
+    # other pool 100% — even at a non-zero weight. Weight AND health are combined.
+    orders-v1:
+      loadBalancer:
+        servers:
+          - url: "http://orders-v1:8080"
+        healthCheck:
+          path: "/health"
+          interval: "2s"
+          timeout: "1s"
+    orders-v2:
+      loadBalancer:
+        servers:
+          - url: "http://orders-v2:8080"
+        healthCheck:
+          path: "/health"
+          interval: "2s"
+          timeout: "1s"

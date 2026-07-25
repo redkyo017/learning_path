@@ -1,0 +1,29 @@
+// BREAK-IT (part A): nothing stops you from coupling to a PUBLIC type.
+//
+// Rename this file to `reach_public.go` and run `go build ./...` from lab/.
+// It COMPILES FINE. This code reaches straight into inventory's own Reservation
+// type and its Reserve signature — bypassing orders' port + DTOs entirely. The
+// compiler is happy; only DISCIPLINE (consumer-defined interfaces + DTOs, kept
+// honest by `go list -deps ... | grep inventory`) prevents this kind of leak
+// inside a single binary.
+//
+// This is the whole lesson: an in-process boundary is enforced by CONVENTION for
+// exported symbols (only `internal/` is compiler-enforced). A NETWORK boundary
+// (Day 13) makes the leak impossible — the only way in is the wire contract — at
+// the cost of latency and partial failure. Rename back to .go.txt when done.
+package breakit
+
+import (
+	"fmt"
+
+	"lab/boundaries/inventory"
+)
+
+func Leak() {
+	inv := inventory.New()
+	r, _ := inv.Reserve("widget", 1)
+	// We are now coupled to inventory's INTERNAL model shape (r.Ref). If inventory
+	// renames or removes this field, our code breaks — the coupling the port + DTO
+	// design was meant to prevent.
+	fmt.Println("leaked inventory ref:", r.Ref)
+}

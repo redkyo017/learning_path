@@ -1,0 +1,45 @@
+# Build locally per day; never commit build artifacts.
+
+# --- Go ---
+# Compiled binaries. Labs use module `lab/...`; the binary is usually the
+# last path segment (e.g. lab/router/router). These patterns catch the common
+# cases without ignoring source.
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+# Binaries that share their parent dir name (go build default output):
+days/**/lab/**/router/router
+days/**/lab/**/server/server
+days/**/lab/**/client/client
+days/**/lab/**/worker/worker
+days/**/lab/**/relay/relay
+# Go workspace / caches
+go.work
+go.work.sum
+# Generated gRPC/protobuf Go stubs (regenerate with `buf generate`)
+*.pb.go
+
+# --- Python (Days 18–19 labs) ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# --- Lab run outputs ---
+# k6 result dumps, local data, embeddings caches, etc.
+*.log
+*.tmp
+k6-results/
+*.summary.json
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

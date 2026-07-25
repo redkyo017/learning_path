@@ -1,0 +1,45 @@
+# Day 5 — three independent Postgres SHARDS for the client-side sharding lab.
+# Each is a plain, separate database (no replication between them) — the point is
+# to route DIFFERENT keys to DIFFERENT nodes, not to copy data.
+#
+# Run from the labs/ directory:
+#
+#   cd labs
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f ../days/day05-partitioning/lab/docker-compose.override.yml \
+#     up -d shard0 shard1 shard2
+#
+# shard0 -> localhost:5441 (ring node "A")
+# shard1 -> localhost:5442 (ring node "B")
+# shard2 -> localhost:5443 (ring node "C")   <- the node you "add" for the reshard
+services:
+  shard0:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD: pass, POSTGRES_DB: app }
+    ports: ["5441:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  shard1:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD: pass, POSTGRES_DB: app }
+    ports: ["5442:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  shard2:
+    image: postgres:16
+    environment: { POSTGRES_PASSWORD: pass, POSTGRES_DB: app }
+    ports: ["5443:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

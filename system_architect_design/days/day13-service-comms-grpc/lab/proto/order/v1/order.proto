@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package order.v1;
+
+// go_package: <import path>;<Go package name>. Generated code lands in
+// gen/order/v1/ (out=gen + paths=source_relative) as package `orderv1`.
+option go_package = "grpclab/gen/order/v1;orderv1";
+
+// Inventory is called synchronously by Orders on the checkout critical path:
+// Orders cannot confirm an order without knowing stock is available.
+service Inventory {
+  rpc CheckStock(CheckStockRequest) returns (CheckStockResponse);
+}
+
+message CheckStockRequest {
+  string order_id = 1;
+  string sku      = 2;
+  int32  quantity = 3;
+
+  // === Beat 3, step B — ADDITIVE EVOLUTION ===
+  // Uncomment the next line, run `buf generate`, rebuild BOTH binaries.
+  // Old peers that don't send it default warehouse to "" — nothing breaks.
+  // string warehouse = 4;
+
+  // === Beat 3, step C — THE BREAK (do this LAST) ===
+  // Do NOT add a new field. Instead RENUMBER an existing one: change
+  //   int32 quantity = 3;   ->   int32 quantity = 7;
+  // Regenerate, then run `go test ./compat/` and watch it fail: old wire bytes
+  // still carry field 3, the new struct reads field 7, quantity silently = 0.
+}
+
+message CheckStockResponse {
+  bool  available = 1;
+  int32 on_hand   = 2;
+}

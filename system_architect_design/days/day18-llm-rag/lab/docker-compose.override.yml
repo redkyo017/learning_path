@@ -1,0 +1,16 @@
+# Day 18 override: swap the shared Postgres image for pgvector/pgvector:pg16 so
+# the `vector` extension is available. Docker Compose merges an override.yml that
+# sits next to (or is passed alongside) the base file.
+#
+# Run FROM the shared labs/ directory, pointing at this override:
+#
+#   cd labs
+#   docker compose -f docker-compose.yml \
+#     -f ../days/day18-llm-rag/lab/docker-compose.override.yml \
+#     up -d postgres
+#
+# Then apply schema.sql (it runs CREATE EXTENSION vector). Everything else about
+# the postgres service (port 5432, db app, user postgres / pass) is inherited.
+services:
+  postgres:
+    image: pgvector/pgvector:pg16

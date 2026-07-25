@@ -1,0 +1,13 @@
+// BREAK-IT (part B): the compiler ENFORCES the internal boundary.
+//
+// Rename this file to `reach_internal.go` and run `go build ./...` from lab/.
+// The build FAILS:
+//
+//   use of internal package lab/boundaries/inventory/internal/store not allowed
+//
+// Go physically forbids code outside .../inventory/ from importing its internal
+// guts. This is the language mechanism that turns the boundary from "please
+// don't" into "you can't". Rename it back to .go.txt to restore a green build.
+package orders
+
+import _ "lab/boundaries/inventory/internal/store"

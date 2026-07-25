@@ -1,0 +1,10 @@
+# Minimal Prometheus config for the Day 11 observability lab.
+# Scrapes the echo services' /metrics endpoints (add the endpoint in the lab).
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'services'
+    static_configs:
+      # host.docker.internal lets Prometheus (in Docker) reach services on the host.
+      - targets: ['host.docker.internal:8080', 'host.docker.internal:8081']

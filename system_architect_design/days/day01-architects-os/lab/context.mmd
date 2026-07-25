@@ -1,0 +1,24 @@
+%% C1 — System Context for <your system>.
+%% Copy to ../diagrams/context.mmd and replace every TODO.
+%% Rule: ONE zoom level. Only your system as a single box + the people and external
+%% systems it talks to. No internal containers here — that's C2 (containers.mmd).
+%% See reference/c4-guide.md. If C4Context does not render in your tool, use the
+%% flowchart fallback at the bottom of this file instead.
+C4Context
+  title System Context — TODO_SYSTEM_NAME
+
+  Person(user, "TODO Primary user/actor", "What they do with the system")
+  System(sys, "TODO_SYSTEM_NAME", "One-line responsibility of the whole system")
+
+  System_Ext(upstream, "TODO Upstream/source system", "Where data/requests come from")
+  System_Ext(downstream, "TODO Downstream/dependency", "External system you depend on")
+
+  Rel(user, sys, "TODO uses / does what", "HTTPS")
+  Rel(upstream, sys, "TODO sends what", "TODO protocol")
+  Rel(sys, downstream, "TODO calls / emits what", "TODO protocol")
+
+%% ---- Fallback if C4Context doesn't render (delete the block above and use this): ----
+%% flowchart LR
+%%   user([TODO user]) -->|HTTPS| sys[TODO_SYSTEM_NAME]
+%%   upstream[[TODO upstream]] -->|TODO| sys
+%%   sys -->|TODO| downstream[(TODO dependency)]

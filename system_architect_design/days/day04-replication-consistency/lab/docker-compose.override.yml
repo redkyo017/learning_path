@@ -1,0 +1,66 @@
+# Day 4 — streaming-replication override for the shared labs/ stack.
+#
+# Layer this over the shared compose FROM the labs/ directory:
+#
+#   cd labs
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f ../days/day04-replication-consistency/lab/docker-compose.override.yml \
+#     up -d postgres postgres-replica
+#
+# Primary  -> localhost:5432   (writes + reads)
+# Replica  -> localhost:5433   (hot standby, read-only, streams from primary)
+#
+# Async replication is the Postgres default (no `synchronous_standby_names` set),
+# so the primary commits locally and ships WAL to the replica afterwards — that
+# gap IS the replication lag this lab exploits.
+services:
+  # Turn the shared `postgres` into a replication PRIMARY by adding WAL settings.
+  # The official postgres image already appends `host replication all all <auth>`
+  # to pg_hba.conf, so the built-in `postgres` superuser (password `pass`) doubles
+  # as the replication user for this lab. Don't do that in production — make a
+  # dedicated REPLICATION-only role.
+  postgres:
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=10
+      - -c
+      - max_replication_slots=10
+      - -c
+      - hot_standby=on
+
+  # A hot-standby REPLICA, built from the primary via pg_basebackup on first boot.
+  postgres-replica:
+    image: postgres:16
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports: ["5433:5432"]        # psql -h localhost -p 5433  ->  the replica
+    user: postgres
+    # Replace the normal entrypoint: base-backup from the primary, then run as a
+    # hot standby. `-R` writes standby.signal + primary_conninfo automatically;
+    # passing the password in the conninfo guarantees it lands in
+    # postgresql.auto.conf so the standby can reconnect.
+    entrypoint:
+      - bash
+      - -c
+      - |
+        set -e
+        DATADIR=/var/lib/postgresql/data
+        if [ ! -s "$$DATADIR/PG_VERSION" ]; then
+          echo "replica: taking base backup from primary..."
+          rm -rf "$$DATADIR"/*
+          until pg_basebackup -d "host=postgres port=5432 user=postgres password=pass" \
+                              -D "$$DATADIR" -Fp -Xs -R -v -w; do
+            echo "replica: primary not ready, retry in 2s..."; sleep 2
+          done
+        fi
+        exec postgres -c hot_standby=on
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20

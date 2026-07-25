@@ -1,0 +1,40 @@
+{"id":"d01","text":"Northwind offers three pricing tiers: Starter at $29 per month, Growth at $99 per month, and Enterprise with custom pricing. Each tier includes more seats and higher API quotas."}
+{"id":"d02","text":"Every new Northwind account starts with a 14-day free trial of the Growth tier. No credit card is required to begin the free trial, and you can cancel any time before it ends."}
+{"id":"d03","text":"The Northwind REST API enforces a rate limit of 600 requests per minute per API key on the Growth tier and 6000 per minute on Enterprise. Exceeding the rate limit returns HTTP 429."}
+{"id":"d04","text":"Authentication to the Northwind API uses bearer API keys. Generate an API key in Settings, then send it in the Authorization header as 'Bearer <key>'. Keys can be rotated and revoked."}
+{"id":"d05","text":"Enterprise customers can enable single sign-on (SSO) using SAML 2.0. Configure the identity provider metadata URL in Settings under Security, then map SAML attributes to Northwind roles."}
+{"id":"d06","text":"Northwind stores customer data in one of three regions chosen at signup: US (us-east-1), EU (eu-west-1), or Asia-Pacific (ap-southeast-1). Data residency is fixed to the selected region."}
+{"id":"d07","text":"Northwind takes automated database backups every 6 hours and retains them for 30 days. Enterprise plans can request point-in-time recovery within the retention window."}
+{"id":"d08","text":"The Northwind service level agreement (SLA) guarantees 99.9% monthly uptime on the Growth tier and 99.95% on Enterprise. Service credits apply when the uptime SLA is not met."}
+{"id":"d09","text":"Support tiers: Starter gets email support with a 48-hour response target, Growth gets 24-hour email support, and Enterprise gets priority support with a 1-hour response target and a dedicated contact."}
+{"id":"d10","text":"Northwind can push events to your endpoint via webhooks. Register a webhook URL in Settings, choose the event types, and verify the HMAC signature on each delivery. Failed deliveries are retried."}
+{"id":"d11","text":"To reset your password, click 'Forgot password' on the login page and enter your email. Northwind emails a reset link valid for 30 minutes. Set a new password to complete the reset."}
+{"id":"d12","text":"Two-factor authentication (2FA) can be enabled per user in Security settings using a TOTP authenticator app. Enterprise admins can require 2FA for all members of the organization."}
+{"id":"d13","text":"You can export all of your Northwind data as JSON or CSV from Settings under Data Export. Large exports are generated asynchronously and a download link is emailed when ready."}
+{"id":"d14","text":"To delete your account and all associated data, go to Settings, Danger Zone, Delete Account. Deletion is permanent and, per GDPR, all personal data is purged within 30 days."}
+{"id":"d15","text":"All Northwind data is encrypted at rest using AES-256. Encryption keys are managed by the cloud provider's key management service and rotated automatically."}
+{"id":"d16","text":"All connections to Northwind are encrypted in transit using TLS 1.2 or higher. Older TLS versions are rejected, and HTTP requests are redirected to HTTPS."}
+{"id":"d17","text":"Enterprise organizations get audit logs recording sign-ins, permission changes, API key events, and data exports. Audit logs are retained for 1 year and can be streamed to your SIEM."}
+{"id":"d18","text":"Northwind uses role-based access control (RBAC) with four roles: Owner, Admin, Member, and Viewer. Permissions are assigned by role, and custom roles are available on Enterprise."}
+{"id":"d19","text":"Invite teammates from Settings, Members, Invite. Each invited seat counts toward your plan's seat limit. Starter includes 3 seats, Growth includes 10, and Enterprise is unlimited."}
+{"id":"d20","text":"Billing is monthly or annual. Northwind accepts major credit cards and, on Enterprise, invoicing with net-30 terms. Invoices and receipts are available in Settings under Billing."}
+{"id":"d21","text":"Northwind offers a prorated refund if you cancel an annual plan within 30 days of purchase. Monthly plans are not refundable but can be canceled to stop future charges."}
+{"id":"d22","text":"The Northwind mobile app is available for iOS and Android. It supports viewing dashboards, receiving push notifications, and approving requests, but not full administration."}
+{"id":"d23","text":"The maximum file upload size in Northwind is 50 MB per file on Growth and 500 MB on Enterprise. Files larger than the limit are rejected with a clear error message."}
+{"id":"d24","text":"Northwind accepts uploads in PDF, PNG, JPEG, CSV, and XLSX formats. Unsupported file formats are rejected at upload time. Uploaded files are virus-scanned before storage."}
+{"id":"d25","text":"Northwind integrates with Slack, Microsoft Teams, and Zapier. Connect an integration in Settings to receive alerts and to trigger workflows from Northwind events."}
+{"id":"d26","text":"Northwind publishes real-time service health on its public status page at status.northwind.example. Subscribe there to get notified about incidents and scheduled maintenance."}
+{"id":"d27","text":"Scheduled maintenance windows occur on the first Sunday of each month between 02:00 and 04:00 UTC. Northwind announces maintenance at least 72 hours in advance on the status page."}
+{"id":"d28","text":"The Northwind API is versioned by date in the URL path, for example /v2026-01-01/. Old versions remain available for at least 12 months after a new version is released."}
+{"id":"d29","text":"List endpoints in the Northwind API are paginated with a cursor. Pass the 'next_cursor' from a response as the 'cursor' query parameter to fetch the next page; page size defaults to 50."}
+{"id":"d30","text":"Northwind API error responses use standard HTTP status codes: 400 for bad requests, 401 for authentication failures, 404 for not found, and 429 when the rate limit is exceeded."}
+{"id":"d31","text":"A separate sandbox environment is available at sandbox.northwind.example for testing. Sandbox data is isolated from production and is reset every night at 00:00 UTC."}
+{"id":"d32","text":"The Northwind command-line tool, 'nw', lets you script account operations. Install it with 'brew install northwind/tap/nw' and authenticate with 'nw auth login'."}
+{"id":"d33","text":"Enterprise customers can serve Northwind on a custom domain with a company-provided TLS certificate. Configure the CNAME and upload the certificate in Settings under Domains."}
+{"id":"d34","text":"Email notification preferences are configured per user under Settings, Notifications. You can choose which event types email you, and set a daily digest instead of individual emails."}
+{"id":"d35","text":"The Northwind web interface supports light and dark themes. Dark mode can be set per user in Appearance settings or configured to follow your operating system theme automatically."}
+{"id":"d36","text":"The Northwind interface is localized into English, Spanish, French, German, and Japanese. Set your preferred language in Settings; dates and numbers follow the chosen locale."}
+{"id":"d37","text":"New users are guided through onboarding: create your first project, invite a teammate, and connect an integration. The getting-started checklist appears on the dashboard until completed."}
+{"id":"d38","text":"Northwind's deprecation policy gives at least 6 months notice before removing an API field or endpoint. Deprecated fields are marked in the changelog and return a Deprecation header."}
+{"id":"d39","text":"Enterprise organizations can restrict access with an IP allowlist. Add trusted CIDR ranges in Security settings; requests from outside the allowlist are blocked at the edge."}
+{"id":"d40","text":"The usage analytics dashboard shows API calls, active users, and storage consumed over time. Export the underlying metrics as CSV or query them through the analytics API."}

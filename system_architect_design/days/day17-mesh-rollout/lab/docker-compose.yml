@@ -1,0 +1,35 @@
+# Day 17 canary lab — standalone stack (NOT the shared labs/ stack).
+# orders-v1 + orders-v2 behind Traefik with weighted upstreams.
+#
+#   docker compose -f docker-compose.yml up -d --build
+#   docker compose -f docker-compose.yml down -v
+#
+# Ports on the host:
+#   8080 -> Traefik web entrypoint (send canary traffic here: curl localhost:8080/orders)
+#   8081 -> Traefik dashboard + Prometheus metrics (localhost:8081/dashboard/, /metrics)
+#   8091 -> orders-v1 direct (admin toggles)
+#   8092 -> orders-v2 direct (admin toggles)
+services:
+  traefik:
+    image: traefik:v3.1
+    ports:
+      - "8080:80"     # web entrypoint (the router the clients hit)
+      - "8081:8080"   # dashboard + metrics
+    volumes:
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+    depends_on: [orders-v1, orders-v2]
+
+  orders-v1:
+    build: ./orders
+    environment:
+      VERSION: v1
+      PORT: "8080"
+    ports: ["8091:8080"]
+
+  orders-v2:
+    build: ./orders
+    environment:
+      VERSION: v2
+      PORT: "8080"
+    ports: ["8092:8080"]

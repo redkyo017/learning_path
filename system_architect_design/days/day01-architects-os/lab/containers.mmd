@@ -1,0 +1,33 @@
+%% C2 — Container diagram for <your system>.
+%% Copy to ../diagrams/containers.mmd and replace every TODO.
+%% Rule: ONE zoom level down from context — the deployable/runnable units INSIDE your
+%% system (services, databases, queues, caches). Every box: name + technology +
+%% one-line responsibility. Every arrow: what flows + protocol. Aim for <= ~7 boxes.
+%% See reference/c4-guide.md. Flowchart fallback at the bottom if C4Container won't render.
+C4Container
+  title Containers — TODO_SYSTEM_NAME
+
+  Person(user, "TODO user")
+
+  System_Boundary(s, "TODO_SYSTEM_NAME") {
+    Container(api, "TODO API/Service", "TODO tech e.g. Go", "TODO responsibility")
+    Container(worker, "TODO Worker/Consumer", "TODO tech", "TODO async processing")
+    ContainerDb(db, "TODO Database", "TODO e.g. PostgreSQL", "TODO what it stores")
+    Container(queue, "TODO Queue/Log", "TODO e.g. Kafka", "TODO what flows through")
+  }
+
+  System_Ext(dep, "TODO external dependency", "TODO")
+
+  Rel(user, api, "TODO uses", "HTTPS")
+  Rel(api, db, "TODO reads/writes", "SQL")
+  Rel(api, queue, "TODO publishes", "TODO")
+  Rel(queue, worker, "TODO consumes", "TODO")
+  Rel(worker, dep, "TODO calls", "TODO")
+
+%% ---- Fallback if C4Container doesn't render: ----
+%% flowchart LR
+%%   user([TODO user]) -->|HTTPS| api[TODO API]
+%%   api -->|SQL| db[(TODO DB)]
+%%   api -->|publish| queue[[TODO queue]]
+%%   queue --> worker[TODO worker]
+%%   worker --> dep[(TODO dependency)]

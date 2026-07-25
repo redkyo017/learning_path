@@ -1,0 +1,8 @@
+{"query":"What is the API rate limit per minute?","expected":"d03"}
+{"query":"How long is the free trial and do I need a credit card?","expected":"d02"}
+{"query":"How do I reset my password if I forgot it?","expected":"d11"}
+{"query":"Which regions can Northwind store my data in for residency?","expected":"d06"}
+{"query":"What uptime does the SLA guarantee?","expected":"d08"}
+{"query":"How often are database backups taken and how long are they retained?","expected":"d07"}
+{"query":"What is the maximum file upload size?","expected":"d23"}
+{"query":"How do I set up SSO with SAML for my organization?","expected":"d05"}

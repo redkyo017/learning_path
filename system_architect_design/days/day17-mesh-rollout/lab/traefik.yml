@@ -1,0 +1,21 @@
+# Traefik v3 static config. The dynamic (routing) config is watched from a file
+# so you can edit weights live and Traefik hot-reloads them — that IS the promote
+# / roll-back mechanism in this lab.
+entryPoints:
+  web:
+    address: ":80"
+
+api:
+  dashboard: true
+  insecure: true   # dashboard on the :8080 (container) entrypoint -> host :8081
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true    # edit traefik-dynamic.yml and Traefik reloads without restart
+
+metrics:
+  prometheus: {}   # scrape at http://localhost:8081/metrics (per-service RED signals)
+
+log:
+  level: INFO
