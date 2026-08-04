@@ -1,0 +1,1 @@
+Expanded Day 19 primer from 107 to 159 lines: added narrative hooks, memory slogans, and worked-example connections to Concrete-first walkthrough; deepened Pictures section with visualization explanations; expanded Proof roadmaps with step-by-step detail; kept 6 sections, 7 flashcards.
