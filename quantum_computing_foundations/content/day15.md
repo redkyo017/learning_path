@@ -55,7 +55,8 @@ measurement outcomes."
 
 **Error amplification.** The constant $1/3$ in the definition is not
 special — it can be replaced by any constant strictly less than $1/2$
-without changing the class, by the *same* argument as Day 2 Step 3. Run the
+without changing the class, by the *same* argument as Day 2 (see the section
+"Error amplification: the Chernoff/Hoeffding bound"). Run the
 circuit $k$ independent times (fresh ancillas/measurement each run) and take
 the majority of the $k$ outcomes. Let $X_i$ be the indicator that run $i$ is
 correct; the $X_i$ are i.i.d. Bernoulli-type random variables with
@@ -90,7 +91,7 @@ single-qubit randomness-generation step, so its output distribution is
 acceptance probabilities meet the same $BPP$ error bound — hence the same
 language is also in $BQP$. This containment is proven unconditionally.
 
-**$BQP\subseteq PSPACE$**: A quantum circuit's final acceptance probability
+**$BQP\subseteq PSPACE$** ($PSPACE$: the class of languages decidable using at most polynomial space and unbounded time): A quantum circuit's final acceptance probability
 is $\sum_{\text{accepting } y}|\langle y|U_T\cdots U_1|x\rangle|^2$, a sum
 over exponentially many basis states $y$ of squared amplitudes, each of
 which is itself, by expanding $U_T\cdots U_1$ as a product of the circuit's
@@ -123,8 +124,14 @@ versus $=$). In particular:
   major open problem: nobody has ruled out a not-yet-discovered classical
   algorithm putting factoring (or every other BQP problem) into $BPP$ after
   all.
-- Whether $BQP\subseteq NP$ or $NP\subseteq BQP$ — in *either* direction —
-  is a genuinely open problem. Grover's algorithm (Days 11–12) gives only a
+- **NP** (nondeterministic polynomial time): the class of decision problems
+  whose YES instances have a polynomial-length certificate verifiable in
+  polynomial time by a deterministic machine. **NP-complete**: a problem in
+  NP to which every NP problem reduces in polynomial time; SAT (Boolean
+  satisfiability) is the canonical example (Cook–Levin theorem). NP sits
+  *outside* the proven chain above: neither $BQP\subseteq NP$ nor
+  $NP\subseteq BQP$ has been established in either direction —
+  a genuinely open problem. Grover's algorithm (Days 11–12) gives only a
   quadratic speedup for unstructured search, and BBBV proves that quadratic
   speedup is optimal for the *unstructured* case; this is consistent with,
   but does not prove, $NP\not\subseteq BQP$, since it says nothing about
@@ -184,8 +191,7 @@ samples from the same output distribution in a comparable amount of time.*
 This is an empirical/complexity-theoretic claim about the current frontier
 of known classical algorithms and available classical compute, sometimes
 additionally supported by complexity-theoretic evidence (e.g. hardness
-results conditional on standard conjectures about the polynomial
-hierarchy not collapsing).
+results conditional on a widely-believed classical-complexity conjecture).
 
 What it does **not** assert is that $BQP\supsetneq BPP$ has been *proven*.
 That containment being strict remains exactly the open problem stated
@@ -199,9 +205,10 @@ algorithmic breakthrough (or even sufficiently large classical compute)
 could in principle close the specific empirical gap being claimed, without
 that touching the (much stronger, and unproven) statement $BQP\ne BPP$.
 
-This is exactly the same distinction Day 2 Step 5 raised when asked to
-turn "a quantum computer solved X faster than a classical laptop's
-program" into a well-posed complexity statement: an informal
+This is exactly the same distinction raised in Day 2's section "A
+randomized classical algorithm for the Deutsch–Jozsa promise problem"
+when asked to turn "a quantum computer solved X faster than a classical
+laptop's program" into a well-posed complexity statement: an informal
 speed comparison between two specific implementations is not, by itself, a
 statement about complexity classes. There, the fix was to restate the
 claim in $P$/$BPP$ language ("no known/possible poly-time classical
@@ -265,9 +272,8 @@ the Model answers section below.
    probability down to $e^{-ck}$ for an explicit constant $c>0$, via the
    Chernoff/Hoeffding bound.
 3. State and prove the spectral theorem for normal operators in the
-   $2\times2$ case, and use it (together with the defining algebraic
-   properties of the Pauli matrices) to derive the eigenvalues and
-   eigenvectors of $X$, $Y$, and $Z$.
+   $2\times2$ case, and use it to derive the Pauli eigenvalues via their
+   algebraic defining properties, and find the eigenvectors directly.
 4. For $|\psi\rangle = \frac35|0\rangle + \frac{4i}{5}|1\rangle$, compute the
    Born-rule measurement probabilities in the standard basis
    $\{|0\rangle,|1\rangle\}$ and in the Hadamard basis
@@ -363,7 +369,8 @@ $c=\frac{1}{18}$, an explicit constant.
 
 **Driving the error below $2^{-20}$.** We need $e^{-k/18} < 2^{-20}$, i.e.
 $k/18 > 20\ln2$, i.e. $k > 360\ln2 \approx 249.5$. So $k=250$ independent
-repetitions suffice.
+repetitions suffice (take $k=251$ if, as on Day 2, you require odd $k$
+to avoid ties).
 
 ### 3. Spectral theorem (2×2 case) and Pauli eigenstructure
 
@@ -505,7 +512,7 @@ $$H^{\otimes n}\left[\frac{1}{\sqrt{2^n}}\sum_x(-1)^{a\cdot x}|x\rangle\right]
 = \frac{1}{\sqrt{2^n}}\sum_x(-1)^{a\cdot x}\cdot\frac{1}{\sqrt{2^n}}\sum_y
 (-1)^{x\cdot y}|y\rangle = \frac{1}{2^n}\sum_y\left[\sum_x(-1)^{x\cdot(a\oplus
 y)}\right]|y\rangle.$$
-**Character-sum lemma:** for $z\in\{0,1\}^n$, $\sum_{x\in\{0,1\}^n}
+**Parity-orthogonality lemma (Day 10)** (= character-sum lemma): for $z\in\{0,1\}^n$, $\sum_{x\in\{0,1\}^n}
 (-1)^{x\cdot z} = 2^n$ if $z=0^n$, and $=0$ otherwise. *Proof:* if $z=0^n$,
 every term is $1$ and the sum is $2^n$. If $z\ne0^n$, pick an index $i$ with
 $z_i=1$; pairing each $x$ with $x\oplus e_i$ (flipping bit $i$) gives
@@ -569,11 +576,18 @@ $\varphi(21)=\varphi(3)\varphi(7)=2\times6=12$, and $6\mid12$. ✓.
 **Continued fractions (from an assumed QPE output).** Suppose a QPE run
 returns a phase estimate $\varphi\approx k/r$ for some integer $k$; take, for
 concreteness, $k=1$, so $\varphi\approx1/6\approx0.1667$. The continued
-fraction expansion of $0.1667$: integer part $0$, remainder $0.1667$;
-reciprocal of the remainder is $\approx6.0$, integer part $6$, remainder
-$\approx0$. So the expansion terminates at $[0;6] = 1/6$, recovering
-denominator (candidate order) $r=6$ — matching the brute-force value found
-above exactly.
+fraction expansion of $0.1667$, applying $\lfloor\cdot\rfloor$ (floor)
+at each step:
+- Step 1: $\lfloor0.1667\rfloor = 0$; reciprocal of remainder
+  $= 1/0.1667 \approx 5.9988$; $\lfloor5.9988\rfloor = 5$. Convergent:
+  $1/5$.
+- Step 2: fractional part of $5.9988$ is $0.9988$; reciprocal
+  $= 1/0.9988 \approx 1.0012$; $\lfloor1.0012\rfloor = 1$. Next partial
+  quotient $1$ appended: convergent $1/(5+1/1) = 1/6$.
+
+Convergents in order: $0/1,\,1/5,\,1/6$. The last convergent whose
+denominator does not exceed $N=21$ is $1/6$, recovering candidate order
+$r=6$ — matching the brute-force value found above exactly.
 
 **Miller's reduction.** $r=6$ is even. Compute $a^{r/2}\bmod N = 2^3\bmod21
 = 8$. Check the non-degeneracy condition: is $8\equiv-1\pmod{21}$, i.e.

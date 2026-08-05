@@ -14,8 +14,9 @@ By the end of today you should be able to:
   is the algebraic signature distinguishing pure from mixed states.
 - Compute expectation values of an observable via $\text{Tr}(\rho O)$ and
   show this agrees with the direct bra-ket computation $\langle\psi|O|\psi\rangle$.
-- Verify that $R_z(\theta)$ is unitary and use it as a concrete instance of
-  the general single-qubit rotation decomposition.
+- Verify that $R_z(\theta)$ is unitary and compute one of its actions
+  (the Euler Z-Y-Z decomposition form is in the Reference material;
+  write it down and verify $R_z$ fits as the $z$-rotation factor).
 - State (without proving) why a small fixed gate set such as $\{H, T\}$
   suffices to approximate any single-qubit unitary to arbitrary precision.
 
@@ -43,6 +44,11 @@ an orthonormal basis $\{|e_i\rangle\}$ is a physical process with two parts:
 2. **Collapse:** conditioned on observing outcome $i$, the state
    immediately after measurement is $|e_i\rangle$ — all information about
    the pre-measurement amplitudes on the other basis vectors is gone.
+
+The same postulate applies with $\{|e_i\rangle\}$ an orthonormal basis of
+any finite-dimensional state space: measuring in basis $\{|e_i\rangle\}$
+yields outcome $i$ with probability $|\langle e_i|\psi\rangle|^2$ and
+collapses the state to $|e_i\rangle$.
 
 Because $\{|e_i\rangle\}$ is an orthonormal basis, $|\psi\rangle =
 \sum_i \langle e_i|\psi\rangle\, |e_i\rangle$, and normalization of
@@ -102,8 +108,8 @@ exactly the algebraic statement of that fact.
 ### Density matrices as expectation-value machines
 
 The density matrix isn't just a repackaging of $|\psi\rangle$ — it is the
-natural object for computing expectation values. For any observable
-(Hermitian operator) $O$, $\text{Tr}(\rho O) = \langle\psi|O|\psi\rangle$,
+natural object for computing expectation values. For any operator $O$
+(Hermiticity not needed), $\text{Tr}(\rho O) = \langle\psi|O|\psi\rangle$,
 the expectation value of $O$ in state $|\psi\rangle$, proved directly from
 the trace's cyclic/completeness properties in today's Solutions. This
 identity is what makes density matrices indispensable once mixed states
@@ -144,7 +150,8 @@ set of gates (e.g. $H$ and $T = \text{diag}(1, e^{i\pi/4})$) and must
 accuracy: for any single-qubit unitary $U$ and any $\varepsilon > 0$, there
 is a sequence of gates from $\{H,T\}$ of length $O(\log^c(1/\varepsilon))$
 (for a small constant $c$) whose product is within distance $\varepsilon$
-of $U$ (in operator norm). We state this today as a fact, without proving
+of $U$ (in operator norm: the largest factor by which $U$ stretches a unit
+vector). We state this today as a fact, without proving
 it — the proof is a substantial independent result — because its
 *consequence* is what matters practically: a compiler never needs a
 gate set matching every possible rotation angle; a small universal set
@@ -311,7 +318,8 @@ are a property of *state and basis together*, not of the state alone.
 **3.** *Trace.* Writing $|\psi\rangle$ as a column vector and
 $\langle\psi|$ as its conjugate-transpose row vector, $\rho=|\psi\rangle
 \langle\psi|$ is the outer product, and by the cyclic property of the
-trace, $\text{Tr}(|\psi\rangle\langle\psi|) =
+trace (cyclic property: $\text{Tr}(AB) = \sum_{ij}A_{ij}B_{ji} =
+\text{Tr}(BA)$), $\text{Tr}(|\psi\rangle\langle\psi|) =
 \text{Tr}(\langle\psi|\,|\psi\rangle) = \langle\psi|\psi\rangle = 1$,
 using normalization of $|\psi\rangle$.
 

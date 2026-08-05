@@ -95,7 +95,12 @@ Suppose you try to force a Las Vegas algorithm into a fixed time budget by
 truncating it: run it for at most $T = c \cdot \mathbb{E}[T(x)]$ steps (some
 constant multiple of its expected time) and, if it has not yet halted,
 stop it and output *something* — e.g. a fixed default guess. Two things
-must be tracked separately:
+must be tracked separately.
+
+**Markov's inequality.** For any nonneg. r.v. $X$ and $t>0$:
+$\Pr[X\ge t] \le \mathbb{E}[X]/t$.
+*Proof:* $\mathbb{E}[X] \ge \mathbb{E}[X\cdot\mathbf{1}_{X\ge t}] \ge
+t\cdot\Pr[X\ge t]$; divide by $t$.
 
 1. **How often does truncation actually trigger?** By Markov's inequality,
    $\Pr[T(x) > c\cdot\mathbb{E}[T(x)]] \le 1/c$, since $T(x)$ is a
@@ -212,25 +217,28 @@ linear) cost in the number of repetitions.
 ### A randomized classical algorithm for the Deutsch–Jozsa promise problem
 
 Consider a black-box function $f:\{0,1\}^n \to \{0,1\}$, promised to be
-either the constant function $f\equiv 0$ or **balanced** (exactly half of
-the $2^n$ inputs map to $1$, half to $0$). We want to decide which case
-holds using as few queries to $f$ as possible.
+either **constant** ($f\equiv 0$ for every input, or $f\equiv 1$ for every
+input) or **balanced** (exactly half of the $2^n$ inputs map to $1$, half
+to $0$). We want to decide which case holds using as few queries to $f$ as
+possible.
 
 **Algorithm.** Query $f$ at $m$ points $x_1,\dots,x_m$, drawn independently
-and uniformly at random from $\{0,1\}^n$. If any query returns $1$, output
-"balanced." If all $m$ queries return $0$, output "constant."
+and uniformly at random from $\{0,1\}^n$. If all $m$ answers agree (all $0$
+or all $1$), output "constant." Otherwise (some answers differ), output
+"balanced."
 
-**Correctness.** If $f\equiv 0$, every query returns $0$ with certainty, so
-the algorithm always (correctly) outputs "constant" — there is no error on
-this side of the promise at all. If $f$ is balanced, the algorithm errs
-only if it happens to output "constant," i.e. only if all $m$ independent
-uniformly random queries land in the half of the domain where $f=0$. Since
-the queries are independent and each one lands in the zero-half with
-probability exactly $1/2$ (balance is exact, not approximate), this
-happens with probability exactly $(1/2)^m = 2^{-m}$. So with $m=k$ queries,
-the algorithm is correct with probability at least $1-2^{-k}$ — confidence
-$1-2^{-k}$, one-sided error only (it can never mistake a truly constant
-function for balanced).
+**Correctness.** If $f$ is constant (either $f\equiv 0$ or $f\equiv 1$),
+every query returns the same value with certainty, so all $m$ answers agree
+and the algorithm always (correctly) outputs "constant" — there is no error
+on this side of the promise. If $f$ is balanced, the algorithm errs only if
+all $m$ answers happen to agree: either all land in the half where $f=0$
+(probability $(1/2)^m$) or all land in the half where $f=1$ (probability
+$(1/2)^m$). Since the queries are independent and each lands in either half
+with probability exactly $1/2$ (exact balance), the two error events are
+disjoint and the total error probability is $2\cdot(1/2)^m = 2^{-(m-1)}$.
+So with $m=k$ queries, the algorithm is correct with probability at least
+$1-2^{-(k-1)}$ — confidence $1-2^{-(k-1)}$, one-sided error only (it can
+never mistake a truly constant function for balanced).
 
 This is worth holding onto: no *fixed* number of classical random queries
 ever reaches error $0$ with certainty — confidence approaches $1$ only in
@@ -329,6 +337,22 @@ Practically, this means: Exercise 4's computed repetition count for a
 target confidence is a safe (conservative) sufficient number of
 repetitions, not a claim that fewer repetitions couldn't also work.
 
+---
+
+**Appendix: Derivatives of the log-MGF under tilting.** Let
+$M(s)=\mathbb{E}[e^{sY}]$. Define the *tilted distribution*
+$dP_s = e^{sY}/M(s)\,dP$, so that $\mathbb{E}_s[\cdot]$ denotes
+expectation under $dP_s$. Then:
+- $\varphi(s)=\ln M(s)$, so $\varphi'(s)=M'(s)/M(s)=
+  \mathbb{E}[Ye^{sY}]/\mathbb{E}[e^{sY}]=\mathbb{E}_s[Y]$.
+- Differentiating again: $\varphi''(s)=\tfrac{d}{ds}\mathbb{E}_s[Y]=
+  \mathbb{E}_s[Y^2]-(\mathbb{E}_s[Y])^2=\mathrm{Var}_s(Y)$.
+
+These two identities are what Step 2's derivation uses; Exercise 3 asks
+you to reproduce the full argument using them.
+
+---
+
 ## Exercises
 
 Attempt every problem closed-book before checking the Solutions section
@@ -352,11 +376,11 @@ below.
 4. Using your bound from Exercise 3, compute how large $k$ must be to
    guarantee the amplified algorithm's error probability is below
    $2^{-20}$.
-5. A black-box $f:\{0,1\}^n\to\{0,1\}$ is promised to be either constant-$0$
-   or exactly balanced. Design a randomized classical algorithm that
-   queries $f$ at random points and decides which case holds, and prove
-   that after $k$ random queries all returning $0$, the algorithm's
-   confidence is $1-2^{-k}$.
+5. A black-box $f:\{0,1\}^n\to\{0,1\}$ is promised to be either constant
+   ($f\equiv0$ or $f\equiv1$) or exactly balanced. Design a randomized
+   classical algorithm that queries $f$ at random points and decides which
+   case holds, and prove that the algorithm's error probability is at most
+   $2^{-(k-1)}$ after $k$ random queries.
 6. Explain in a short paragraph why the informal claim "a quantum computer
    solved X faster than a classical laptop's program" is not, by itself, a
    well-posed complexity statement. Rewrite it as a precise complexity
@@ -446,19 +470,20 @@ an odd number of trials to avoid ties, take $k=251$. (Any $k\ge250$
 works arithmetically; $251$ is the smallest odd such $k$.)
 
 **5.** Algorithm: draw $x_1,\dots,x_k \in \{0,1\}^n$ independently and
-uniformly at random; query $f$ at each. If any query returns $1$, output
-"balanced"; if all return $0$, output "constant."
+uniformly at random; query $f$ at each. If all $k$ answers agree (all $0$
+or all $1$), output "constant"; otherwise output "balanced."
 
-Correctness: if $f\equiv0$, every query returns $0$ and the algorithm
-always outputs "constant" — correctly, with certainty. If $f$ is balanced,
-each independent uniform query lands in $f$'s zero-valued half of the
-domain with probability exactly $1/2$ (exact balance, by the promise). The
-algorithm errs (outputting "constant" for a balanced $f$) exactly when all
-$k$ independent queries land in that half, which has probability
-$(1/2)^k = 2^{-k}$ by independence. So the algorithm is correct with
-probability at least $1-2^{-k}$ whenever $f$ is balanced, and with
-probability exactly $1$ whenever $f$ is constant — overall confidence
-$1-2^{-k}$ (one-sided error only, and only on the balanced case).
+Correctness: if $f$ is constant (either $f\equiv0$ or $f\equiv1$), every
+query returns the same value, so all $k$ answers always agree and the
+algorithm outputs "constant" — correctly, with certainty. If $f$ is
+balanced, the algorithm errs (outputting "constant") exactly when all $k$
+answers agree: all land in $f$'s zero-half (probability $(1/2)^k = 2^{-k}$)
+or all land in $f$'s one-half (probability $(1/2)^k = 2^{-k}$). By
+independence the two events are disjoint, so the total error probability is
+$2^{-k}+2^{-k}=2^{-(k-1)}$. The algorithm is correct with probability
+exactly $1$ whenever $f$ is constant and with probability at least
+$1-2^{-(k-1)}$ whenever $f$ is balanced — overall confidence
+$1-2^{-(k-1)}$ (one-sided error only, and only on the balanced case).
 
 **6.** "A quantum computer solved X faster than a classical laptop's
 program" compares two specific, fixed implementations on specific hardware

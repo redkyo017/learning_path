@@ -3,7 +3,7 @@
 ## Learning objectives
 
 By the end of today you should be able to:
-- Derive $H^{\otimes n}\sum_x(-1)^{a\cdot x}|x\rangle = |a\rangle$ exactly
+- Derive $\frac{1}{\sqrt{2^n}}H^{\otimes n}\sum_x(-1)^{a\cdot x}|x\rangle = |a\rangle$ exactly
   from the Hadamard-transform identity, and recognize the
   Bernstein–Vazirani (BV) circuit as literally the Deutsch–Jozsa (DJ)
   circuit run against a different oracle.
@@ -96,8 +96,7 @@ $$\frac{1}{\sqrt{2^n}}\sum_x|x\rangle \;\longrightarrow\; \frac{1}{\sqrt{2^n}}\s
 
 (the ancilla stays $|-\rangle$ throughout and is dropped from here on).
 Now apply $H^{\otimes n}$ a second time, using the Hadamard-transform
-identity on each $|x\rangle$ in the sum — this is the "use the identity
-twice" referred to in the learning objectives: once implicitly, to produce
+identity on each $|x\rangle$ in the sum — once implicitly, to produce
 the uniform superposition above from $H^{\otimes n}|0\rangle^{\otimes n}$,
 and once explicitly here:
 
@@ -144,8 +143,9 @@ classify $f$ into one of two buckets, it asks you to *identify* one
 specific hidden string $s$ out of $2^n-1$ possible nonzero candidates,
 where the only observable trace of $s$ is a *collision*: two specific
 inputs $x$ and $x\oplus s$ that happen to produce the same output. A
-classical algorithm learns nothing about $s$ from any query that doesn't
-land on both members of some colliding pair, and by a birthday-paradox
+classical algorithm learns almost nothing about $s$ from any query that doesn't
+land on both members of some colliding pair — only that $s \ne x\oplus x'$ for each
+queried non-colliding pair — and by a birthday-paradox
 argument, random queries only start finding such collisions after
 $\Omega(2^{n/2})$ of them (there are $2^{n-1}$ colliding pairs scattered
 among $\binom{2^n}{2}$ possible pairs of queries). This is a *provable*
@@ -173,6 +173,12 @@ second register**, apply $H^{\otimes n}$ to the first register, measure it.
 is
 
 $$\frac{1}{\sqrt{2^n}}\sum_x |x\rangle|f(x)\rangle.$$
+
+*Partial-measurement rule (used here and below).* When we measure only one
+register of a joint state, the probability of each outcome follows the Born
+rule applied to that register's marginal; the post-measurement state is the
+component of the joint state consistent with the observed outcome,
+renormalized to unit norm.
 
 Measuring the second register yields some outcome $z$. Because $f$ is
 exactly 2-to-1 with period $s$, exactly two values of $x$ produce $f(x)=z$:
@@ -321,7 +327,8 @@ below.
    $y_1,y_2,y_3\in\{0,1\}^4$, linearly independent over $\mathbb{F}_2$, each
    satisfying $y_i\cdot s\equiv0\pmod2$ — verify each one directly. Then set
    up the homogeneous linear system $y_i\cdot s' = 0$ (unknowns
-   $s'=(s_1,s_2,s_3,s_4)$) and solve it by Gaussian elimination over
+   $s'=(s_1,s_2,s_3,s_4)$; note: bits are indexed from the left here,
+   1-indexed, unlike the 0-indexed convention used above) and solve it by Gaussian elimination over
    $\mathbb{F}_2$, showing every row-reduction step explicitly. Confirm the
    unique nonzero solution is $s'=1010$.
 6. Write one paragraph explaining how Deutsch–Jozsa, Bernstein–Vazirani,

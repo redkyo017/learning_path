@@ -85,23 +85,26 @@ individually. Since $N=pq$ (or more generally has at least two distinct
 prime factors), this is only possible if $N$'s prime factors are *split*
 between the two terms — some of $N$'s factors divide $a^m-1$ and the
 complementary factors divide $a^m+1$, with neither side getting all of
-$N$. Concretely: let $d=\gcd(a^m-1,N)$. Since $N\mid(a^m-1)(a^m+1)$, every
-prime power dividing $N$ divides at least one of the two factors; combined
-with $N\nmid(a^m-1)$ and $N\nmid(a^m+1)$ individually, $d$ cannot be $1$
+$N$. Concretely: let $d=\gcd(a^m-1,N)$. Since $N\nmid(a^m-1)$ and
+$N\nmid(a^m+1)$, $d$ cannot be $1$
 (some nontrivial common factor must exist on the $a^m-1$ side — otherwise
-all of $N$'s prime power divides $a^m+1$, i.e. $N\mid a^m+1$, contradiction)
+all of $N$'s factors divide $a^m+1$, i.e. $N\mid a^m+1$, contradiction)
 and $d$ cannot be $N$ (that would mean $N\mid a^m-1$, also a
 contradiction). Hence $1<d<N$: $d$ is a nontrivial factor of $N$.
 $\blacksquare$
+
+**Euclidean algorithm:** to compute $\gcd(a,b)$, write $a = q\cdot b + r$,
+replace $(a,b)$ with $(b,r)$, and repeat until $r=0$; the last nonzero
+remainder is $\gcd(a,b)$.
 
 The power of this claim is computational: computing $a^{r/2}\bmod N$ and
 then a single $\gcd$ (fast, via the Euclidean algorithm) is all that's
 needed to turn "the order $r$" into an actual factorization — *provided*
 $r$ is even and $a^{r/2}\not\equiv-1$. (If either fails, the reduction
 gives no information and a different $a$ must be tried; Shor's algorithm
-shows this failure happens with probability at most $1/2$ for a
-uniformly random $a$, so retrying a constant expected number of times
-succeeds.)
+shows that for odd $N$ with at least 2 distinct prime factors, this
+failure happens with probability at most $1/2$ for a uniformly random $a$,
+so retrying a constant expected number of times succeeds.)
 
 ### The Quantum Fourier Transform
 
@@ -122,8 +125,9 @@ $\omega^{y-y'}$ is itself a nontrivial $N$-th root of unity (since
 $0<|y-y'|<N$), and a nontrivial root of unity raised to $x=0,\dots,N-1$
 sums to zero (a geometric series with ratio $z\ne1$, $z^N=1$, sums to
 $(z^N-1)/(z-1)=0$). Dividing by $N$, this says exactly $\langle
-\text{column } y, \text{column } y'\rangle = \delta_{yy'}$ — orthonormal
-columns, hence unitary.
+\text{column } y, \text{column } y'\rangle = \delta_{yy'}$ (valid here
+because $M$ is symmetric, so its columns and rows are interchangeable) —
+orthonormal columns, hence unitary.
 
 ### Deriving the $N=4$ matrix explicitly
 
@@ -188,9 +192,10 @@ useful for Shor's algorithm — it is the *best* rational approximation to
 $x_0$ among all fractions with denominator $\le q_n$. So given a noisy
 estimate of $k/r$ and an a-priori bound on $r$, running this expansion
 until the denominator first exceeds the bound, then backing up one step,
-recovers $k/r$ exactly despite the noise (stated here as the operational
-fact used below; the full approximation-theory proof is standard but not
-re-derived today).
+recovers $k/r$ exactly — provided the QPE estimate satisfies
+$|x_0 - k/r| < 1/(2r^2)$ (as guaranteed by QPE with $t$ large enough)
+(stated here as the operational fact used below; the full
+approximation-theory proof is standard but not re-derived today).
 
 ## Worked example
 

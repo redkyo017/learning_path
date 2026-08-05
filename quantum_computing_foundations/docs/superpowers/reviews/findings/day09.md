@@ -1,0 +1,14 @@
+# Day 09 findings
+## Correctness
+- none (all four model answers re-derived and verified: the separability contradiction $ac\ne0,\ bd\ne0$ vs $ad=0$ forcing $d$ both zero and nonzero (lines 64–84); the partial-trace computation $\rho_1=\tfrac12 I$ via $\mathrm{Tr}_2(A\otimes B)=A\,\mathrm{Tr}(B)$, equivalent to Day 7's $\langle d|c\rangle$ rule, with all four cross terms correctly killed by $\mathrm{Tr}(|0\rangle\langle1|)=\langle1|0\rangle=0$ (lines 89–108); the no-cloning proof with coefficient vectors (A) $(\tfrac12,\tfrac12,\tfrac12,\tfrac12)$ vs (B) $(\tfrac{1}{\sqrt2},0,0,\tfrac{1}{\sqrt2})$ and the neat entangled-vs-separable observation (lines 139–182); and the full Deutsch–Jozsa rebuild including phase kickback, the $H^{\otimes n}$ identity re-derived inline, $a_0=\tfrac{1}{2^n}\sum_x(-1)^{f(x)}$, the constant/balanced dichotomy, and the correct $n=1$ sanity check (lines 199–263))
+## Consistency
+- [09-S1] MINOR — content/day09.md:1 — the day is titled "Review: Days 6–8" and the objectives promise "the four core results that anchor Days 6–8" (line 7), but all four review questions cover Day 7 (Q1–Q3) and Day 8 (Q4) only; Day 6's own headline material (Born rule / basis dependence of measurement statistics, the pure-$\Rightarrow$-rank-1 proof, Euler decomposition) gets no dedicated question and appears only indirectly (density-matrix machinery inside Q2, the "proved on Day 6" citation at line 121) — either add a fifth Day 6 question or reword the scope to "Days 7–8 (using Day 6's density-matrix toolkit)".
+## Prerequisites
+- none (everything reviewed is introduced on Days 6–8 per inventory.md; the citation "the pure-state signature proved on Day 6" at line 121 resolves — day06.md:13–14 and its Exercise at day06.md:272 prove rank-1 purity; `notes/day09_review.md` and the Day 15 gap analysis referenced at lines 30–35 match the path's established review workflow and day15.md's Gap analysis section per inventory.md)
+## Time budget
+- estimated hours: 3–4.5 h — four closed-book reproductions (two full proofs, one explicit partial-trace computation, one complete algorithm derivation) written out in notes, then a compare-and-append correction pass plus journal; no new theory to absorb; assumes a learner comfortable with linear algebra but new to quantum who completed Days 6–8.
+## Code lab
+- not applicable
+## Primer-ability
+- citable labels: yes — one bold **Claim:** for no-cloning (line 132) plus four numbered `###` model-answer anchors: "1. $|\Phi^+\rangle$ is entangled", "2. Reduced density matrix of $|\Phi^+\rangle$", "3. No-cloning theorem", "4. Deutsch–Jozsa: circuit and general-$n$ amplitude formula".
+- hook candidate: the coefficient-vector comparison at lines 165–167 — "(A): $\left(\tfrac12,\ \tfrac12,\ \tfrac12,\ \tfrac12\right)$ vs. (B): $\left(\tfrac{1}{\sqrt2},\ 0,\ 0,\ \tfrac{1}{\sqrt2}\right)$ … $\tfrac12\ne\tfrac{1}{\sqrt2}$ (the first is $0.5$, the second $\approx0.707$)".

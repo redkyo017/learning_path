@@ -1,0 +1,15 @@
+# Day 03 findings
+## Correctness
+- [03-C1] CRITICAL — content/day03.md:171 — "a general normalized vector in $\mathbb{C}^2$ has two independent real degrees of freedom beyond overall normalization" — wrong count: $\mathbb{C}^2$ has 4 real parameters and normalization removes 1, leaving THREE real degrees of freedom; the count drops to two only after also quotienting out global phase, which this sentence does not mention (and which is deferred to Day 4's Bloch sphere) — a learner absorbs an off-by-one DOF count for the qubit — fix: "three real degrees of freedom beyond normalization; Day 4 shows one of them (global phase) is physically irrelevant, leaving the two that the Bloch sphere parametrizes."
+- everything else re-derived and verified: forced-conjugation example ($v=(i,0)$, $\sum v_i^2=-1$); all three inner-product axioms; $A^\dagger$ for $A=\begin{pmatrix}1&i\\2-i&3\end{pmatrix}$ is $\begin{pmatrix}1&2+i\\-i&3\end{pmatrix}$ and $(A^\dagger)^\dagger=A$; three-way unitary equivalence proof (including the correct left-inverse-implies-two-sided note); modulus-1 eigenvalue proof; worked example ($\langle c_1,c_2\rangle=\frac12(i-i)=0$; $U^\dagger U=I$ via $(-i)(i)=1$; $\operatorname{tr}=\sqrt2$, $\det=1$, $\lambda=(1\pm i)/\sqrt2$, $|\lambda|=1$); Solutions 5 and 6 exact.
+## Consistency
+- [03-S1] MINOR — content/day03.md:107 — the adjoint's defining relation $\langle Av,w\rangle=\langle v,A^\dagger w\rangle$ is stated "for all $v,w\in\mathbb{C}^n$" although $A$ was introduced as $m\times n$ (line 94), for which $Av$ and $w$ live in $\mathbb{C}^m$ — fix: either restrict the paragraph to square $A$ or write $v\in\mathbb{C}^n$, $w\in\mathbb{C}^m$.
+## Prerequisites
+- none — complex arithmetic (modulus, conjugate) and 2x2 eigenvalue machinery via trace/determinant are assumed, which matches the stated learner profile (comfortable with linear algebra); the file's real-vs-complex framing consistently builds on that background, and all forward references (Day 4 spectral theorem/Bloch sphere, Day 6 Born rule) resolve per inventory.md.
+## Time budget
+- estimated hours: 3–4.5 h — ~370 lines of material that is mostly a complex-field re-run of known real linear algebra for this learner profile; 6 exercises, with only Ex. 3 (three-way equivalence proof) taking substantial time.
+## Code lab
+- not applicable
+## Primer-ability
+- citable labels: partial — one bold label (`**Claim:**` line 201, the worked-example matrix) plus clean ### section names ("The complex inner product, and why conjugation is forced", "The Hermitian adjoint", "Unitary matrices", "The qubit", "Bra-ket notation, outer products, completeness").
+- hook candidate: the worked example's eigenvalue computation for $U=\frac{1}{\sqrt2}\begin{pmatrix}1&i\\i&1\end{pmatrix}$: "$\lambda = \frac{\sqrt2\pm i\sqrt2}{2} = \frac{1}{\sqrt2}(1\pm i)$ ... $|\lambda| = \frac{1}{\sqrt2}\cdot\sqrt2 = 1$" — content/day03.md:231–234; secondary hook: "$\langle\psi|\psi\rangle = \frac{9}{25}+\frac{16}{25} = 1$" for $|\psi\rangle=\frac35|0\rangle+\frac{4i}{5}|1\rangle$, content/day03.md:346–348.

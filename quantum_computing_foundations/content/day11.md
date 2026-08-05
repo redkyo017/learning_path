@@ -34,8 +34,8 @@ By the end of today you should be able to:
 
 ### The unstructured search problem
 
-You are given an oracle over $N=2^n$ items, $n$ of which are indices into a
-list with no exploitable structure — no ordering, no hashing shortcut,
+You are given an oracle over $N=2^n$ items (indexed by $n$-bit strings) with
+no exploitable structure — no ordering, no hashing shortcut,
 nothing but the ability to ask the oracle "is this item marked?" for one
 item at a time. $M$ of the $N$ items are **marked** ("good"); the rest are
 **unmarked** ("bad"). The task: find a marked item using as few oracle
@@ -82,7 +82,9 @@ x| = I - 2P_{good}$, where $P_{good}=\sum_{x\text{ good}}|x\rangle\langle
 x|$ is the projector onto the span of the marked basis states. Concretely,
 $O_f$ leaves every unmarked basis state alone and flips the sign of every
 marked basis state's amplitude — the standard "phase oracle" used in
-Grover's algorithm.
+Grover's algorithm. This phase oracle is implemented from Day 8's $U_f$ via
+the $|{-}\rangle$ ancilla: $U_f|x\rangle|{-}\rangle=(-1)^{f(x)}|x\rangle|{-}\rangle$,
+so acting on the work register alone reproduces exactly the phase kickback from Day 8.
 
 $P_{good}$ is a Hermitian, idempotent projector ($P_{good}^2=P_{good}$), so
 $O_f$ is Hermitian and $O_f^2 = I-4P_{good}+4P_{good}^2 = I$: $O_f$ is its
@@ -295,11 +297,11 @@ general geometric fact.
 
 The peak nearest $k=0$ is at the integer closest to
 $k^\star=\frac{\pi}{2\theta}-\frac12=\frac{3.14159}{1.01072}-0.5\approx
-3.1089-0.5=2.6089$, which rounds to $k=3$. Checking: $(2\cdot3+1)\theta/2=
-3.5\theta\approx1.7688$ rad $\approx101.36°$,
-$\sin^2(101.36°)\approx0.962$ — noticeably higher than the neighboring
+3.1083-0.5=2.6083$, which rounds to $k=3$. Checking: $(2\cdot3+1)\theta/2=
+3.5\theta\approx1.7688$ rad $\approx101.34°$,
+$\sin^2(101.34°)\approx0.962$ — noticeably higher than the neighboring
 $k=2$ value ($\sin^2(72.39°)\approx0.908$) and $k=4$ value
-($\sin^2(146.15°)$... using the coterminal angle, $\approx0.582$), so
+($\sin^2(130.30°)\approx0.582$), so
 $k=3$ is indeed the local peak.
 
 The heuristic gives $k\approx\frac\pi4\sqrt{16/1}=\frac\pi4\cdot4=\pi
@@ -315,16 +317,16 @@ approximation that the two rounded integers can differ by one.)
 | $k$ | $(2k+1)\theta/2$ (rad) | $P(k)$ |
 |---|---|---|
 | 0 | 0.2527 | 0.0625 |
-| 1 | 0.7580 | 0.4729 |
-| 2 | 1.2634 | 0.9076 |
-| 3 | 1.7688 | 0.9616 |
+| 1 | 0.7580 | 0.4727 |
+| 2 | 1.2634 | 0.9084 |
+| 3 | 1.7688 | 0.9613 |
 | 4 | 2.2741 | 0.5816 |
 | 5 | 2.7795 | 0.1254 |
 | 6 | 3.2848 | 0.0204 |
-| 7 | 3.7902 | 0.3657 |
+| 7 | 3.7902 | 0.3649 |
 | 8 | 4.2956 | 0.8360 |
 | 9 | 4.8009 | 0.9922 |
-| 10 | 5.3063 | 0.6849 |
+| 10 | 5.3063 | 0.6869 |
 
 (Sanity check: $k=0$ gives $P(0)=\sin^2(\theta/2)=M/N=1/16=0.0625$ exactly,
 as it must — no rotation has been applied yet, so this is just the overlap
@@ -365,16 +367,17 @@ python3 code/day11_grover_simulation.py
 printed probability of measuring the marked state should climb from
 $0.0625$ at iteration $0$ (matching $M/N=1/16$, the sanity check above),
 rise through iterations $1$ and $2$, **peak at iteration $3$** near
-$0.96$ — the exact $k=3$ predicted in Exercise 4 — and then *decrease*
-again on iterations $4$ and beyond as the rotation overshoots
+$0.96$ — the exact $k=3$ predicted in Exercise 4 — and then *decrease* on iterations $4$–$6$, then climb again toward a second
+peak near $k=9$, as the rotation overshoots
 $|good\rangle$ and continues past it, exactly the non-monotonic,
 periodic behavior derived in Exercise 5's table. If your printed peak
 iteration doesn't land at $3$, or the values don't roughly match the
 table in Exercise 5's solution, recheck the `marked` index and the
 `diffusion` implementation against the $D=2|s\rangle\langle s|-I$
 definition before trusting the rest of the run. Record the printed peak
-iteration and probability in `notes/day11_grovers.md` alongside your
-hand-computed values from Exercise 4.
+iteration and probability alongside your hand-computed values from Exercise 4
+(see the `notes/` directory created in Day 1; record your results in
+`notes/day11_grovers.md`).
 
 ## Journal template
 

@@ -141,9 +141,11 @@ Toffoli-on-a-fresh-ancilla. The final ancilla holds $\text{MAJ}(a,b,c)$; every
 other line — $a,b,c$ themselves plus $g_1,g_2,g_3$ and the intermediate OR
 results — is either an original input or a garbage bit that must be kept.
 Counting: 3 original inputs never change, and the circuit produces one
-"real" answer plus 5 garbage bits (three AND-results, two intermediate ORs)
-for a total of 9 output lines from 3 input lines — a concrete illustration
-of why garbage accumulates quickly even for a simple 3-input function.
+"real" answer plus 4 garbage bits (three AND-results $g_1,g_2,g_3$ and
+one intermediate OR value $g_2\vee g_3$) for 8 lines total — a concrete
+illustration of why garbage accumulates quickly even for a simple 3-input
+function. (The constant-1 control lines feeding the NOT-Toffolis pass
+through unchanged and are tracked separately from the data/ancilla lines.)
 
 ## Exercises
 
@@ -225,13 +227,14 @@ flipped — exactly NOT, applied to whatever value sits on the target line.
 
 **4.** $a \vee b = \neg(\neg a \wedge \neg b)$. Using Exercise 3's
 construction, compute $\neg a$ and $\neg b$ (2 Toffoli gates, no new
-ancilla needed if you're willing to overwrite — though to stay strictly
-reversible you'd route these onto fresh ancilla lines and keep $a,b$
-untouched, costing 2 more ancillas). Then AND them together via Exercise
+ancilla needed if you're willing to overwrite the $a,b$ lines — though
+to keep $a$ and $b$ available unchanged for later use, you'd route these
+onto fresh ancilla lines, costing 2 more ancillas). Then AND them together via Exercise
 2's construction (1 Toffoli gate, 1 fresh ancilla). Then NOT the result
 (1 more Toffoli gate). Total: 4 Toffoli gates, at least 3 fresh ancilla
 bits (two for $\neg a,\neg b$, one for the AND result — the final NOT can
-reuse the AND-result line as its target).
+reuse the AND-result line as its target) +2 reusable constant-1 lines
+(controls pass through unchanged, so one pair serves all NOTs).
 
 **5.** XOR on 3 bits, $a\oplus b\oplus c$, computed by $\text{CNOT}(a,b)$
 then $\text{CNOT}(\text{result}, c)$ — i.e. $(a,b,c) \to (a, a\oplus b, c)
@@ -256,10 +259,16 @@ whole thing reversible (composition of bijections), and the total gate/
 ancilla count is $O(g-1) + O(1) = O(g)$.
 
 **7.** $\text{sum} = a\oplus b\oplus c_{in}$ is exactly Exercise 5's 3-bit
-XOR: 2 CNOTs, 0 ancillas, writing the result onto a fresh line (or onto
-$c_{in}$'s line if you don't need to preserve it — but to stay strictly
-reversible and keep all of $a,b,c_{in}$ available, route it to a fresh
-line, which then holds sum). $\text{carry} = \text{MAJ}(a,b,c_{in})$ is
+XOR, computed as chained CNOTs. Two options:
+- **Option A (destructive):** 2 CNOTs, 0 ancillas — CNOT$(a, c_{in})$
+  then CNOT$(b, c_{in})$ writes $a\oplus b\oplus c_{in}$ onto $c_{in}$'s
+  line; still a bijection, but $c_{in}$ is no longer separately available.
+- **Option B (preserving):** 3 CNOTs, 1 ancilla — introduce a fresh
+  0-ancilla, then CNOT$(a,\text{anc})$, CNOT$(b,\text{anc})$,
+  CNOT$(c_{in},\text{anc})$; the ancilla holds sum while all three
+  inputs remain unchanged.
+
+$\text{carry} = \text{MAJ}(a,b,c_{in})$ is
 exactly the worked example above: 3 Toffolis producing $a\wedge b$,
 $b\wedge c_{in}$, $a\wedge c_{in}$ on 3 fresh ancillas, then OR-ing those
 three together via the Exercise 4 construction. Garbage: the three
@@ -288,6 +297,8 @@ the trade is more wires (space) for no thermodynamic floor on erasure
 energy.
 
 ## Journal template
+
+Before you begin: create a `notes/` directory in the repo root (`mkdir notes`) — Days 4, 5, and 11 will ask you to record work there.
 
 ```
 ## Day 1 — Boolean logic & reversible computation

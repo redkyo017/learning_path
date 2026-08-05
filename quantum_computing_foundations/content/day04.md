@@ -71,7 +71,7 @@ general linear-algebra result, not specific to quantum computing): **Schur's
 theorem** — every $A\in\mathbb{C}^{n\times n}$ can be written $A = VTV^\dagger$
 for some unitary $V$ and *upper triangular* $T$ (triangularize by unitary
 similarity; this always exists over $\mathbb{C}$, whether or not $A$ is
-normal). Given this, the argument is:
+normal; see, e.g., Horn & Johnson, *Matrix Analysis*, §2.3 for a proof). Given this, the argument is:
 
 1. If $A$ is normal, so is $T$: $T^\dagger T = V^\dagger A^\dagger V\,V^\dagger AV =
    V^\dagger A^\dagger A V$ and $TT^\dagger = V^\dagger AA^\dagger V$; since
@@ -217,10 +217,10 @@ $X,Y,Z$:
   the $\pm x$ axis, $Y$'s on the $\pm y$ axis, $Z$'s on the $\pm z$ axis —
   you will verify this by direct computation in the exercises.
 - A single-qubit unitary acts on the Bloch sphere as a *rigid rotation* of
-  the sphere (it must preserve $x^2+y^2+z^2=1$ and, being linear, preserve
-  the geometric structure of great circles). $X$, $Y$, $Z$, each being a
-  $180°$ rotation about their own axis, is the special case of a rotation
-  that is also an involution.
+  the sphere; we state without proof that this map is a proper rotation (not
+  a reflection) — this follows from the U(2)→SO(3) homomorphism; see the
+  Reference material. $X$, $Y$, $Z$, each being a $180°$ rotation about
+  their own axis, is the special case of a rotation that is also an involution.
 
 ## Worked example
 
@@ -281,7 +281,7 @@ Entry $(1,2)$: $\tfrac12\big[(1+i)(-i)+(1-i)(i)\big]
 Entry $(2,1)$: $\tfrac12\big[(-1+i)+(-1-i)\big] = \tfrac12(-2) = -1$.
 Entry $(2,2)$: $\tfrac12\big[(-1+i)(-i)+(-1-i)(i)\big]
 =\tfrac12\big[(1+i)+(1-i)\big] = 1$
-(using $(-1+i)(-i)=i-i^2\cdot... $ — expand directly: $(-1+i)(-i)=i-i\cdot i\cdot(-1)$; more carefully $(-1+i)(-i) = (-1)(-i)+i(-i) = i - i^2 = i+1$, and $(-1-i)(i) = -i-i^2 = -i+1 = 1-i$, summing to $2$, giving entry $1$).
+(using $(-1+i)(-i) = i - i^2 = i+1 = 1+i$ and $(-1-i)(i) = -i-i^2 = 1-i$, summing to $2$, giving entry $1$).
 
 So $UDU^\dagger = \begin{pmatrix}1&1\\-1&1\end{pmatrix} = A$ exactly,
 recovered by direct matrix multiplication — the spectral theorem's claim
@@ -464,13 +464,14 @@ python3 code/day04_bloch_sphere.py
 ```
 
 Expected output, per the plan: `|0>` at `(0,0,1)`, `|1>` at `(0,0,-1)`,
-`H|0>` at `(1,0,0)` — matching your Exercise 5 by-hand computation exactly.
+`H|0>` at `(1,0,0)` — matching your Exercise 5 by-hand computation up to float round-off.
 For the last two printed lines ($\psi$ and $X|\psi\rangle$), confirm that
 $X$ leaves the printed $x$-coordinate unchanged and flips the sign of both
 the $y$- and $z$-coordinates — the numerical instance of the general
 Exercise 7 proof, and the direct check of your Exercise 6 prediction. Write
 this confirmation, and whether it matched your Step 4.6/Exercise 6
-prediction, in `notes/day04_normal_matrices_bloch.md`.
+prediction (see the notes/ directory created in Day 1; record your reflection
+in `notes/day04_normal_matrices_bloch.md`).
 
 ## Journal template
 

@@ -42,7 +42,8 @@ matters that you know which is which:
 - **Sketch-level only:** the BBBV lower-bound proof (the hybrid argument).
   This is a genuinely hard result, and the full rigorous inequality chain —
   making "distinguishing power" precise as a variational-distance or
-  amplitude bound, then chaining a probabilistic averaging argument over $N$
+  amplitude bound (variational distance: a standard measure of how
+  distinguishable two quantum states are), then chaining a probabilistic averaging argument over $N$
   oracles through $T$ queries — is beyond the scope of a 15-day survey
   course. What follows states the theorem precisely and explains the
   *structure* of the argument (which comparison is being made, why it
@@ -120,8 +121,8 @@ oracle it's facing — it must be built to work for every $O_i$ simultaneously
 The key move: run the *same* algorithm against $O_0$ and separately against
 each $O_i$, and track how far its internal quantum state after $t$ queries
 against $O_i$ has diverged from its state after $t$ queries against $O_0$.
-A single query can only touch the oracle's answer on the one input the
-algorithm currently has amplitude on; since the algorithm's state just
+O_i and O_0 differ only at input i, so one oracle query can shift the
+state by at most the amplitude the algorithm currently has on input i; since the algorithm's state just
 before the query is spread out over many of the $N$ possible inputs (it has
 no way to concentrate on the "right" one — it hasn't seen $O_i$ yet), the
 amount that one query can *possibly* shift the state toward "the version
@@ -266,8 +267,7 @@ here. Checking neighboring integers directly, with $\theta/2 = 0.125328$:
 $k=6$ is indeed the peak, with success probability $\approx 0.997$ —
 essentially certain detection of the marked item.
 
-Now cross-check against BBBV: $T=6$ queries is $\Theta(\sqrt N) =
-\Theta(\sqrt{64}) = \Theta(8)$ — the same order the lower bound says is
+Now cross-check against BBBV: $T=6$ queries is on the order of $\sqrt{N} = \sqrt{64} = 8$ — the same order the lower bound says is
 *necessary* for constant success probability. Grover's algorithm, using
 $T=6\approx\sqrt{64}$ queries, achieves success probability $\approx0.997$,
 i.e. $\Theta(1)$ — exactly the order the BBBV bound $O(T^2/N)$ permits at

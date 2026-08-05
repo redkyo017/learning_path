@@ -1,10 +1,10 @@
-# Day 9 — Review: Days 6–8 (Closed-Book)
+# Day 9 — Review: Days 7–8, building on Day 6 (Closed-Book)
 
 ## Learning objectives
 
 This is a closed-book review day: no new primer material. By the end of
-today you should be able to re-derive, without notes, the four core results
-that anchor Days 6–8:
+today you should be able to re-derive, without notes, the core results
+from Days 7–8 (building on Day 6's density-matrix toolkit):
 
 - **Entanglement as a separability failure.** State the definition of a
   separable two-qubit pure state, and prove directly from it that the Bell
@@ -265,7 +265,7 @@ general formula.)
 ## Journal template
 
 ```
-## Day 9 — Review: Days 6–8 (closed-book)
+## Day 9 — Review: Days 7–8, building on Day 6 (closed-book)
 Key idea in my own words: ...
 What confused me: ...
 Which items needed correction, and why: ...

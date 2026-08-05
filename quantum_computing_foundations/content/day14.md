@@ -53,7 +53,7 @@ building directly on Day 13's QFT.
 
 ### Phase kickback, generalized from a $\pm1$ phase to an arbitrary phase
 
-Recall Day 8 Step 2's identity: for an oracle acting as $X^{f(x)}$ on the
+Recall Day 8's 'The oracle and phase kickback' identity: for an oracle acting as $X^{f(x)}$ on the
 target, $U_f|x\rangle|-\rangle = (-1)^{f(x)}|x\rangle|-\rangle$, because
 $|-\rangle$ is an eigenvector of $X$ with eigenvalue $-1$, and applying $X$
 conditionally on $x$ kicks that eigenvalue, raised to the power $f(x)$, back
@@ -128,14 +128,14 @@ ancilla register, after all $t$ controlled-$U^{2^j}$ applications, is
 
 $$\frac{1}{\sqrt{2^t}}\sum_{x=0}^{2^t-1} e^{2\pi i\varphi x}|x\rangle.$$
 
-Recall Day 13 Step 4's QFT definition on dimension $M=2^t$: $\text{QFT}
+Recall Day 13's 'The Quantum Fourier Transform' QFT definition on dimension $M=2^t$: $\text{QFT}
 |y\rangle = \frac{1}{\sqrt M}\sum_x e^{2\pi i xy/M}|x\rangle$. Setting
 $y = \varphi M = \varphi 2^t$ turns $e^{2\pi ixy/M}$ into exactly $e^{2\pi i
 \varphi x}$ — so the state above is *exactly* $\text{QFT}|\varphi 2^t\rangle$
 when $\varphi2^t$ happens to be an integer, and the QFT applied to a state
 "peaked" at the (possibly non-integer) value $\varphi2^t$ in general. Either
 way, it is a QFT output whose defining input parameter is $\varphi2^t$.
-Since the QFT is unitary (Day 13 Step 4), it has an inverse, and applying
+Since the QFT is unitary (Day 13's 'The Quantum Fourier Transform'), it has an inverse, and applying
 $\text{QFT}^{-1}$ to this state recovers $|\varphi2^t\rangle$ exactly when
 $\varphi2^t\in\mathbb{Z}$, or a distribution sharply peaked around the
 nearest integers to $\varphi2^t$ otherwise. Measuring the ancilla register
@@ -161,7 +161,7 @@ Concretely, for a randomly chosen $a$ with $\gcd(a,N)=1$:
   circuit-level arithmetic synthesis or physical implementation details.
   Everything below treats $U_a$ as an exact black-box unitary.
 - $U_a$ acts as a cyclic shift on the orbit $\{a^0,a^1,\dots,a^{r-1}\bmod
-  N\}$, where $r$ is the order of $a$ mod $N$ (Day 13 Step 1). It is a
+  N\}$, where $r$ is the order of $a$ mod $N$ (Day 13's 'Modular arithmetic and the order of an element'). It is a
   standard fact — also taken as given here, since deriving it is a
   side-quest in Fourier-diagonalizing a cyclic shift rather than something
   today's exercises ask for — that $U_a$'s eigenvectors are discrete-Fourier
@@ -173,18 +173,18 @@ Concretely, for a randomly chosen $a$ with $\gcd(a,N)=1$:
   produces, after the inverse QFT and a measurement, a phase register
   outcome $x$ with $x/2^t \approx k/r$ for a uniformly random $k\in\{0,
   \dots,r-1\}$.
-- Feed that phase estimate $\varphi\approx k/r$ into Day 13 Step 5's
-  continued-fraction algorithm to recover $r$ (its denominator in lowest
+- Feed that phase estimate $\varphi\approx k/r$ into Day 13's 'Continued fractions'
+  algorithm to recover $r$ (its denominator in lowest
   terms), provided $\gcd(k,r)=1$; if $k=0$ or the recovered denominator
   doesn't check out, rerun QPE (a different random $k$ is likely to be
   coprime to $r$).
-- Feed $r$ into Day 13 Step 3.2's (Miller's) reduction: if $r$ is even and
+- Feed $r$ into Day 13's 'Miller's reduction: from order to factor': if $r$ is even and
   $a^{r/2}\not\equiv -1\pmod N$, then $\gcd(a^{r/2}-1,N)$ is a nontrivial
   factor of $N$.
 
 ### The $N=15,\ a=7$ pipeline, traced end to end
 
-Day 13 Step 3.3 established $\gcd(7,15)=1$ and computed the order of $7$
+Day 13's 'Miller's reduction: from order to factor' section established $\gcd(7,15)=1$ and computed the order of $7$
 mod $15$ by brute force: $7^1=7$, $7^2=49\bmod15=4$, $7^3=28\bmod15=13$,
 $7^4=91\bmod15=1$ — so $r=4$ is the smallest exponent giving $1$, and no
 smaller power works. $r=4$ is even, and $7^{2}\bmod15=4\ne14\equiv-1
@@ -197,7 +197,7 @@ on the work register started in $|1\rangle$ should return phase-register
 outcomes $x$ clustering at $x/2^6\approx k/4$, i.e. at $x\approx0,16,32,48$
 (the four multiples of $\tfrac14$ scaled to a $64$-outcome register).
 Suppose a run measures $x=16$: the phase estimate is $\varphi=16/64=0.25=
-\tfrac14$. Running Day 13 Step 5's continued-fraction expansion on $0.25$
+\tfrac14$. Running the continued-fraction expansion from Day 13's 'Continued fractions' on $0.25$
 returns $\tfrac14$ directly (it is already in lowest terms with a small
 denominator), recovering $r=4$ — matching the brute-force value from Day 13
 exactly. Feeding $r=4$ into Miller's reduction reproduces the factor $3$
@@ -210,12 +210,12 @@ carries no information about $r$.
 
 | Pipeline step | Originating derivation |
 |---|---|
-| Controlled-$U^{2^j}$ kicks back phase $e^{2\pi i\varphi2^j}$ | Today's Theory / Exercise 1, generalizing Day 8 Step 2's $\pm1$ phase-kickback identity |
-| Ancilla register becomes $\frac{1}{\sqrt{2^t}}\sum_x e^{2\pi i\varphi x}|x\rangle$; inverse QFT recovers $\varphi$ | Today's Theory / Exercise 2, built on Day 13 Step 4's QFT definition and unitarity |
+| Controlled-$U^{2^j}$ kicks back phase $e^{2\pi i\varphi2^j}$ | Today's Theory / Exercise 1, generalizing Day 8's 'The oracle and phase kickback' $\pm1$ phase-kickback identity |
+| Ancilla register becomes $\frac{1}{\sqrt{2^t}}\sum_x e^{2\pi i\varphi x}|x\rangle$; inverse QFT recovers $\varphi$ | Today's Theory / Exercise 2, built on Day 13's 'The Quantum Fourier Transform' and 'Deriving the $N=4$ matrix explicitly' |
 | $U_a|y\rangle=|ay\bmod N\rangle$, eigenphases encode $1/r$ | Given building block (not derived — see scope note above) |
-| Phase estimate $\varphi\approx k/r\;\Rightarrow\;$ recover $r$ | Day 13 Step 5, continued fractions |
-| $r$ even, $a^{r/2}\not\equiv-1\Rightarrow\gcd(a^{r/2}-1,N)$ is a nontrivial factor | Day 13 Step 3.2 (Miller's reduction), numeric example Step 3.3 |
-| $N=15,a=7,r=4$, factor $3$ | Day 13 Step 3.3, reused verbatim today |
+| Phase estimate $\varphi\approx k/r\;\Rightarrow\;$ recover $r$ | Day 13's 'Continued fractions' |
+| $r$ even, $a^{r/2}\not\equiv-1\Rightarrow\gcd(a^{r/2}-1,N)$ is a nontrivial factor | Day 13's 'Miller's reduction: from order to factor' (numeric example in same section) |
+| $N=15,a=7,r=4$, factor $3$ | Day 13's 'Miller's reduction: from order to factor', reused verbatim today |
 
 ## Worked example
 
@@ -261,7 +261,7 @@ below.
    factor of $N$ from $r$.
 4. Reproduce the traceability table above from scratch (without looking at
    it) in your notes file: for each of the six pipeline steps, name the
-   specific day and step number where it was derived.
+   specific day and section name where it was derived.
 5. Without opening the code file, predict what
    `code/day14_shors_qpe_simulation.py` does at each stage (building $U_a$,
    finding $r$ classically, building the QPE state, applying
@@ -320,7 +320,7 @@ $y=\varphi M=\varphi2^t$ makes $e^{2\pi ixy/M}=e^{2\pi i\varphi x}$
 identically, so the ancilla state above is precisely $\text{QFT}|\varphi
 2^t\rangle$ (exactly, when $\varphi2^t\in\mathbb{Z}$; as a QFT of a state
 peaked there, in general). A QFT output is inverted by the QFT's inverse
-(it's unitary, Day 13 Step 4), so applying $\text{QFT}^{-1}$ to this
+(it's unitary, Day 13's 'The Quantum Fourier Transform'), so applying $\text{QFT}^{-1}$ to this
 ancilla state recovers $|\varphi2^t\rangle$ (or a distribution sharply
 peaked around the nearest integers to $\varphi2^t$) — hence the circuit
 ends with an *inverse* QFT, and measuring afterward and dividing by $2^t$
@@ -333,28 +333,28 @@ controlled-$U_7^{2^j}$ for each ancilla, apply the inverse QFT to the
 ancilla register, and measure it. By Exercise 2's mechanism, the result is
 a phase estimate $\varphi\approx k/r$ for a uniformly random $k\in\{0,1,2,
 3\}$, since $U_7$'s eigenphases are $e^{2\pi ik/4}$ (Day 13's $r=4$).
-Feeding $\varphi$ into Day 13 Step 5's continued-fraction algorithm
+Feeding $\varphi$ into Day 13's 'Continued fractions' algorithm
 recovers the denominator $r=4$ (provided $k\ne0$ and $\gcd(k,4)=1$; $k=1,3$
 work directly, $k=2$ gives the reduced fraction $1/2$ and must be detected
-and retried). Feeding $r=4$ into Day 13 Step 3.2's Miller's reduction —
+and retried). Feeding $r=4$ into Day 13's 'Miller's reduction: from order to factor' —
 check $r$ even (yes) and $7^{2}\bmod15=4\ne14\equiv-1\pmod{15}$ (yes) —
 gives $\gcd(7^2-1,15)=\gcd(3,15)=3$, a nontrivial factor of $15$, so
 $15=3\times5$.
 
 **4.** See the traceability table in Theory above: (i) phase kickback with
-an arbitrary phase → today's Exercise 1, generalizing Day 8 Step 2; (ii) the
+an arbitrary phase → today's Exercise 1, generalizing Day 8's 'The oracle and phase kickback'; (ii) the
 ancilla register as a QFT output and inverse-QFT recovery → today's
-Exercise 2, built on Day 13 Step 4; (iii) $U_a$ as a given permutation unitary
+Exercise 2, built on Day 13's 'The Quantum Fourier Transform'; (iii) $U_a$ as a given permutation unitary
 with eigenphases encoding $1/r$ → stated as a given building block, not
 derived (scope note); (iv) continued fractions recovering $r$ from $\varphi$
-→ Day 13 Step 5; (v) Miller's reduction recovering a factor from $r$ → Day
-13 Step 3.2, with the numeric $N=15,a=7$ check in Step 3.3; (vi) the reused
-numeric values $N=15,a=7,r=4$, factor $3$ → Day 13 Step 3.3 verbatim.
+→ Day 13's 'Continued fractions'; (v) Miller's reduction recovering a factor from $r$ → Day
+13's 'Miller's reduction: from order to factor', with the numeric $N=15,a=7$ check in the same section; (vi) the reused
+numeric values $N=15,a=7,r=4$, factor $3$ → Day 13's 'Miller's reduction: from order to factor' verbatim.
 
 **5.** The code (i) builds `U` as an $N\times N$ permutation matrix with
 $U[(a\cdot y)\bmod N, y]=1$ — the exact matrix form of $U_a|y\rangle=|ay
 \bmod N\rangle$; (ii) finds $r$ classically by repeated multiplication mod
-$N$ until it hits $1$, printing it as a check against Day 13 Step 3.3's
+$N$ until it hits $1$, printing it as a check against Day 13's 'Miller's reduction: from order to factor'
 hand computation ($r=4$ expected); (iii) builds the full $2^t\times N$-
 dimensional QPE state exactly, starting the work register in $|1\rangle$
 and the phase register in an equal superposition over all $2^t$ values
@@ -398,12 +398,12 @@ python3 code/day14_shors_qpe_simulation.py
 ```
 
 **Expected output** (per the plan's Step 4): the printed order matches
-Day 13 Step 3.3's hand computation, $r=4$; and the high-probability
+Day 13's 'Miller's reduction: from order to factor' hand computation, $r=4$; and the high-probability
 phase-register outcomes cluster at $x/2^t$ values close to $0/4,\ 1/4,\
 2/4,\ 3/4$ — i.e. multiples of $1/r=1/4$ — the exact numerical confirmation
 of the entire week's most complex derivation chain. After running it, pick
-one high-probability outcome, run it through Day 13 Step 5's
-continued-fraction algorithm by hand, and confirm you recover $r=4$ (see
+one high-probability outcome, run it through Day 13's 'Continued fractions'
+algorithm by hand, and confirm you recover $r=4$ (see
 the Worked example above for a fully worked instance of this check with
 $x=48$).
 

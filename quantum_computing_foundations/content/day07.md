@@ -223,9 +223,9 @@ each individually true of quantum mechanics: unitaries must act linearly
 on superpositions (forced by the axioms), while the *desired* cloning
 action $|\psi\rangle\mapsto|\psi\rangle\otimes|\psi\rangle$ is manifestly
 **not** linear in $|\psi\rangle$ (squaring, in effect, a vector is a
-quadratic, not linear, operation). No linear map can implement a quadratic
-one on more than a one-dimensional set of inputs, and that is really all
-the no-cloning theorem is saying.
+quadratic, not linear, operation). No linear map can agree with the cloning map on two non-orthogonal states,
+hence never on a state and any superposition involving it, and that is
+really all the no-cloning theorem is saying.
 
 ## Worked example
 

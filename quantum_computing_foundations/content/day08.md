@@ -163,7 +163,7 @@ $$\frac{1}{2^n}\sum_{y\in\{0,1\}^n}\left(\sum_{x\in\{0,1\}^n}
 **The amplitude on $|0\rangle^{\otimes n}$.** Set $y=0^n$. Then $x\cdot y =
 0$ for every $x$, so the amplitude on $|0\rangle^{\otimes n}$ is exactly
 $$\boxed{\ a_0 = \frac{1}{2^n}\sum_{x\in\{0,1\}^n}(-1)^{f(x)}\ }.$$
-This is precisely the formula the plan calls for, and the derivation above
+This is the key formula of the day, and the derivation above
 is the complete proof, not an assertion: it follows in three mechanical
 steps (Hadamard, phase kickback, Hadamard) from the two identities proved
 above.
@@ -193,15 +193,17 @@ the outcomes are exhaustive).
 
 ### Comparison with the classical randomized algorithm (Day 2)
 
-Day 2, Step 4, Problem 5 gave the best classical strategy for this exact
-promise problem: query $f$ at $m$ independently random points. If every
-query returns $0$, the algorithm guesses "constant." Since a balanced $f$
-has exactly half its inputs mapping to $0$, the chance that $m$ independent
-random queries into a balanced $f$ all happen to land on $0$-inputs is
-$(1/2)^m = 2^{-m}$ — so seeing $m$ zeros in a row gives confidence
-$1-2^{-m}$ that $f$ is really constant, never certainty for any finite $m$.
-To reach the same confidence used in Day 2 Step 3 ($2^{-20}$), the classical
-algorithm needs $m=20$ queries, and even then there remains a genuine
+Day 2's section "A randomized classical algorithm for the Deutsch–Jozsa
+promise problem" gives the best classical strategy for this exact promise
+problem: query $f$ at $m$ independently random points. If all $m$ answers
+agree (all $0$ or all $1$), the algorithm guesses "constant"; otherwise it
+guesses "balanced." A balanced $f$ has exactly half its inputs mapping to
+$0$ and half to $1$, so the chance that $m$ independent queries all agree
+(all on the $0$-half, or all on the $1$-half) is $2\cdot(1/2)^m = 2^{-(m-1)}$
+— so $m$ unanimous queries give confidence $1-2^{-(m-1)}$ that $f$ is
+really constant, never certainty for any finite $m$. To reach the same
+$2^{-20}$ error bound used in Day 2, Exercise 4 / Solution 4, the classical
+algorithm needs $m=21$ queries, and even then there remains a genuine
 (if tiny) $2^{-20}$ chance of being wrong.
 
 Deutsch–Jozsa needs exactly **one** oracle query and produces the
@@ -466,9 +468,9 @@ exponentially fewer queries.
 **8.** Removing Stage 3 (the second layer of $H^{\otimes n}$, applied to
 the input register after the oracle call) and measuring immediately after
 Stage 2 instead: the state at that point is $\tfrac{1}{\sqrt{2^n}}\sum_x
-(-1)^{f(x)}|x\rangle\otimes|-\rangle$, and since a global phase
-$(-1)^{f(x)}$ on a computational basis term does not change measurement
-probabilities in that same basis, measuring the input register here gives
+(-1)^{f(x)}|x\rangle\otimes|-\rangle$, and since the $\pm1$ relative phase
+on each individual branch $|x\rangle$ does not change measurement
+probabilities in the standard basis, measuring the input register here gives
 a uniformly random $x\in\{0,1\}^n$ with probability $1/2^n$ each — exactly
 what one classical query at a uniformly random point would give you, with
 no advantage whatsoever. It is specifically the second Hadamard layer,

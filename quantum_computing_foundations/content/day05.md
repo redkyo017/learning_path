@@ -28,7 +28,7 @@ established on Days 1–4:
 This is a closed-book day: no new primer, no peeking at the Day 1–4 notes
 files while attempting the questions below.
 
-1. Open `notes/day05_review.md` and attempt every question in the **Review
+1. Open `notes/day05_review.md` (see the notes/ directory, which Day 1 asks you to create) and attempt every question in the **Review
    questions** section from memory, writing out full proofs/derivations, not
    just final answers or sketches.
 2. Only after finishing (or running out of your allotted time) should you
@@ -56,6 +56,9 @@ Model answers section.
 4. Derive the matrix forms of the Pauli matrices $X, Y, Z$ and the Hadamard
    matrix $H$ from their defining properties (unitary and
    Hermitian/involutory, with eigenvalues $\pm1$) — without looking them up.
+   (Stretch synthesis — you have all the ingredients from Days 3–4, but this
+   derivation direction has not been shown; attempt it before reading the model
+   answer.)
 5. State Landauer's principle, and explain its connection to reversible
    gates.
 
@@ -101,19 +104,21 @@ trivially a bijection, hence reversible, using $0$ Toffolis and $0$
 ancillas.
 
 *Inductive step*: suppose any circuit with $g-1$ AND/OR/NOT gates converts
-to a reversible circuit using $O(g-1)$ Toffoli gates and $O(g-1)$ ancilla
-bits (inductive hypothesis). Consider a circuit with $g$ gates. Its first
-$g-1$ gates convert, by the hypothesis, to a reversible sub-circuit using
-$O(g-1)$ Toffolis/ancillas. The $g$-th gate is AND, OR, or NOT acting on
-some existing wires (original inputs or outputs of earlier gates, all of
-which are still available as wires in the reversible sub-circuit already
-built). By Steps 1–3, this single gate is realized by $O(1)$ Toffoli gates
-and $O(1)$ fresh ancilla bits, fed from the existing wires, producing one
-new (possibly garbage-accompanied) output wire. Appending this $O(1)$-size
-reversible gadget to the reversible sub-circuit for the first $g-1$ gates
-keeps the whole thing reversible, because a composition of bijections is a
-bijection. The total gate count is $O(g-1) + O(1) = O(g)$ Toffolis, and
-likewise $O(g-1)+O(1) = O(g)$ ancilla bits.
+to a reversible circuit using at most $C(g-1)$ Toffoli gates and $C(g-1)$
+ancilla bits, for a fixed constant $C$ (inductive hypothesis). Consider a
+circuit with $g$ gates. Its first $g-1$ gates convert, by the hypothesis, to
+a reversible sub-circuit using at most $C(g-1)$ Toffolis/ancillas. The
+$g$-th gate is AND, OR, or NOT acting on some existing wires (original inputs
+or outputs of earlier gates, all of which are still available as wires in the
+reversible sub-circuit already built). By Steps 1–3, this single gate is
+realized by at most $c$ Toffoli gates and $c$ fresh ancilla bits (for a fixed
+constant $c$ determined by the gadget sizes in Steps 1–3), fed from the
+existing wires, producing one new (possibly garbage-accompanied) output wire.
+Appending this constant-size reversible gadget to the reversible sub-circuit
+for the first $g-1$ gates keeps the whole thing reversible, because a
+composition of bijections is a bijection. The total gate count is
+$C(g-1) + c \le Cg$ Toffolis (choosing $C \ge c$), and likewise
+$C(g-1)+c \le Cg$ ancilla bits.
 
 By induction, this holds for all $g$. $\blacksquare$
 
@@ -137,7 +142,7 @@ or "no."
 
 **Claim.** Running a BPP algorithm $k$ times independently on the same
 input and taking the majority answer reduces the error probability to
-$e^{-k/18}$ — exponentially small in $k$.
+at most $e^{-k/18}$ — exponentially small in $k$.
 
 **Proof.** Fix an input $x$. Let $X_1,\dots,X_k \in \{0,1\}$ be independent
 indicator random variables, $X_i = 1$ if the $i$-th run of the algorithm is
@@ -260,8 +265,8 @@ decomposition the theorem promised, worked out explicitly for $H$.
 starting only from: $2\times2$, Hermitian ($A=A^\dagger$), unitary
 ($A^\dagger A = I$), hence involutory ($A^2=I$, since Hermitian + unitary
 gives $A^2 = A^\dagger A = I$), with eigenvalues $\pm1$ (forced by
-Hermitian + involutory: eigenvalues of a Hermitian matrix are real, by
-Problem 3's spectral theorem applied to the eigenvector equation; and
+Hermitian + involutory: eigenvalues of a Hermitian matrix are real, proved in Day 4's Theory
+section; and
 $A^2=I$ forces $\lambda^2=1$ for every eigenvalue, so $\lambda=\pm1$).
 
 **General form.** Write a general Hermitian $2\times2$ matrix as
@@ -312,7 +317,7 @@ diagonal, respectively).
 
 **Hadamard $H$.** $H$ also satisfies Hermitian + unitary + involutory +
 eigenvalues $\pm1$ (verified in Problem 3), so it too lies in the
-$b\ne0$, $d=-a$ family: from Problem 3, $a = d = \pm\frac{1}{\sqrt2}$ (take
+$b\ne0$, $d=-a$ family: from Problem 3, $a = -d = \frac{1}{\sqrt2}$ (take
 $a=\frac1{\sqrt2}$) and $b=\frac1{\sqrt2}$ (real), consistent with
 $a^2+b^2 = \tfrac12+\tfrac12=1$. What singles out this exact member of the
 family (as opposed to $X$, $Y$, $Z$, or any other point on the circle) is

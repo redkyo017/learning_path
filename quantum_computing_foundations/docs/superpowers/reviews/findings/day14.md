@@ -1,0 +1,15 @@
+# Day 14 findings
+## Correctness
+- none (phase-kickback induction, product-state expansion to (1/√2^t)Σ e^{2πiφx}|x⟩, QFT identification with y=φ2^t, the |1⟩ = equal superposition of eigenvectors claim, the x=16 and x=48 continued-fraction traces, and the exact peak locations 0/16/32/48 for t=6, r=4 all re-derive correctly)
+## Consistency
+- [14-S1] MINOR — content/day14.md:56 — cross-references use plan step numbers ("Day 8 Step 2", "Day 13 Step 3.2/3.3", "Day 13 Step 4/5" — also lines 132, 186–187, 211–218, and Exercise 4's "name the specific day and step number") — content/day08.md and content/day13.md contain no "Step N" labels; the numbers resolve only through the plan file listed in Reference material, so a learner working from content/ alone cannot locate them — suggested fix: cite the content files' ### section names alongside (e.g. "Day 13, 'Miller's reduction'").
+## Prerequisites
+- none (eigenvector/eigenvalue: Days 3–4; tensor products: Day 7; phase kickback: Day 8; QFT, continued fractions, Miller's reduction, r=4 example: Day 13; the one underived ingredient — U_a's gate-level construction and eigenstructure — is explicitly flagged as a given building block)
+## Time budget
+- estimated hours: 4–5.5 h — 418 lines with two substantial derivations, 5 exercises (two are full closed-book derivations), plus running and interpreting the code lab; the file's own journal template anticipates overrunning the 4-hour budget, which is honest.
+## Code lab
+- [14-L1] MINOR — code/day14_shors_qpe_simulation.py:71 — the script prints the top 8 outcomes, but the exact simulation has only 4 nonzero-probability outcomes (0, 16, 32, 48 at P=0.25 each; all others exactly 0), so rows 5–8 are arbitrary x values printed with P=0.0000 — mildly at odds with the content's "highest-probability outcomes cluster near k/4" framing and potentially confusing — suggested fix: print top 4, or filter P > 1e-9.
+- otherwise the static check passes: imports (numpy only) match README's runnable-as-is claim; U built as the exact permutation matrix U[(a·y)%N, y]=1; classical order loop prints r=4; QPE state has work register |1⟩ and uniform t=6 phase register; controlled-U^{2^j} applied as U^x per block exactly as Solution 5(iv) describes; inverse QFT matrix ω=e^{−2πi/dim} is the correct conjugate of the Day 13 forward QFT; measurement marginalizes |amp|² over the work index; printed output shape matches content/day14.md's Code lab section and Solution 5's prediction.
+## Primer-ability
+- citable labels: partial — one bold label (**Claim:** line 222) plus strong ### names ("Phase kickback, generalized from a $\pm1$ phase to an arbitrary phase", "From one ancilla to the full phase register: recognizing a QFT", "Assembling Shor's algorithm", "The $N=15,\ a=7$ pipeline, traced end to end").
+- hook candidate: "a single QPE run with outcome x=48 (out of 2^6=64): φ = 48/64 = 0.75 = 3/4, continued fractions give 3/4, so r=4 and gcd(7²−1,15)=3" — Worked example, lines 222–238 (claim at line 222).

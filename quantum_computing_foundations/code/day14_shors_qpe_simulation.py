@@ -68,6 +68,6 @@ state = state_reshaped.reshape(-1)
 # Measure the phase register: sum probability over the work register.
 probs = np.sum(np.abs(state.reshape(phase_dim, work_dim)) ** 2, axis=1)
 print("Top phase-register outcomes (x, probability, x/2^t):")
-top = np.argsort(probs)[::-1][:8]
+top = np.where(probs > 1e-9)[0]
 for x in sorted(top):
     print(f"  x={x:3d}  P={probs[x]:.4f}  x/2^t={x/phase_dim:.4f}  (expect near k/{r} for integer k)")

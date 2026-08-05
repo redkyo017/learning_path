@@ -104,7 +104,7 @@ matrix satisfying $\langle Av,w\rangle_{\mathbb{R}} = \langle v,A^Tw
 same defining relation, but with the complex inner product:
 $$\langle Av,w\rangle = (Av)^\dagger w = v^\dagger A^\dagger w =
 \langle v, A^\dagger w\rangle$$
-for all $v,w\in\mathbb{C}^n$ — and this property, together with linearity,
+for all $v\in\mathbb{C}^n$, $w\in\mathbb{C}^m$ — and this property, together with linearity,
 *characterizes* $A^\dagger$ uniquely, exactly as the real transpose was
 characterized. Taking the adjoint twice returns the original matrix,
 $(A^\dagger)^\dagger = A$, since conjugating twice and transposing twice
@@ -167,11 +167,9 @@ product above — it is the complex-vector-space statement that a quantum
 state has "total probability 1," a physical requirement that will be made
 precise by the Born rule on Day 6. Unlike a real unit vector in
 $\mathbb{R}^2$ (parametrized by a single angle), a general normalized
-vector in $\mathbb{C}^2$ has two independent real degrees of freedom beyond
-overall normalization — this is exactly the extra structure ($\alpha,\beta$
-complex rather than real) that makes a qubit richer than a classical bit,
-and is what the Bloch-sphere picture on Day 4 will make geometrically
-precise.
+vector in $\mathbb{C}^2$ has three real degrees of freedom beyond
+normalization; Day 4 shows one of them (global phase) is physically
+irrelevant, leaving the two that the Bloch sphere parametrizes.
 
 ### Bra-ket notation, outer products, completeness
 
