@@ -1,4 +1,4 @@
-# Quantum Computing Foundations — Content Feasibility & Primer-Readiness Review (Design)
+/# Quantum Computing Foundations — Content Feasibility & Primer-Readiness Review (Design)
 
 **Date:** 2026-08-05
 **Status:** Approved design, awaiting implementation plan
