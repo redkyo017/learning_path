@@ -1,0 +1,9 @@
+{
+  "identifier": { "type": "dns", "value": "test.local" },
+  "status": "pending",
+  "challenges": [
+    { "type": "http-01",     "status": "pending", "url": "https://pebble:14000/chalZ/http-01/..."     },
+    { "type": "dns-01",      "status": "pending", "url": "https://pebble:14000/chalZ/dns-01/..."      },
+    { "type": "tls-alpn-01", "status": "pending", "url": "https://pebble:14000/chalZ/tls-alpn-01/..." }
+  ]
+}

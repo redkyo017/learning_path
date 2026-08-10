@@ -1,0 +1,65 @@
+networks:
+  certlab:
+    driver: bridge
+    # Day 5 (Task 7): pebble needs to tell challtestsrv a FIXED IP for
+    # test.local (see labs/acme/README.md), so toolbox/pebble/challtestsrv
+    # get static addresses in this subnet. Days 1-4 never depended on any
+    # particular IP (everything is reached by service name), so this is
+    # additive — nothing about how nginx/toolbox were reached changes.
+    ipam:
+      config:
+        - subnet: 10.77.30.0/24
+
+services:
+  toolbox:
+    build: ./toolbox
+    networks:
+      certlab:
+        ipv4_address: 10.77.30.10
+    volumes:
+      - .:/work
+    working_dir: /work
+    entrypoint: []
+
+  nginx:
+    image: nginx:stable
+    networks:
+      - certlab
+    volumes:
+      - ./services/active.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs
+    ports:
+      - "8443:443"
+
+  # Day 5 (Task 7) — ACME test server. Serves its ACME directory/management
+  # API over HTTPS signed by ITS OWN test CA (pebble.minica.pem) — see
+  # labs/acme/README.md for how certbot is told to trust that. -dnsserver
+  # points pebble at challtestsrv's static IP so pebble resolves the lab's
+  # test domain (and any DNS-01 TXT lookups) through challtestsrv instead of
+  # real DNS.
+  pebble:
+    image: letsencrypt/pebble
+    command: ["pebble", "-config", "/acme/pebble-config.json", "-dnsserver", "10.77.30.30:8053"]
+    networks:
+      certlab:
+        ipv4_address: 10.77.30.20
+    volumes:
+      - ./acme/pebble-config.json:/acme/pebble-config.json:ro
+    ports:
+      - "14000:14000"
+      - "15000:15000"
+
+  # Day 5 (Task 7) — companion challenge-validation server. In this lab it is
+  # used ONLY as pebble's DNS backend (so "test.local" resolves to toolbox's
+  # static IP, and DNS-01 TXT lookups have somewhere to land); its own
+  # built-in HTTP-01/HTTPS-01/TLS-ALPN-01 responders are disabled because
+  # certbot's --standalone plugin answers the HTTP-01 challenge itself, on
+  # toolbox, directly. See labs/acme/README.md.
+  challtestsrv:
+    image: letsencrypt/pebble-challtestsrv
+    command: ["pebble-challtestsrv", "-http01", "", "-https01", "", "-tlsalpn01", "", "-doh", ""]
+    networks:
+      certlab:
+        ipv4_address: 10.77.30.30
+    ports:
+      - "8055:8055"

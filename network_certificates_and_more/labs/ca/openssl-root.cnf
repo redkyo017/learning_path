@@ -1,0 +1,82 @@
+# labs/ca/openssl-root.cnf
+#
+# Root CA configuration. Used for two operations:
+#   1) self-signing the root certificate itself:
+#        openssl req -x509 -config openssl-root.cnf -extensions v3_ca ...
+#   2) signing the intermediate CA's CSR with the root's key:
+#        openssl ca -config openssl-root.cnf -extensions v3_intermediate_ca ...
+#
+# All paths below are relative to the CWD the script is invoked from, which
+# is assumed to be labs/ (the toolbox container's /work, bind-mounted from
+# this repo's labs/ directory). See make-root.sh / make-intermediate.sh.
+
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir              = ca/root
+certs            = $dir/certs
+crl_dir          = $dir/crl
+new_certs_dir    = $dir/newcerts
+database         = $dir/index.txt
+serial           = $dir/serial
+RANDFILE         = $dir/private/.rand
+
+private_key      = $dir/private/ca.key.pem
+certificate      = $dir/certs/ca.cert.pem
+
+default_md       = sha256
+default_days     = 3650
+name_opt         = ca_default
+cert_opt         = ca_default
+default_crl_days = 30
+preserve         = no
+policy           = policy_strict
+copy_extensions  = none
+
+# unique_subject (whether re-issuing a cert for the same DN is allowed) is
+# controlled by ca/root/index.txt.attr, written by make-root.sh, not here.
+
+# The root only ever signs ONE thing (the intermediate CSR), so it is safe
+# -- and good practice -- to require the intermediate's core identity fields
+# to match the root's own. OU/CN are allowed to differ.
+[ policy_strict ]
+countryName            = match
+stateOrProvinceName    = match
+organizationName       = match
+organizationalUnitName = optional
+commonName             = supplied
+emailAddress           = optional
+
+[ req ]
+default_bits       = 4096
+default_md          = sha256
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+# Used when no -extensions flag is passed to `openssl req -x509`.
+x509_extensions     = v3_ca
+
+[ req_distinguished_name ]
+countryName            = Country Name (2 letter code)
+stateOrProvinceName    = State or Province Name
+localityName           = Locality Name
+organizationName       = Organization Name
+organizationalUnitName = Organizational Unit Name
+commonName             = Common Name
+emailAddress           = Email Address
+
+# --- Root certificate itself: self-signed, CA:TRUE, no path length limit ---
+[ v3_ca ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints       = critical, CA:TRUE
+keyUsage                = critical, keyCertSign, cRLSign
+
+# --- Intermediate certificate: signed BY the root -------------------------
+# pathlen:0 means the intermediate may sign end-entity (leaf) certs only; it
+# may NOT sign another sub-CA underneath itself.
+[ v3_intermediate_ca ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints       = critical, CA:TRUE, pathlen:0
+keyUsage                = critical, keyCertSign, cRLSign

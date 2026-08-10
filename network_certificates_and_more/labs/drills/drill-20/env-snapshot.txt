@@ -1,0 +1,4 @@
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOME=/root
+LANG=C.UTF-8
+# note: no REQUESTS_CA_BUNDLE anywhere in this list

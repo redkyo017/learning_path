@@ -1,0 +1,6 @@
+{
+  "pebble": {
+    "httpPort": 5002,
+    "tlsPort": 5001
+  }
+}

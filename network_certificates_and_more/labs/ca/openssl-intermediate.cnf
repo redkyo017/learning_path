@@ -1,0 +1,92 @@
+# labs/ca/openssl-intermediate.cnf
+#
+# Intermediate CA configuration. Used to:
+#   1) create the intermediate's own CSR (before the root signs it):
+#        openssl req -config openssl-intermediate.cnf -new ...
+#   2) issue end-entity (leaf) server certs, signed by the intermediate:
+#        openssl ca -config openssl-intermediate.cnf -extensions server_cert ...
+#
+# issue-server-cert.sh does NOT edit this file in place. For each issuance it
+# copies everything above the "[ alt_names ]" placeholder into a scratch file
+# and appends a freshly generated [ alt_names ] block built from that
+# invocation's <cn> and SAN args, then points -config at the scratch file.
+# That keeps concurrent/repeated issuances for different CNs from racing on
+# a shared mutable config.
+#
+# All paths below are relative to the CWD the script is invoked from, which
+# is assumed to be labs/ (the toolbox container's /work). See
+# make-intermediate.sh / issue-server-cert.sh.
+
+[ ca ]
+default_ca = CA_default
+
+[ CA_default ]
+dir              = ca/intermediate
+certs            = $dir/certs
+crl_dir          = $dir/crl
+new_certs_dir    = $dir/newcerts
+database         = $dir/index.txt
+serial           = $dir/serial
+RANDFILE         = $dir/private/.rand
+
+private_key      = $dir/private/intermediate.key.pem
+certificate      = $dir/certs/intermediate.cert.pem
+
+default_md       = sha256
+default_days     = 375
+name_opt         = ca_default
+cert_opt         = ca_default
+default_crl_days = 30
+preserve         = no
+policy           = policy_loose
+copy_extensions  = none
+
+# unique_subject is controlled by ca/intermediate/index.txt.attr, written by
+# make-intermediate.sh, not here.
+
+# The intermediate issues MANY leaf certs (example.local, client01, ...)
+# across different days of the course, each with its own CN/O/OU, so field
+# matching against the intermediate's own subject would be wrong here.
+[ policy_loose ]
+countryName            = optional
+stateOrProvinceName    = optional
+localityName           = optional
+organizationName       = optional
+organizationalUnitName = optional
+commonName             = supplied
+emailAddress           = optional
+
+[ req ]
+default_bits       = 2048
+default_md          = sha256
+distinguished_name  = req_distinguished_name
+string_mask         = utf8only
+# Used when no -extensions flag is passed to `openssl req` (not relied on by
+# the scripts, which always pass -extensions explicitly; kept for parity
+# with openssl-root.cnf and so the learner sees the full pattern).
+x509_extensions     = server_cert
+
+[ req_distinguished_name ]
+countryName            = Country Name (2 letter code)
+stateOrProvinceName    = State or Province Name
+localityName           = Locality Name
+organizationName       = Organization Name
+organizationalUnitName = Organizational Unit Name
+commonName             = Common Name
+emailAddress           = Email Address
+
+# --- End-entity (leaf) server certs, signed by the intermediate -----------
+[ server_cert ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer:always
+basicConstraints       = CA:FALSE
+keyUsage                = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = serverAuth
+subjectAltName         = @alt_names
+
+# Placeholder — issue-server-cert.sh rewrites this section (in a scratch
+# copy of this file, see header note above) from its <cn> and SAN args.
+# This section MUST remain the last section in this file: the rewrite logic
+# cuts the file at the "[ alt_names ]" line and appends a new version.
+[ alt_names ]
+DNS.1 = localhost
