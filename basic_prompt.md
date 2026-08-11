@@ -32,3 +32,10 @@ I want to master Golang as fast as humanly possible.
 Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 15-day aggreesive practive plan the fast-tracks real results.
 Focus mainly on golang strength's (concurrency, build performmance app, insfrastructure app, system app), particularly in microservices and cloud native. Given i was a senior softwar engineer in BE, Golang, but had to switch to management for a long time and now i want to go back to SE
 Ask me questions before answering it.
+
+the most important is the reasonable of the content for each day, check if it's easy to master or not, for a humand being since the main idea is to "master the linear algebra as fast as humanly possible, skipping the traditional learning path, using strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners"
+
+I want to master network/web certificate (commonly called an SSL or TLS certificate) as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 5-day aggreesive practive plan the fast-tracks real results.
+Focus mainly on web/network security technologies but including far more all related to have a deeply understanding on this fields
+Ask me questions before answering it.
