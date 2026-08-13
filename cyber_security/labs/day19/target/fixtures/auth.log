@@ -1,0 +1,6 @@
+Aug 10 14:03:55 prod-web01 sudo: pam_unix(sudo:session): session opened for user root by (uid=0)
+Aug 10 14:04:20 prod-web01 useradd[8841]: new user: name=svc-monitor, UID=1001, GID=1001, home=/home/svc-monitor, shell=/bin/bash
+Aug 10 15:10:02 prod-web01 sshd[9021]: Accepted publickey for svc-monitor from 203.0.113.77 port 51322 ssh2: ED25519 SHA256:9x7z2exampleFingerprint
+Aug 10 15:10:02 prod-web01 sshd[9021]: pam_unix(sshd:session): session opened for user svc-monitor by (uid=0)
+Aug 11 03:00:01 prod-web01 CRON[10233]: (root) CMD (/usr/local/bin/sysmon-check >> /var/log/sysmon-check.log 2>&1)
+Aug 11 03:05:01 prod-web01 CRON[10251]: (root) CMD (/usr/local/bin/sysmon-check >> /var/log/sysmon-check.log 2>&1)

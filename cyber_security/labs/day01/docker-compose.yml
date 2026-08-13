@@ -1,0 +1,32 @@
+name: cyberlab-day01
+
+# Day 1 lab: adds only the `target` service. This reuses the shared
+# `attacker` container and `cyberlab` network from labs/base — run
+# ../base/up.sh FIRST, or `target` will have no network to join.
+#
+# `target` runs:
+#   - nginx on :80, left at stock config (leaks its version banner and
+#     serves a page with a fingerprintable HTML comment)
+#   - a deliberately leaky "legacy" service on :2121 that announces an
+#     outdated software name/version on connect
+#
+# See target/Dockerfile for detail. Nothing here is exploitable beyond
+# information disclosure — the point of Day 1 is recon, not a foothold.
+
+services:
+  target:
+    build:
+      context: ./target
+      dockerfile: Dockerfile
+    image: cyberlab/day01-target:latest
+    container_name: cyberlab-day01-target
+    hostname: target
+    networks:
+      - cyberlab
+    # No ports published to the host: the attacker container reaches
+    # `target` by service name over the shared cyberlab network only.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

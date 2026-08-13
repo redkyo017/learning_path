@@ -1,0 +1,91 @@
+name: cyberlab-day07
+
+# Day 7 lab: adds THREE services -- `juiceshop`, `proxy`, and `hardened` --
+# and does NOT redefine `attacker`. That container lives ONLY in
+# labs/base/docker-compose.yml (Day 0) and must already be running
+# (../base/up.sh) before this lab comes up. Every `docker compose exec
+# attacker ...` command below still runs from `labs/base`, exactly like
+# every earlier day.
+#
+# - `juiceshop` -- OWASP Juice Shop, the deliberately vulnerable target
+#   for today's HTTP/web-attack-surface lab. Runs stock, unmodified, on
+#   its default port 3000. This is what Attack Lab Steps 1-4 map,
+#   intercept, tamper, and inspect.
+#
+# - `proxy` -- a headless mitmproxy instance (`mitmdump`, the CLI/scriptable
+#   half of mitmproxy -- same interception engine as the interactive
+#   `mitmproxy` TUI or Burp's proxy, no terminal UI required). The
+#   attacker container routes requests through it with `curl -x
+#   proxy:8080 ...`; `proxy` loads `mitm/tamper_addon.py`, which rewrites
+#   one specific query parameter on every request in flight, before it
+#   ever reaches `juiceshop` -- the live demonstration that a client
+#   can never trust that a request server-side arrives unmodified from
+#   what it sent, once anything sits on the network path.
+#
+# - `hardened` -- an nginx reverse proxy in FRONT of `juiceshop` that adds
+#   the security headers (CSP, HSTS, X-Frame-Options, X-Content-Type-
+#   Options, Referrer-Policy, Permissions-Policy) and the explicit,
+#   non-wildcard CORS policy `juiceshop` itself doesn't ship -- see
+#   `hardened/nginx.conf`. This is the Defense Lab's before/after: curl
+#   `juiceshop:3000` directly (missing headers) vs. curl `hardened:8080`
+#   (headers present) against the exact same underlying app. This is
+#   also the realistic pattern for hardening a third-party app you can't
+#   edit the source of: fix it at the reverse-proxy edge, not in code
+#   you don't own.
+#
+# No ports are published to the host anywhere in this file: every
+# service is reached by name (juiceshop, proxy, hardened) from the
+# attacker container over the shared cyberlab network only.
+
+services:
+  juiceshop:
+    image: bkimminich/juice-shop
+    container_name: cyberlab-day07-juiceshop
+    hostname: juiceshop
+    networks:
+      - cyberlab
+
+  proxy:
+    image: mitmproxy/mitmproxy:latest
+    container_name: cyberlab-day07-proxy
+    hostname: proxy
+    networks:
+      - cyberlab
+    volumes:
+      - ./mitm:/home/mitmproxy/scripts:ro
+      - ./flows:/home/mitmproxy/flows
+    # mitmdump is mitmproxy's headless CLI -- deliberately chosen per this
+    # lab's "headless-friendly" requirement over the interactive TUI.
+    # --listen-port 8080 is the address the attacker container points
+    # curl at with `-x proxy:8080`; -s loads the tamper addon; -w writes
+    # a replayable flow capture; --set flow_detail=3 makes `docker
+    # compose logs proxy` show a readable summary of every intercepted
+    # request/response without needing to attach to a TUI.
+    command:
+      - mitmdump
+      - --listen-port
+      - "8080"
+      - -s
+      - /home/mitmproxy/scripts/tamper_addon.py
+      - --set
+      - flow_detail=3
+      - -w
+      - /home/mitmproxy/flows/day07.flow
+    depends_on:
+      - juiceshop
+
+  hardened:
+    image: nginx:alpine
+    container_name: cyberlab-day07-hardened
+    hostname: hardened
+    networks:
+      - cyberlab
+    volumes:
+      - ./hardened/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - juiceshop
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

@@ -1,0 +1,31 @@
+name: cyberlab-day08
+
+# Day 8 lab: adds ONLY the `dvwa` service -- Damn Vulnerable Web
+# Application, a well-known, self-contained (bundled Apache + PHP +
+# MySQL, all in one image) intentionally-vulnerable web app. This does
+# NOT redefine the `attacker` service -- that container lives ONLY in
+# labs/base/docker-compose.yml (Day 0) and must already be running
+# (../base/up.sh) before you bring this lab up.
+#
+# `dvwa` is reached from the attacker container as `dvwa` on the shared
+# `cyberlab` network -- same pattern as every earlier day's `target`.
+# No ports are published to the host: database setup, admin login, and
+# security-level selection are all done via `curl` from inside the
+# attacker container (see dvwa_setup.sh and README.md "Setup"), not a
+# host browser.
+
+services:
+  dvwa:
+    image: vulnerables/web-dvwa
+    container_name: cyberlab-day08-dvwa
+    hostname: dvwa
+    networks:
+      - cyberlab
+    # DVWA's bundled MySQL needs a few seconds after first start before
+    # PHP can reach it -- dvwa_setup.sh's setup.php POST is safe to
+    # retry (idempotent) if it runs before MySQL is ready.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

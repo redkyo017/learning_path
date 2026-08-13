@@ -1,0 +1,64 @@
+name: cyberlab-day02
+
+# Day 2 lab: adds `server` and `victim`. Reuses the shared `attacker`
+# container and `cyberlab` network from labs/base -- run ../base/up.sh
+# FIRST, or these services will have no `cyberlab` network to join.
+#
+# `server` runs a tiny plaintext "LegacyAuth" service on :2121; `victim`
+# logs into it on a loop, sending a username/password in cleartext every
+# few seconds. That exchange happens ENTIRELY on `day02-mitm`, a bridge
+# network private to THIS lab (not `external`, not shared with any other
+# day) -- so the ARP-spoof/MITM demo is self-contained: nothing on
+# `day02-mitm` is reachable from any other lab or from outside this
+# compose project.
+#
+# `server` is dual-homed (cyberlab + day02-mitm) so the attacker
+# container can enumerate it directly over cyberlab, same as every other
+# day's target. `victim` is day02-mitm ONLY.
+#
+# `attacker` (from labs/base) starts out on `cyberlab` alone -- it is NOT
+# automatically on `day02-mitm`. To run the ARP-spoof/MITM demo, join it
+# to the segment manually (full steps in README.md / SOLUTION.md):
+#
+#   docker network connect cyberlab-day02-mitm cyberlab-attacker
+#
+# This is a deliberate, visible step rather than something baked into
+# the compose file: getting onto the same L2 segment as a victim's
+# traffic is a distinct move from merely being able to reach a host on
+# a network you're already on, and the lab is built so that distinction
+# is something you have to notice and do, not something compose does
+# for you.
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: cyberlab/day02-server:latest
+    container_name: cyberlab-day02-server
+    hostname: server
+    networks:
+      - cyberlab
+      - day02-mitm
+    cap_add:
+      - NET_ADMIN
+
+  victim:
+    build:
+      context: ./victim
+      dockerfile: Dockerfile
+    image: cyberlab/day02-victim:latest
+    container_name: cyberlab-day02-victim
+    hostname: victim
+    networks:
+      - day02-mitm
+    depends_on:
+      - server
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab
+  day02-mitm:
+    name: cyberlab-day02-mitm
+    driver: bridge

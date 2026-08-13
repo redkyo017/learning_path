@@ -1,0 +1,46 @@
+name: cyberlab-day19
+
+# Day 19 lab: adds ONLY the `target` service -- a Debian host,
+# "prod-web01", that is ALREADY compromised at build time (see
+# target/Dockerfile for every planted IOC). This does NOT redefine the
+# `attacker` service -- that container lives ONLY in
+# labs/base/docker-compose.yml and must already be running (../base/up.sh)
+# before you bring this lab up.
+#
+# UNLIKE every earlier day, `target` here is not something you attack --
+# it's evidence you triage. `target` bind-mounts the SAME host loot
+# directory the attacker container already has at /loot (labs/base/loot),
+# and its entrypoint.sh copies every planted IOC into /loot/day19/evidence
+# at boot -- simulating a forensic acquisition. Investigation then happens
+# from the `attacker` container (reused here as the analyst workstation),
+# reading files under /loot/day19/evidence, run from labs/base:
+#
+#   cd cyber_security/labs/base
+#   docker compose exec attacker bash
+#   ls /loot/day19/evidence
+#
+# `target` itself can also be exec'd into directly, from THIS directory,
+# for optional live exploration (e.g. watching cron actually fire) -- see
+# README.md "Running docker compose exec for this lab" -- but that is a
+# secondary path, not the one this lab's SOLUTION.md verifies.
+
+services:
+  target:
+    build:
+      context: ./target
+      dockerfile: Dockerfile
+    image: cyberlab/day19-target:latest
+    container_name: cyberlab-day19-target
+    hostname: prod-web01
+    networks:
+      - cyberlab
+    volumes:
+      - ../base/loot:/loot
+    # No ports published to the host: this is a forensics lab, not a
+    # network-attack lab -- evidence is read from /loot/day19/evidence,
+    # not reached over the network.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

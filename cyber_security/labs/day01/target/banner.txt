@@ -1,0 +1,1 @@
+220 LegacyMail SMTP Server 2.3.1 (Ubuntu) ready

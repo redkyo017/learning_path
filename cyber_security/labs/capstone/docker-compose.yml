@@ -1,0 +1,116 @@
+name: cyberlab-capstone
+
+# Capstone lab (Day 20 attack / Day 21 defend): a small "company" --- a
+# public-facing ops portal (`webapp`) fronting an internal Linux host
+# (`host`) it was never supposed to expose, plus a simulated AWS side:
+# `fake-imds` stands in for real EC2 instance metadata at the real,
+# literal link-local address 169.254.169.254 (reachable ONLY from
+# `webapp`, never directly from `attacker` -- exactly like real IMDS is
+# only reachable from code running ON the instance itself), and `fake-s3`
+# stands in for an internet-reachable AWS API endpoint (reachable
+# directly from `attacker`, exactly like real S3 is reachable from
+# anywhere once you hold valid credentials). See README.md for the full
+# architecture map, why each network boundary exists, and the optional
+# real-AWS mode (setup.sh --with-aws) that swaps `fake-imds`/`fake-s3`
+# for the genuine AWS services.
+#
+# This does NOT redefine the `attacker` service -- that container lives
+# only in labs/base/docker-compose.yml and must already be running
+# (../base/up.sh) before you bring this lab up.
+
+services:
+  webapp:
+    build:
+      context: ./webapp
+      args:
+        OPS_PASSWORD: "${OPS_PASSWORD:-Fall2024-Temp!}"
+    image: cyberlab/capstone-webapp:latest
+    container_name: cyberlab-capstone-webapp
+    hostname: webapp
+    environment:
+      OPS_HOST: host
+      OPS_USER: opsuser
+    networks:
+      - cyberlab
+      - internal
+      - imds
+    volumes:
+      - ./logs/webapp:/var/log/webapp
+    # No ports published to the host -- reached only from `attacker` over
+    # the shared `cyberlab` network, exactly like every earlier day's
+    # target.
+
+  host:
+    build:
+      context: ./host
+      args:
+        OPS_PASSWORD: "${OPS_PASSWORD:-Fall2024-Temp!}"
+    image: cyberlab/capstone-host:latest
+    container_name: cyberlab-capstone-host
+    hostname: host
+    networks:
+      - internal
+    # No ports published, and deliberately NOT on `cyberlab` at all --
+    # `attacker` has no direct route to this container. Reaching it
+    # requires pivoting THROUGH `webapp` (see
+    # content/day20-capstone-attack.md, Stage 3 -- lateral movement).
+
+  fake-imds:
+    build:
+      context: ./fake-imds
+    image: cyberlab/capstone-fake-imds:latest
+    container_name: cyberlab-capstone-fake-imds
+    hostname: fake-imds
+    environment:
+      IMDS_MODE: "${IMDS_MODE:-v1}"
+      FAKE_ROLE_NAME: "${FAKE_ROLE_NAME:-lab-capstone-role}"
+      FAKE_ACCESS_KEY_ID: "${FAKE_ACCESS_KEY_ID:-AKIA_FAKE_CAPSTONE_LAB01}"
+      FAKE_SECRET_ACCESS_KEY: "${FAKE_SECRET_ACCESS_KEY:-FAKEfakeSecretForLabPurposesOnly1234567890}"
+      FAKE_SESSION_TOKEN: "${FAKE_SESSION_TOKEN:-FAKE-SESSION-TOKEN-CAPSTONE}"
+    networks:
+      imds:
+        ipv4_address: 169.254.169.254
+    # NOT on `cyberlab` and NOT on `internal` -- only `webapp` shares a
+    # network with this container, which is the entire point: the only
+    # way anyone ever reaches this address is by tricking `webapp` into
+    # fetching it on their behalf (SSRF), never by reaching it directly.
+    #
+    # IMDS_MODE=v1 (default, Day 20 baseline): metadata is served to any
+    # GET request, no token required -- vulnerable, matches real IMDSv1.
+    # IMDS_MODE=v2 (Day 21 hardening): metadata GETs are rejected with
+    # 401 unless a valid session token (obtained via a separate PUT to
+    # /latest/api/token) is presented -- matches real IMDSv2 enforcement.
+    # Flip it with: IMDS_MODE=v2 docker compose up -d --force-recreate fake-imds
+
+  fake-s3:
+    build:
+      context: ./fake-s3
+    image: cyberlab/capstone-fake-s3:latest
+    container_name: cyberlab-capstone-fake-s3
+    hostname: fake-s3
+    environment:
+      FAKE_ACCESS_KEY_ID: "${FAKE_ACCESS_KEY_ID:-AKIA_FAKE_CAPSTONE_LAB01}"
+      FAKE_BUCKET: "${FAKE_BUCKET:-lab-capstone-bucket}"
+    networks:
+      - cyberlab
+    # Reachable directly from `attacker`, on purpose -- once you HOLD
+    # valid (fake) credentials, using them looks exactly like using real
+    # stolen AWS credentials against the real, internet-reachable S3 API:
+    # no further SSRF or pivot needed, just the right Authorization-style
+    # header.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab
+  internal:
+    name: cyberlab-capstone-internal
+    driver: bridge
+    internal: true
+  imds:
+    name: cyberlab-capstone-imds
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 169.254.169.0/24

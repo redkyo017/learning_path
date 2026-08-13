@@ -1,0 +1,15 @@
+{"ts": "2026-08-12T10:00:01Z", "ip": "192.0.2.10", "user": null, "method": "GET", "path": "/", "status": 200}
+{"ts": "2026-08-12T10:00:15Z", "ip": "192.0.2.11", "user": null, "method": "GET", "path": "/login", "status": 200}
+{"ts": "2026-08-12T10:00:40Z", "ip": "203.0.113.44", "user": null, "method": "POST", "path": "/login", "body": "username=bob&password=wrong1", "status": 401}
+{"ts": "2026-08-12T10:00:52Z", "ip": "203.0.113.44", "user": null, "method": "POST", "path": "/login", "body": "username=bob&password=wrong2", "status": 401}
+{"ts": "2026-08-12T10:01:05Z", "ip": "203.0.113.44", "user": null, "method": "POST", "path": "/login", "body": "username=bob&password=Summer2024!", "status": 401}
+{"ts": "2026-08-12T10:01:30Z", "ip": "192.0.2.15", "user": null, "method": "GET", "path": "/", "status": 200}
+{"ts": "2026-08-12T10:01:52Z", "ip": "192.0.2.5", "user": null, "method": "GET", "path": "/?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E", "status": 200}
+{"ts": "2026-08-12T10:02:00Z", "ip": "198.51.100.23", "user": null, "method": "GET", "path": "/login", "status": 200}
+{"ts": "2026-08-12T10:02:10Z", "ip": "198.51.100.23", "user": null, "method": "POST", "path": "/login", "body": "username=alice&password=letmein", "status": 401}
+{"ts": "2026-08-12T10:02:25Z", "ip": "198.51.100.23", "user": null, "method": "POST", "path": "/login", "body": "username=alice' -- &password=x", "status": 200}
+{"ts": "2026-08-12T10:02:40Z", "ip": "198.51.100.23", "user": "alice", "method": "GET", "path": "/notes/1", "status": 200}
+{"ts": "2026-08-12T10:02:55Z", "ip": "198.51.100.23", "user": "alice", "method": "GET", "path": "/notes/2", "status": 200}
+{"ts": "2026-08-12T10:03:10Z", "ip": "192.0.2.20", "user": null, "method": "GET", "path": "/favicon.ico", "status": 404}
+{"ts": "2026-08-12T10:03:30Z", "ip": "192.0.2.21", "user": null, "method": "GET", "path": "/", "status": 200}
+{"ts": "2026-08-12T10:04:02Z", "ip": "192.0.2.11", "user": null, "method": "GET", "path": "/api/whoami", "status": 401}

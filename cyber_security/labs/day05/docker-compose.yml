@@ -1,0 +1,43 @@
+name: cyberlab-day05
+
+# Day 5 lab: adds ONLY the `target` service -- a deliberately-vulnerable
+# Debian host with three planted local-privilege-escalation vectors (see
+# target/Dockerfile). This does NOT redefine the `attacker` service --
+# that container lives ONLY in labs/base/docker-compose.yml and must
+# already be running (../base/up.sh) before you bring this lab up.
+#
+# UNLIKE every earlier day's target, this one is attacked LOCALLY, not
+# over the network from `attacker`: today's foothold is simulated with
+# `docker compose exec target su - lowpriv`, run from THIS directory
+# (labs/day05), because `target` is a service in *this* compose project,
+# not in labs/base's. Contrast Day 4, where every exec ran `attacker`
+# from labs/base and reached `target` only via curl/hydra over
+# `cyberlab` -- see README.md "Running docker compose exec" for the
+# precise distinction.
+#
+# `target` also bind-mounts the SAME host loot directory the attacker
+# container already has at /loot (labs/base/loot), so linpeas.sh staged
+# there (see tools/README.md) is visible inside `target` too, with no
+# extra container and no docker cp needed -- same "just cp into loot"
+# pattern Day 4 uses for its own scripts/wordlists.
+
+services:
+  target:
+    build:
+      context: ./target
+      dockerfile: Dockerfile
+    image: cyberlab/day05-target:latest
+    container_name: cyberlab-day05-target
+    hostname: target
+    networks:
+      - cyberlab
+    volumes:
+      - ../base/loot:/loot
+    # No ports published to the host: this lab is exec-only, exactly
+    # like every earlier day's target -- the difference here is WHICH
+    # service you exec into (target, not attacker) for the local steps.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

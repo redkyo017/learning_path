@@ -1,0 +1,16 @@
+# Day 11 detection: fires on a burst of TCP SYN packets to target's port
+# 5000 from the same source within a short window -- the exact half-open
+# SYN-scan pattern `nmap -sS` produces, and the same technique Day 2
+# (content/day02-networking.md) taught against a different target.
+#
+# Signature-based, by construction: this rule matches a SPECIFIC packet
+# shape (bare SYN, no data, five-in-ten-seconds from one source) rather
+# than any learned baseline of "normal" traffic. See content/
+# day11-detection.md Section 1 and Drill 4 for why that distinction
+# matters -- and for what an anomaly-based scan detector would need
+# instead (a baseline of normal connection rates per source).
+#
+# threshold:type both -- fires once per matching window per source, not
+# once per matching packet (avoids one alert per SYN once the threshold
+# is already crossed).
+alert tcp any any -> any 5000 (msg:"Possible port scan against target:5000 (SYN burst)"; flags:S; threshold:type both, track by_src, count 5, seconds 10; classtype:attempted-recon; sid:1000001; rev:1;)

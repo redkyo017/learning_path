@@ -1,0 +1,42 @@
+name: cyberlab-day06
+
+# Day 6 lab: the Phase-1 consolidation CTF. A single `box` service --
+# reusing the shared `attacker` container and `cyberlab` network from
+# labs/base (run ../base/up.sh FIRST) -- plus a one-shot `loot-loader`
+# that stages this lab's cracking wordlist into labs/base's shared
+# ./loot bind mount, the same pattern labs/day03 uses for its wordlist.
+#
+# This does NOT redefine the `attacker` service -- that service lives
+# only in labs/base/docker-compose.yml.
+#
+# `box` chains three flags end to end: recon/enum (flag1), a crackable
+# password hash (flag2), and a classic SUID-`find` privilege escalation
+# to root (flag3). See target/Dockerfile for the full setup and
+# content/day06-ctf-fundamentals.md for the chain + hints ladder.
+
+services:
+  box:
+    build:
+      context: ./target
+      dockerfile: Dockerfile
+    image: cyberlab/day06-box:latest
+    container_name: cyberlab-day06-box
+    hostname: box
+    networks:
+      - cyberlab
+    # No ports published to the host: the attacker container reaches
+    # `box` by service name over the shared cyberlab network only.
+
+  loot-loader:
+    image: alpine:3.20
+    container_name: cyberlab-day06-loot-loader
+    volumes:
+      - ./:/day06-src:ro
+      - ../base/loot:/loot
+    command: ["sh", "-c", "mkdir -p /loot/day06 && cp /day06-src/wordlist.txt /loot/day06/ && chmod +r /loot/day06/wordlist.txt && echo staged day06 lab data in /loot/day06 on the host at labs/base/loot/day06"]
+    restart: "no"
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

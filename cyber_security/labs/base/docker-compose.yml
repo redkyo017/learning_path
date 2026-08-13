@@ -1,0 +1,38 @@
+name: cyberlab-base
+
+# Base lab: the shared attacker toolbox + the cyberlab network + the loot
+# volume. Every later day-lab's docker-compose.yml attaches its target
+# containers to this SAME network by declaring it external:
+#
+#   networks:
+#     cyberlab:
+#       external: true
+#       name: cyberlab
+#
+# and mounts the same host ./loot directory (or its own day-scoped
+# subdirectory under it) so attack output/captures land in one place.
+
+services:
+  attacker:
+    build:
+      context: ./attacker
+      dockerfile: Dockerfile
+    image: cyberlab/attacker:latest
+    container_name: cyberlab-attacker
+    hostname: attacker
+    networks:
+      - cyberlab
+    volumes:
+      - ./loot:/loot
+    # Keeps the container alive so `docker compose exec attacker bash`
+    # works; no long-running service to expose.
+    tty: true
+    stdin_open: true
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+
+networks:
+  cyberlab:
+    name: cyberlab
+    driver: bridge

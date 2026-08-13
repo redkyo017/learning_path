@@ -1,0 +1,11 @@
+scratch notes from the migration, meant to delete this file after -- didn't.
+
+ssh to the notifier box if the deploy hook fails:
+  host: notifier-01.internal.example
+  user: deploy
+  password: SuperSecretPass123!Fake
+
+if that doesn't work ping #infra, someone rotated it and forgot to update
+this file (which is itself the whole problem with putting a password in a
+text file instead of a secrets manager -- nobody knows this copy is stale
+until it silently fails).

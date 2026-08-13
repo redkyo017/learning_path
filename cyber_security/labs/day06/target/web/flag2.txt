@@ -1,0 +1,1 @@
+CTF{cracked_the_weak_password_hash}

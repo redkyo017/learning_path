@@ -1,0 +1,5 @@
+# Runtime attack/access logs written by webapp -- regenerated every run,
+# never something to commit (and they will contain the exact payloads
+# you tried while working this lab).
+logs/webapp/*
+!logs/webapp/.gitkeep

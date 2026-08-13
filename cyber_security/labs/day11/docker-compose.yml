@@ -1,0 +1,71 @@
+name: cyberlab-day11
+
+# Day 11 lab: adds `target` and `detection`. Does NOT redefine `attacker`
+# -- that container lives ONLY in labs/base/docker-compose.yml (Day 0) and
+# must already be running (../base/up.sh) before this lab comes up.
+#
+# `target` (see target/app.py) replays three earlier attack surfaces on
+# one small Flask app, all logged as structured JSON to a shared
+# `weblogs` volume:
+#   - port 5000 itself is scannable (Day 2's SYN-scan replay)
+#   - POST /login is a weak, unlimited login (Day 4's brute-force replay)
+#   - GET /search is UNION-based-SQLi-vulnerable (a self-contained stand-in
+#     for Day 8's injection lab, which hasn't shipped yet in this path's
+#     build order -- see content/day11-detection.md Section 2's scope note)
+#
+# `detection` runs Suricata + fail2ban + a jq-based log watcher, all
+# consolidating into one file the learner greps: /var/log/detect.log.
+# It runs with `network_mode: "service:target"` DELIBERATELY -- it shares
+# target's network namespace/interface rather than joining `cyberlab` on
+# its own, for two concrete reasons:
+#   1. Suricata needs to sniff the SAME interface the scan traffic
+#      actually arrives on (target's eth0), not some other container's.
+#   2. fail2ban's ban action edits iptables IN THAT SAME NAMESPACE, so a
+#      ban actually blocks traffic reaching target -- exactly how a real
+#      fail2ban/Suricata pair is normally deployed: on the same host as
+#      the service they protect, not on a separate box.
+# A `network_mode` service cannot also declare its own `networks:` list
+# (Compose's schema forbids both on one service) -- that's why `detection`
+# has no `networks:` key below; it inherits target's network entirely.
+
+services:
+  target:
+    build:
+      context: ./target
+    image: cyberlab/day11-target:latest
+    container_name: cyberlab-day11-target
+    hostname: target
+    networks:
+      - cyberlab
+    volumes:
+      - weblogs:/var/log/webapp
+    # No ports published to the host: the attacker container reaches
+    # `target` by service name over the shared cyberlab network only.
+
+  detection:
+    build:
+      context: ./detection
+    image: cyberlab/day11-detection:latest
+    container_name: cyberlab-day11-detection
+    network_mode: "service:target"
+    depends_on:
+      - target
+    cap_add:
+      # NET_RAW for Suricata's packet capture; NET_ADMIN for fail2ban's
+      # iptables ban action. Both are scoped to this one container, not
+      # granted to `target` or `attacker`.
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - weblogs:/var/log/webapp
+      - ./rules/suricata/local.rules:/etc/suricata/rules/local.rules:ro
+      - ./rules/fail2ban/target-bruteforce-filter.conf:/etc/fail2ban/filter.d/target-bruteforce.conf:ro
+      - ./rules/fail2ban/target-bruteforce-jail.local:/etc/fail2ban/jail.d/target-bruteforce.local:ro
+
+volumes:
+  weblogs:
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

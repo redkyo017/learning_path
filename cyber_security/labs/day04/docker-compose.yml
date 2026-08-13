@@ -1,0 +1,38 @@
+name: cyberlab-day04
+
+# Day 4 lab: adds ONLY the `target` service -- a small Flask auth app
+# with a weak login endpoint (Attack Lab step 2) and a JWT API signed
+# with a guessable secret (Attack Lab steps 3-5). This does NOT
+# redefine the `attacker` service -- that container lives ONLY in
+# labs/base/docker-compose.yml (Day 0) and must already be running
+# (../base/up.sh) before you bring this lab up.
+#
+# `target` (see target/app.py) is a single live HTTP service on :5000,
+# reached from the attacker container as `target` over the shared
+# `cyberlab` network -- same pattern as day01's target, not day03's
+# offline loot-loader.
+#
+# This lab also ships jwt_forge.py, passwords.txt, and secrets.txt in
+# THIS directory (not staged by compose at all). Copy them into the
+# shared loot dir with a plain `cp` before attacking -- see README.md
+# "Setup" for the exact command. No extra container is needed for that:
+# labs/base/loot/ is just a host directory the already-running
+# `attacker` container has bind-mounted at /loot.
+
+services:
+  target:
+    build:
+      context: ./target
+      dockerfile: Dockerfile
+    image: cyberlab/day04-target:latest
+    container_name: cyberlab-day04-target
+    hostname: target
+    networks:
+      - cyberlab
+    # No ports published to the host: the attacker container reaches
+    # `target` by service name over the shared cyberlab network only.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

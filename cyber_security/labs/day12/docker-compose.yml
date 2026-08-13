@@ -1,0 +1,35 @@
+name: cyberlab-day12
+
+# Day 12 lab: adds ONLY the `target` service -- the Phase 2 web-
+# consolidation mini-CTF box (SQL injection auth bypass -> IDOR
+# escalation, see target/app.py). This does NOT redefine the `attacker`
+# service -- that container lives ONLY in labs/base/docker-compose.yml
+# (Day 0) and must already be running (../base/up.sh) before you bring
+# this lab up.
+#
+# `target` is a single live HTTP service on :5000, reached from the
+# attacker container as `target` over the shared `cyberlab` network --
+# same pattern as every earlier day-lab's target (day01, day04, ...).
+#
+# Stage 3 of this CTF (the detection challenge) does NOT need a running
+# container at all: it's a pair of static, provided log files under
+# ./logs/ (access.log, alerts.log) that the attacker container's
+# jq/grep already handle -- no extra service to define for it.
+
+services:
+  target:
+    build:
+      context: ./target
+      dockerfile: Dockerfile
+    image: cyberlab/day12-target:latest
+    container_name: cyberlab-day12-target
+    hostname: target
+    networks:
+      - cyberlab
+    # No ports published to the host: the attacker container reaches
+    # `target` by service name over the shared cyberlab network only.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

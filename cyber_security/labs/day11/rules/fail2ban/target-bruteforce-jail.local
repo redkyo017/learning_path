@@ -1,0 +1,24 @@
+# Day 11 detection: the brute-force jail. 5 failed logins from the same
+# source within 60 seconds -> banned for 300 seconds. Deliberately close
+# to Day 4's own hydra wordlist run (which fires far more than 5 failures
+# in under 60 seconds against an undefended target) so a Day-4-style
+# replay trips this jail quickly and visibly.
+#
+# `action = iptables-allports` is a stock fail2ban action (ships with the
+# package) -- it inserts a DROP rule for the banned source IP across all
+# ports. Because this `detection` container runs with
+# `network_mode: service:target` (see ../docker-compose.yml), that DROP
+# rule lands in target's OWN network namespace -- so a ban here actually
+# blocks the attacker's traffic from reaching target, not some unrelated
+# namespace. `backend = polling` avoids relying on inotify support inside
+# the container's log filesystem, which isn't guaranteed across every
+# Docker storage driver.
+[target-bruteforce]
+enabled  = true
+filter   = target-bruteforce
+logpath  = /var/log/webapp/access.log
+backend  = polling
+maxretry = 5
+findtime = 60
+bantime  = 300
+action   = iptables-allports[name=TargetBruteForce, protocol=all]

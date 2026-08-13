@@ -1,0 +1,5 @@
+{"id": "A1", "ts": "2026-08-12T10:01:00Z", "signature": "PORT_SCAN_SUSPECTED", "source_ip": "198.51.100.9", "confidence": "medium", "matched_snippet": "repeated SYN probes to sequential ports"}
+{"id": "A2", "ts": "2026-08-12T10:00:40Z", "signature": "BRUTE_FORCE_LOGIN", "source_ip": "203.0.113.44", "confidence": "high", "matched_snippet": "5 failed /login attempts from this source within a 10s window"}
+{"id": "A3", "ts": "2026-08-12T10:02:25Z", "signature": "SQLI_AUTH_BYPASS", "source_ip": "198.51.100.23", "confidence": "high", "matched_snippet": "username field on /login contains a quote followed by an SQL comment sequence (--)"}
+{"id": "A4", "ts": "2026-08-12T10:02:55Z", "signature": "IDOR_CROSS_USER_ACCESS", "source_ip": "198.51.100.23", "confidence": "high", "matched_snippet": "session user 'alice' fetched /notes/2, a note owned by a different user (admin)", "flag": "CTF{logs-reveal-the-full-attack-chain}"}
+{"id": "A5", "ts": "2026-08-12T10:01:52Z", "signature": "XSS_ATTEMPT_REFLECTED", "source_ip": "192.0.2.5", "confidence": "low", "matched_snippet": "<script> tag observed in a query-string parameter"}

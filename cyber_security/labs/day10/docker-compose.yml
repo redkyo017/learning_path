@@ -1,0 +1,42 @@
+name: cyberlab-day10
+
+# Day 10 lab: static secrets + supply-chain scanning. Unlike every earlier
+# day-lab, there is NO live network target here -- gitleaks/trufflehog scan
+# files on disk, and trivy/grype/syft scan a built image's filesystem; none
+# of that needs a running service reachable over `cyberlab`. This compose
+# file exists ONLY to build the `vulnapp` image so there is something for
+# trivy/grype/syft to point at:
+#
+#   cd cyber_security/labs/day10
+#   docker compose build vulnapp
+#
+# `vulnapp` is never `up`'d -- no `docker compose up`, no ports, no
+# `attacker`-reachable service. Compare this to day04's `target`, which WAS
+# a live service reached over `cyberlab`; day10 is intentionally different.
+#
+# Stage sample-repo/ into the shared loot dir before running gitleaks/
+# trufflehog against it from inside the attacker container:
+#
+#   mkdir -p ../base/loot/day10
+#   cp -r sample-repo ../base/loot/day10/
+#
+# See README.md for the full gitleaks/trufflehog/trivy/grype/syft
+# walkthrough and toolbox install notes -- none of these five tools ship in
+# the base attacker image built by labs/base/attacker/Dockerfile, so
+# README.md documents the exact install command for each.
+
+services:
+  vulnapp:
+    build:
+      context: ./sample-repo
+      dockerfile: Dockerfile
+    image: cyberlab/day10-vulnapp:latest
+    container_name: cyberlab-day10-vulnapp
+    networks:
+      - cyberlab
+    # Deliberately never started. `docker compose build vulnapp` only.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab

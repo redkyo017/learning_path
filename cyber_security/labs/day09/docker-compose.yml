@@ -1,0 +1,78 @@
+name: cyberlab-day09
+
+# Day 9 lab: adds TWO services -- `juiceshop` (a real, intentionally
+# vulnerable app: OWASP Juice Shop) and `internal` (a tiny custom service
+# this lab owns, playing the role of "the thing SSRF is dangerous because
+# it exists"). This does NOT redefine the `attacker` service -- that
+# container lives ONLY in labs/base/docker-compose.yml (Day 0) and must
+# already be running (../base/up.sh) before you bring this lab up.
+#
+# Network topology -- this is the whole point of today's SSRF target:
+#
+#   attacker --- cyberlab --- juiceshop --- day09-app --- internal
+#                              (dual-homed)
+#
+# `attacker` is on `cyberlab` only. `internal` is on `day09-app` only.
+# The two networks do NOT overlap anywhere except at `juiceshop`, which is
+# dual-homed onto both. That means:
+#   - attacker CAN reach juiceshop directly (curl juiceshop:3000/...).
+#   - attacker CANNOT reach internal directly -- there is no path; it is
+#     not on cyberlab and never will be, unlike Day 2's manual
+#     `docker network connect` escape hatch. That absence is deliberate:
+#     SSRF is exactly the technique for reaching a host you have NO direct
+#     route to, by making a DIFFERENT, better-connected process (juiceshop)
+#     fetch it on your behalf.
+#
+# `day09-app` is also declared `internal: true` -- Compose/Docker will not
+# give this network a route to the outside internet either, matching the
+# real-world shape of a private application subnet (Day 2's segmentation
+# lesson, applied here).
+#
+# `internal` is pinned to 169.254.169.254 -- a REAL cloud metadata-service
+# address (AWS/GCP/Azure all use this exact link-local IP for IMDS). This
+# is not decorative: Day 15 attacks the real thing at this real address in
+# a real AWS sandbox; today's `internal` container is a safe, local stand-
+# in for that same address and category of target, using a subnet
+# (169.254.0.0/16, the IANA-reserved link-local block) chosen specifically
+# so the address matches. See content/day09-access-ssrf-csrf.md Section 1
+# and Drill 2 for why blocking this exact address matters, and
+# content/day15-metadata-s3.md for where this thread goes next.
+
+services:
+  juiceshop:
+    image: bkimminich/juice-shop:latest
+    container_name: cyberlab-day09-juiceshop
+    hostname: juiceshop
+    networks:
+      - cyberlab
+      - day09-app
+    # No ports published to the host: the attacker container reaches
+    # `juiceshop` by service name over the shared cyberlab network only,
+    # exactly like every earlier day's `target`.
+
+  internal:
+    build:
+      context: ./internal
+      dockerfile: Dockerfile
+    image: cyberlab/day09-internal:latest
+    container_name: cyberlab-day09-internal
+    hostname: internal
+    networks:
+      day09-app:
+        ipv4_address: 169.254.169.254
+    # Deliberately NOT on `cyberlab` -- see topology note above. This is
+    # the one line that makes `internal` an SSRF target instead of just
+    # another directly-reachable `target`.
+
+networks:
+  cyberlab:
+    external: true
+    name: cyberlab
+  day09-app:
+    name: cyberlab-day09-app
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 169.254.0.0/16

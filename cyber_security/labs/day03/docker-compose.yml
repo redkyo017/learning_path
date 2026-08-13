@@ -1,0 +1,29 @@
+name: cyberlab-day03
+
+# Day 3 lab: NO live network target -- this is a crypto/offline-cracking
+# day, not a networking day. There's nothing to scan or MITM here; the
+# "target" is the hashes.txt file below plus openssl and Python running
+# LOCALLY inside the already-running attacker container.
+#
+# This compose file does NOT redefine the `attacker` service -- that
+# service lives ONLY in labs/base/docker-compose.yml (Day 0). Its only
+# job is to stage this lab's data (hashes, wordlist, demo scripts) into
+# labs/base's shared `./loot` bind mount, under /loot/day03/, so the
+# attacker container -- already running, already mounting that same
+# host directory at /loot -- can see them without any change to its own
+# service definition.
+#
+# It runs once (a one-shot "loader" service, same idea as a DB-seed
+# container), copies the files, and exits 0. `docker compose up` will
+# print an exit code 0 for `loot-loader` -- that is success, not a
+# crash; there is no long-running process for this lab to keep alive.
+
+services:
+  loot-loader:
+    image: alpine:3.20
+    container_name: cyberlab-day03-loot-loader
+    volumes:
+      - ./:/day03-src:ro
+      - ../base/loot:/loot
+    command: ["sh", "-c", "mkdir -p /loot/day03 && cp /day03-src/hashes.txt /day03-src/wordlist.txt /day03-src/ecb_cbc_demo.sh /day03-src/padding_oracle_demo.py /loot/day03/ && chmod +r /loot/day03/hashes.txt /loot/day03/wordlist.txt && chmod +x /loot/day03/ecb_cbc_demo.sh /loot/day03/padding_oracle_demo.py && echo staged day03 lab data in /loot/day03 on the host at labs/base/loot/day03"]
+    restart: "no"

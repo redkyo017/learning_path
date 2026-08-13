@@ -1,0 +1,19 @@
+# ATTACK LAB: two real, historical vulnerable pins, planted on purpose so
+# trivy/grype have something to find when scanning the built image's
+# filesystem. Severities below are the published NVD/vendor CVSS v3 base
+# scores as of writing -- always re-check the live NVD entry, scores are
+# occasionally revised.
+#
+#   PyYAML  5.1    -> CVE-2020-1747  (CVSS 9.8 CRITICAL) -- yaml.load() on
+#                     untrusted input can execute arbitrary Python objects.
+#                     This is the highest-severity CVE in this image; see
+#                     Drill 2 and SOLUTION.md.
+#   urllib3 1.24.1 -> CVE-2019-11324 (CVSS 7.5 HIGH) -- improper certificate
+#                     validation in certain configurations.
+#
+# Flask is pinned recent/patched on purpose, as a contrast: not every
+# dependency in a real repo is vulnerable, and a scan report is only useful
+# if you can tell which lines actually matter.
+PyYAML==5.1
+urllib3==1.24.1
+Flask==2.3.3

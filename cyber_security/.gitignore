@@ -1,0 +1,26 @@
+# AWS credentials and secrets — never commit these
+.aws/
+aws-credentials*
+credentials.csv
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+
+# Lab output / loot / captured artifacts
+**/loot/
+**/output/
+*.pcap
+*.pcapng
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS cruft
+.DS_Store
+!*.example

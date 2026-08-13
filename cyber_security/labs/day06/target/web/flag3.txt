@@ -1,0 +1,1 @@
+CTF{suid_find_to_root}
