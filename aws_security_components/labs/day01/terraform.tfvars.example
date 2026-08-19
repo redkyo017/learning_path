@@ -1,0 +1,5 @@
+# Copy to terraform.tfvars and edit. Real terraform.tfvars is gitignored;
+# this .example file ships with placeholders only.
+
+region            = "us-east-1"  # MUST match labs/base's region
+app_object_prefix = "app-data"   # object-key prefix this lab treats as "what the app actually uses" — see variables.tf

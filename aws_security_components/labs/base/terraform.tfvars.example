@@ -1,0 +1,28 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit it.
+# NO credentials, account IDs, or secret values belong in this file, ever.
+
+region  = "us-east-1"          # pick your lab region; every day-lab module must match
+project = "aws-sec-lab"        # short prefix — shows up in bucket/role/log names
+
+# --- Networking (defaults are fine for a single-learner lab) ---------------
+# vpc_cidr             = "10.42.0.0/16"
+# public_subnet_cidrs  = ["10.42.0.0/24", "10.42.1.0/24"]
+# private_subnet_cidrs = ["10.42.10.0/24", "10.42.11.0/24"]
+
+# --- App image ---------------------------------------------------------------
+# REQUIRED before the ECS service will actually reach RUNNING.
+# Build and push labs/base/app/ to your own ECR repo first (see README
+# "Build and push the app image"), then set this to that image URI:
+app_image = "REPLACE_ME.dkr.ecr.us-east-1.amazonaws.com/aws-sec-lab-app:latest"
+
+# app_container_port = 8080
+# fargate_cpu         = 256
+# fargate_memory      = 512
+# desired_count       = 1
+
+# --- Cost knobs ---------------------------------------------------------------
+# log_retention_days          = 3
+# secret_recovery_window_days = 0   # 0 = force-delete secret immediately on destroy
+
+# tags = { Owner = "your-name" }

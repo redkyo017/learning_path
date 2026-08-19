@@ -1,0 +1,19 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit it.
+# NO credentials, account IDs, or secret values belong in this file, ever.
+
+region  = "us-east-1"           # must match labs/base's region
+project = "aws-sec-lab-day02"   # short prefix — distinct from base's project name
+
+# REQUIRED — no default on purpose. ARN of the IAM user/role you'll use to
+# `aws sts assume-role` into low_priv for this lab. Find your own with:
+#   aws sts get-caller-identity --query Arn --output text
+assumer_principal_arn = "arn:aws:iam::REPLACE_ME_ACCOUNT_ID:user/REPLACE_ME_YOUR_USER"
+
+# --- THE BREAK / HARDEN TOGGLE ----------------------------------------------
+# false = BREAK phase (no boundary on low_priv, escalation lands).
+# true  = HARDEN phase (boundary attached, escalation blocked). Flip this and
+# re-apply for the harden half of the lab — see README.md "THE HARDEN".
+permission_boundary_enabled = false
+
+# tags = { Owner = "your-name" }

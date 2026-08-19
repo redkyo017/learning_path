@@ -1,0 +1,20 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit it.
+# NO credentials, account IDs, or secret values belong in this file, ever.
+
+region  = "us-east-1"   # MUST match the region labs/base was applied in
+project = "aws-sec-lab" # MUST match labs/base's `project` value
+
+# --- Rate-based rule tuning (defaults are fine for the lab as written) -----
+# rate_limit                 = 100   # AWS-enforced minimum for a rate-based rule
+# rate_evaluation_window_sec = 300   # 60 | 120 | 300 | 600
+
+# --- False-positive tune -----------------------------------------------------
+# Leave commented (variable default = false) for your FIRST apply, so you see
+# the GenericRFI_QUERYARGUMENTS false positive against /fetch?url= for
+# yourself (see README.md "THE HARDEN"). Then uncomment this and re-apply:
+# tune_generic_rfi_false_positive = true
+
+# log_retention_days = 3
+
+# tags = { Owner = "your-name" }

@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars and fill in. Real terraform.tfvars is gitignored.
+
+region  = "us-east-1"    # MUST match the region labs/base was applied in
+project = "aws-sec-lab"  # MUST match labs/base's `project` value
+
+trail_log_retention_days = 14

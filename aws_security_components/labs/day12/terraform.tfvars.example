@@ -1,0 +1,29 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored —
+# never commit it. No real credentials belong in this file even as a
+# placeholder value; the leaked-key fixture's actual secret material lives
+# only in local Terraform state (also gitignored), never in a .tfvars file.
+
+region = "us-east-1" # MUST match the region labs/base was applied in
+
+project = "aws-sec-lab" # MUST match labs/base's `project` value exactly —
+                          # this module looks up base's bucket/table/KMS
+                          # alias by name using this prefix, not by output
+
+create_leaked_user_fixture = true # false if Day 11 already created one —
+                                    # set leaked_user_name to that identity
+
+leaked_user_name = "aws-sec-lab-ci-leaked"
+
+app_object_prefix = "app-data" # MUST match Day 1's lab's own app_object_prefix
+                                 # value — the one S3 prefix the app actually uses
+
+waf_metadata_block_patterns = [
+  "169.254.169.254",
+  "169.254.170.2",
+  "/latest/meta-data",
+  "/v2/credentials",
+]
+
+tags = {
+  Sprint = "aws-security-mastery"
+}

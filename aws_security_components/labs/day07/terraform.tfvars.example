@@ -1,0 +1,18 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit it.
+# NO credentials, account IDs, or secret values belong in this file, ever.
+
+region = "us-east-1"   # must match the region labs/base was applied in
+
+# --- Base state lookup -------------------------------------------------------
+# Default assumes the standard layout: labs/day07/ next to labs/base/.
+# base_state_path = "../base/terraform.tfstate"
+
+# --- Network scope for the endpoint SG / NACL --------------------------------
+# Defaults to the whole base VPC CIDR (10.42.0.0/16) — matches labs/base's
+# default vpc_cidr. If you changed vpc_cidr when applying base, change this
+# to match, or Exercise 1's "SG vs NACL" reasoning won't line up with your
+# actual deployment.
+# allowed_client_cidr = "10.42.0.0/16"
+
+# tags = { Owner = "your-name" }

@@ -1,0 +1,28 @@
+# Copy to terraform.tfvars and edit. terraform.tfvars is gitignored --
+# never commit it. No real secret values belong in this file either way.
+
+region  = "us-east-1"  # must match the region labs/base was applied in
+project = "aws-sec-lab" # must match the `project` value labs/base was applied with
+
+# --- Break vs. harden toggle -------------------------------------------
+# Leave false for your first apply to reproduce THE BREAK (leaked-secret
+# demo task definition). Flip to true (or `terraform apply -var="harden=true"`)
+# once you've found the leak and are ready to apply THE HARDEN (Secrets
+# Manager secrets block + rotation + HTTPS listener).
+harden = false
+
+# --- ACM domain prerequisite --------------------------------------------
+# A PUBLIC ACM certificate can only be issued for a domain you actually
+# control, proven via DNS validation. Fill BOTH in only if that's true for
+# you AND the domain's hosted zone lives in Route53 in this same account:
+domain_name     = "" # e.g. "labs.example.com" -- leave "" if you don't own a domain
+route53_zone_id = "" # e.g. "Z0123456789ABCDEFGHIJ" -- leave "" if the above is ""
+
+# If domain_name/route53_zone_id are left blank, harden=true instead
+# imports a SELF-SIGNED certificate into ACM -- still a real TLS listener,
+# just not publicly trusted (browsers/curl will warn; see README). This
+# value only affects that self-signed cert's Common Name -- it is not a
+# real, resolvable domain either way.
+fallback_common_name = "lab.internal.example"
+
+rotation_days = 30

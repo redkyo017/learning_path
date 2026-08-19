@@ -1,0 +1,18 @@
+# Copy to terraform.tfvars (gitignored) and adjust as needed.
+# No credentials or account IDs belong in this file — every value here is a
+# name, a tag value, or a boolean toggle.
+
+region  = "us-east-1"   # must match labs/base's region
+project = "aws-sec-lab" # keep aligned with labs/base's project var
+
+demo_role_name = "aws-sec-lab-day10-abac-demo"
+
+# --- ABAC tag scheme -------------------------------------------------------
+abac_project_tag        = "aws-sec-lab"
+abac_environment_tag    = "sandbox"
+abac_classification_tag = "internal"
+
+# --- Org-level (SCP) — leave both as-is unless you are the Organizations
+# management account and deliberately want to attach the SCP for real.
+enable_org_resources = false
+org_scp_target_id    = "" # e.g. an OU ID like "ou-xxxx-xxxxxxxx" or the org root ID "r-xxxx"

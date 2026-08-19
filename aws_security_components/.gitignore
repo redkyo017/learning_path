@@ -1,0 +1,41 @@
+# Terraform state and working files — may contain resource IDs, IPs, secrets
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Real variable files with actual values — only *.tfvars.example ships in git
+*.tfvars
+!*.tfvars.example
+
+# Environment files with real values — only *.env.example ships in git
+.env
+.env.*
+!.env.example
+
+# Terraform crash logs
+crash.log
+crash.*.log
+
+# Local override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI history / plan output that may embed account details
+*.tfplan
+.terraform.tfstate.lock.info
+
+# Lambda build artifacts (zipped by `data "archive_file"` at apply time)
+**/build/
+*.zip
+
+# OS noise
+.DS_Store
+
+# Capstone attack evidence — may contain live temp credentials / real data. NEVER commit.
+capstone-evidence/
+**/capstone-evidence/
+exfil-loot/
+**/exfil-loot/

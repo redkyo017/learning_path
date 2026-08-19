@@ -1,0 +1,16 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is gitignored — never commit it.
+# NO credentials, account IDs, or secret values belong in this file, ever.
+
+region  = "us-east-1"   # MUST match the region labs/base was applied with
+project = "aws-sec-lab" # MUST match labs/base's var.project exactly
+
+# --- The break/harden toggle -------------------------------------------
+# Start here (false = locked / correct). Prove the exfil attempt is
+# blocked, THEN flip this to true, re-apply, and watch it succeed. Flip
+# back to false to re-lock. See README "THE BREAK" / "THE HARDEN".
+break_key_policy = false
+
+# test_object_key = "day04/exfil-test.txt"
+
+# tags = { Owner = "your-name" }
