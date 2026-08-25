@@ -85,7 +85,7 @@ Row by row, in the order that actually builds understanding:
    integral rather than a finite sum, because position is a continuous
    label rather than a discrete one — the only real novelty the continuum
    introduces.
-4. **Operators become matrices.** $-i\hbar\,\partial_x$ (Day 15's momentum
+4. **Operators become matrices.** $-i\hbar\,\partial_x$ (Day 16's momentum
    operator) is a linear operator on an infinite-dimensional space; in any
    *finite* truncation (below) it becomes an ordinary matrix, for exactly
    the reason your course represents observables as Hermitian matrices.
@@ -107,12 +107,12 @@ Row by row, in the order that actually builds understanding:
    analogy to the Born rule you meet in your course — it *is* the Born
    rule, already stated in wave-mechanics language before you had the name
    for it.
-8. **Time dependence as unitary evolution.** Day 17's stationary-state
+8. **Time dependence as unitary evolution.** Day 16's stationary-state
    phase $e^{-iE_nt/\hbar}$ attached to each $\phi_n$ is the eigenvalue
    form of the general evolution law $\lvert\psi(t)\rangle
    =U(t)\lvert\psi(0)\rangle$, $U(t)=e^{-iHt/\hbar}$: applied to an energy
    eigenstate, $U(t)\lvert n\rangle=e^{-iE_nt/\hbar}\lvert n\rangle$,
-   recovering exactly the phase Day 17 attached by hand. $U$ is unitary
+   recovering exactly the phase Day 16 attached by hand. $U$ is unitary
    ($U^\dagger U=I$) because $H$ is Hermitian — the same fact that makes
    every gate in your course's circuits unitary.
 
@@ -414,7 +414,7 @@ before moving on.
 
 5. *(construct an $H$)* A block of mass $m$ slides without friction on an
    incline of angle $\theta$, with generalized coordinate $s$ measured
-   along the incline from the top. Construct the Hamiltonian $H(s,p)$.
+   along the incline upward from the base. Construct the Hamiltonian $H(s,p)$.
 6. *(a Poisson bracket)* Compute $\{x^2,p\}$ directly from the single-pair
    definition.
 
@@ -500,8 +500,8 @@ $f_1=62.5\text{ Hz}$, $f_2=125\text{ Hz}$, $f_3=187.5\text{ Hz}$.
 =450\text{ m/s}$. Phase velocity $v_p=\omega/k=c_0+\alpha
 k^2=300+2.0(25)=350\text{ m/s}$. The two differ ($v_g\ne v_p$) because the
 medium is dispersive; the wave packet's envelope moves at $450\text{
-m/s}$, faster than any individual crest. *(If missed: revisit Day 5,
-dispersion.)*
+m/s}$, faster than any individual crest. *(If missed: revisit Day 7,
+group velocity and dispersion.)*
 
 **5.** $L=\tfrac12m\dot s^2-mg\sin\theta\,s$, so
 $p=\partial L/\partial\dot s=m\dot s\Rightarrow\dot s=p/m$. Then
@@ -520,7 +520,7 @@ J}$. Ratio $hf/k_BT=1.60$, so $e^{1.60}-1\approx3.95$, giving
 $\langle E\rangle=6.63\times10^{-21}/3.95\approx1.68\times10^{-21}
 \text{ J}$ — about $40\%$ of the classical value $k_BT$, illustrating
 Planck's suppression of high-frequency modes relative to the classical
-(Rayleigh–Jeans) prediction. *(If missed: revisit Day 12, blackbody
+(Rayleigh–Jeans) prediction. *(If missed: revisit Day 13, blackbody
 radiation.)*
 
 **8.** $E_{\text{photon}}=hc/\lambda=(6.626\times10^{-34})(2.998\times10^8)

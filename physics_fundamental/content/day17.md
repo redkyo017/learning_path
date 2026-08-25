@@ -36,7 +36,7 @@ Time budget: ~4 hours.
 - Self-contained; neither text is required. Builds on Day 3 (classical
   oscillator, $\omega_0$), Day 7 (bandwidth theorem, Gaussian packets),
   and Day 16 (TISE, box, node-counting rule); touches Day 2's
-  forbidden-region language, Day 8's evanescent waves, Day 12's
+  forbidden-region language, Day 8's electromagnetic waves, Day 12's
   freeze-out flag, and Day 13's field-mode-as-oscillator picture.
 
 ## Theory
@@ -53,7 +53,7 @@ $$-\frac{\hbar^2}{2m}\frac{d^2\psi}{dx^2} + \frac12 m\omega_0^2x^2\,\psi
 = E\psi,$$
 defines the **quantum harmonic oscillator (QHO)** — arguably the single
 most-used solvable system in all of quantum mechanics, because *any*
-smooth potential looks quadratic near a minimum, and because (as beat 2
+smooth potential looks quadratic near a minimum, and because (as beat 4
 below explains) a mode of a quantized field is exactly this equation.
 
 Solving this in general means finding every normalizable $\psi$ and $E$
@@ -203,7 +203,9 @@ re-derived). Note $\kappa\propto\sqrt{m}$, so tunneling favors light
 particles heavily (Exercise 4), and $T$ falls off exponentially in both
 $d$ and $\sqrt{V-E}$ — the sensitivity the STM below exploits.
 
-This is exactly the same mathematics as Day 8's evanescent light waves.
+This is exactly the same mathematics as an **evanescent light wave** — an
+optical effect this path has not covered, but one that happens to Day 8's
+electromagnetic waves, and worth meeting here for the parallel.
 Total internal reflection doesn't kill the field on the far side of the
 interface outright — it produces an evanescent field that decays
 exponentially, carrying no energy away on its own, and if a second
@@ -405,19 +407,20 @@ proton, carrying kinetic energy from the confinement and Coulomb potential
 energy from the attraction. Using the order-of-magnitude form
 $\Delta p\sim\hbar/\Delta x$ (not the strict $\hbar/(2\Delta x)$ bound —
 more on this choice below):
-$$E(\Delta x) \sim \frac{\hbar^2}{2m(\Delta x)^2} - \frac{ke^2}{\Delta x},$$
-where $k=1/(4\pi\epsilon_0)$ is the Coulomb constant, $e$ the elementary
-charge, $m$ the electron mass. Minimize:
+$$E(\Delta x) \sim \frac{\hbar^2}{2m(\Delta x)^2} - \frac{k_ee^2}{\Delta x},$$
+where $k_e\equiv1/(4\pi\epsilon_0)$ is the Coulomb constant ($k_e$, not
+$k$, to keep it clear of beat 6's wave number — the same symbol Day 14
+used), $e$ the elementary charge, $m$ the electron mass. Minimize:
 $$\frac{dE}{d(\Delta x)} = -\frac{\hbar^2}{m(\Delta x)^3} +
-\frac{ke^2}{(\Delta x)^2} = 0 \;\Longrightarrow\;
-\Delta x = \frac{\hbar^2}{mke^2}.$$
+\frac{k_ee^2}{(\Delta x)^2} = 0 \;\Longrightarrow\;
+\Delta x = \frac{\hbar^2}{mk_ee^2}.$$
 This is *exactly* the textbook definition of the Bohr radius,
-$a_0=\hbar^2/(mke^2)\approx5.29\times10^{-11}$ m $=0.529$ Å — the
+$a_0=\hbar^2/(mk_ee^2)\approx5.29\times10^{-11}$ m $=0.529$ Å — the
 uncertainty-principle estimate reproduces hydrogen's size directly.
 Substituting back:
-$$E_{\min} = \frac{\hbar^2}{2m}\left(\frac{mke^2}{\hbar^2}\right)^2 -
-ke^2\left(\frac{mke^2}{\hbar^2}\right) = \frac{mk^2e^4}{2\hbar^2} -
-\frac{mk^2e^4}{\hbar^2} = -\frac{mk^2e^4}{2\hbar^2} \approx -13.6\
+$$E_{\min} = \frac{\hbar^2}{2m}\left(\frac{mk_ee^2}{\hbar^2}\right)^2 -
+k_ee^2\left(\frac{mk_ee^2}{\hbar^2}\right) = \frac{mk_e^2e^4}{2\hbar^2} -
+\frac{mk_e^2e^4}{\hbar^2} = -\frac{mk_e^2e^4}{2\hbar^2} \approx -13.6\
 \text{eV},$$
 landing on the exact Bohr ground-state energy. Be honest about what this
 "exactness" is worth: it is a coincidence of hydrogen's numbers combined
@@ -490,7 +493,7 @@ then the Solutions.
 
 ## Hints
 
-1. The spectrum was boxed in Theory beat 4; for the sketches, recall that
+1. The spectrum was stated in Theory beat 4; for the sketches, recall that
    $\phi_0$ is a plain Gaussian (even, no nodes) and $\phi_1$ is $x$ times
    that Gaussian (odd, one node at the origin) — then think about where a
    classical oscillator moves *slowest* (and therefore spends the most

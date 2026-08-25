@@ -115,7 +115,7 @@ Since "the particle is found somewhere" is a certainty, total probability
 must be $1$, which forces the **normalization condition**
 $$\int_{-\infty}^{\infty} |\psi(x,t)|^2\,dx = 1.$$
 $|\psi|^2 = \psi^*\psi$ is manifestly real and non-negative for *any*
-complex $\psi$ (Day 3's lesson from the sister quantum-computing path
+complex $\psi$ (the sister quantum-computing path's day 3
 applies verbatim: $z^*z=|z|^2\ge0$ for every complex $z$), which is exactly
 why $\psi$ was allowed to be complex in Section 1 without breaking the
 requirement that a *probability* be a real, non-negative number. Every
@@ -257,8 +257,10 @@ per mode number.
 
 ### 5. Orthogonality and expansion in the eigenbasis
 
-Two eigenfunctions with different $n$ are **orthogonal**:
-$$\int_0^L \phi_n(x)\phi_m(x)\,dx = \delta_{nm}, \qquad n\ne m,$$
+Two eigenfunctions with different $n$ are **orthogonal**, and each is
+normalized, so the set is **orthonormal**:
+$$\int_0^L \phi_n(x)\phi_m(x)\,dx = \delta_{nm}
+\quad\text{(i.e. } 0 \text{ for } n\ne m, \; 1 \text{ for } n=m),$$
 verified directly (worked in full for $n,m=1,2$ in the Exercises below;
 the general integral uses the same product-to-sum identity and vanishes
 term by term for any $n\ne m$). This is exactly day 7's mode-basis inner
