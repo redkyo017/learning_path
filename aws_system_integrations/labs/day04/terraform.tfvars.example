@@ -1,0 +1,34 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# NEVER commit terraform.tfvars to version control.
+# NEVER put real access keys, secret keys, or account IDs in this file.
+
+# AWS region
+aws_region = "ap-southeast-1"
+
+# Short label — appears in all resource names
+environment = "day04lab"
+
+# Payment error rate — 0 = never fail, 100 = always fail
+# Set to 100 for Exercise B (simulate payment service failure)
+payment_error_rate = 0
+
+# Consumer broken flag — false = normal processing, true = always throws exception
+# Set to true for Exercise C (DLQ fill simulation)
+consumer_broken = false
+
+# ---------------------------------------------------------------------------
+# Credentials: do NOT put keys here.
+# Use one of these approaches instead:
+#
+#   Option 1 — Environment variables (recommended for CI):
+#     export AWS_ACCESS_KEY_ID=<your_key_id>
+#     export AWS_SECRET_ACCESS_KEY=<your_secret_key>
+#     export AWS_SESSION_TOKEN=<session_token_if_using_sso>
+#
+#   Option 2 — AWS SSO (recommended for local dev):
+#     aws sso login --profile <your_profile>
+#     export AWS_PROFILE=<your_profile>
+#
+#   Option 3 — Named profile in provider block (not in this file):
+#     Add `profile = "your-profile"` in the provider block in main.tf
+# ---------------------------------------------------------------------------

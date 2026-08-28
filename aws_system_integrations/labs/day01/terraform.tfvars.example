@@ -1,0 +1,8 @@
+aws_region  = "ap-southeast-1"   # Change to your preferred region
+environment = "lab-day01"        # Prefix for all created resources
+
+# No credentials here — use AWS CLI profile or environment variables:
+# export AWS_PROFILE=your-profile
+# export AWS_ACCESS_KEY_ID=...     (never commit real keys)
+# export AWS_SECRET_ACCESS_KEY=... (never commit real keys)
+# export AWS_SESSION_TOKEN=...     (for temporary credentials)
