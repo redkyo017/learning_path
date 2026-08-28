@@ -208,4 +208,4 @@ The SQS console provides a "Start DLQ redrive" button that automates this. AWS C
 
 ## Teardown
 
-See `teardown.md` for step-by-step teardown instructions. The internal ALB charges ~$0.008/hour even with zero traffic.
+See `teardown.md` for step-by-step teardown instructions. The internal ALB charges ~$0.0225/hour base even with zero traffic.

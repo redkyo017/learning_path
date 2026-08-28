@@ -4,10 +4,10 @@
 
 | Resource | Cost |
 |---|---|
-| Internal ALB | ~$0.008/hour (~$0.19/day) — charged even with zero traffic |
+| Internal ALB | ~$0.0225/hour base + LCU usage (~$0.54/day) — charged even with zero traffic |
 | Lambda | $0.00 at lab volume (free tier covers 1M requests/month) |
 | SQS (audit-queue + audit-dlq) | $0.00 at lab volume (free tier covers 1M requests/month) |
-| VPC Endpoints (SQS + Lambda) | ~$0.01/hour each (~$0.50/day total) |
+| VPC Endpoints (SQS + Lambda) | ~$0.01/hour per AZ; 2 endpoints × 2 AZs = ~$0.04/hour (~$0.96/day total) |
 | CloudWatch alarm | $0.10/alarm/month (negligible) |
 
 **Primary driver:** The internal ALB and VPC Interface Endpoints charge hourly even with no traffic. Destroy the lab when you are done.

@@ -131,12 +131,12 @@ curl -s \
 ### 6. Smoke test — rate limit returns 429
 
 ```bash
-for i in $(seq 1 30); do
-  curl -s -o /dev/null -w "%{http_code}\n" \
-    -H "Authorization: Bearer token" \
-    https://<api-id>.execute-api.<region>.amazonaws.com/summary
-done
-# You should see 429 after hitting the throttle threshold
+# Fire 50 requests in parallel — a sequential curl loop rarely exceeds
+# the 10 req/s throttle, so parallelism is needed to trigger 429s.
+seq 1 50 | xargs -P 25 -I {} curl -s -o /dev/null -w "%{http_code}\n" \
+  -H "Authorization: Bearer token" \
+  https://<api-id>.execute-api.<region>.amazonaws.com/summary | sort | uniq -c
+# Expected: a mix of 200s and 429s once the burst bucket (20) is exhausted
 ```
 
 ---

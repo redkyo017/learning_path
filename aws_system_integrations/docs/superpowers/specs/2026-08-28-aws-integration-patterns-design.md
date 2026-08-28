@@ -48,8 +48,9 @@ By the end the learner can, without notes:
 
 ### The core mental model: integration is about boundaries
 
-Every enterprise integration pattern exists to manage **what crosses a boundary and under what terms** — trust, coupling, data shape, protocol, cost. The four boundary types in this path:
+Every enterprise integration pattern exists to manage **what crosses a boundary and under what terms** — trust, coupling, data shape, protocol, cost. The five boundary types in this path:
 
+- **API gateway boundary**: the contract layer between external clients and backend services (payload shape, protocol, auth policy). Distinct from ingress: ingress controls *admission*; the API gateway controls *interface*
 - **Ingress boundary**: client → your system (who can enter, how, at what rate)
 - **Internal boundary**: service → service inside your system (coupling, reliability contract)
 - **Egress boundary**: your system → AWS managed services or internet (cost, auditability, PCI scope)
@@ -236,7 +237,7 @@ aws_system_integrations/
 <1 paragraph: the enterprise pain this pattern family solves. Concrete. Reference banking/payment/microservice context.>
 
 ## The boundary this manages
-<1–2 sentences: which of the 4 boundary types, and what it controls.>
+<1–2 sentences: which of the 5 boundary types, and what it controls.>
 
 ## Core patterns
 

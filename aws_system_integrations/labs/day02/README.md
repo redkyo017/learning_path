@@ -119,10 +119,13 @@ aws elbv2 register-targets \
 
 ---
 
-### Exercise 3: WAF fraud-signal blocking
+## WAF fraud-signal exercise
+
+The lab also attaches a WAF WebACL to the ALB with two rules in **Count mode** (the Day 2 content explains why you never start in Block mode).
+
 1. Send a normal request — observe 200
 2. Send a request with the fraud header: `curl -H "x-fraud-signal: high-risk" http://<alb-dns>/`
 3. Check CloudWatch → WAF → `FraudSignalHeader` metric — should show 1 counted request
 4. Change the rule action from `count {}` to `block {}` in the AWS Console (do not modify Terraform)
 5. Re-send the fraud-signal request — observe 403
-6. Reset the rule back to Count mode before teardown
+6. Reset the rule back to Count mode before teardown (otherwise the next `terraform apply` will show drift)

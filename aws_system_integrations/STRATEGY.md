@@ -3,7 +3,7 @@
 ## The core mental model: integration is about boundaries
 
 Every enterprise integration pattern exists to manage what crosses a boundary
-and under what terms. Four boundary types in this path:
+and under what terms. Five boundary types in this path:
 
 - **Ingress boundary** — client → your system (who can enter, how, at what rate)
 - **API gateway boundary** — the contract layer between external clients and backend services (payload shape, protocol, auth policy, rate contract). Distinct from ingress: ingress controls *admission* (who enters, at what rate, L4 vs L7 routing); the API gateway controls *interface* (what shape the request takes and what cross-cutting policies apply before services see it).

@@ -6,7 +6,7 @@ Mobile banking apps must talk to multiple backend services (payment, account, no
 
 Without a BFF, every client change requires coordination across multiple teams. An API Gateway layer — and specifically a Backend-for-Frontend on top of it — absorbs that complexity at one boundary so backend services can evolve independently.
 
-This day covers the five ingress patterns you will use in every enterprise AWS integration: reverse proxy, API Gateway, BFF, API Composition/Aggregation, and Anti-Corruption Layer (ACL). By the end you should be able to pick the right pattern in under two minutes given a scenario.
+This day covers the five API-gateway-boundary patterns you will use in every enterprise AWS integration: reverse proxy, API Gateway, BFF, API Composition/Aggregation, and Anti-Corruption Layer (ACL). By the end you should be able to pick the right pattern in under two minutes given a scenario.
 
 ---
 

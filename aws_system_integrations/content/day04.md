@@ -434,4 +434,4 @@ Order Lambda  →  SQS (audit-queue)  →  Consumer Lambda
 
 ## Teardown
 
-See `labs/day04/teardown.md` for step-by-step teardown instructions. Run `terraform destroy` and verify all resources are deleted to avoid ongoing ALB charges (~$0.008/hour).
+See `labs/day04/teardown.md` for step-by-step teardown instructions. Run `terraform destroy` and verify all resources are deleted to avoid ongoing ALB charges (~$0.0225/hour base plus LCU usage).

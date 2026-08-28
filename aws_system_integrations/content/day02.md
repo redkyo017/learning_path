@@ -115,12 +115,13 @@ The default action (weighted) is the fallback when no rule matches. This means: 
 **How it works:** Mutual TLS (mTLS) requires the client to present a certificate during the TLS handshake. The server validates that certificate against a trust store (a CA or set of CAs). If validation fails, the connection is rejected at the network layer — no HTTP request is ever forwarded to the backend.
 
 **AWS implementation:**
-- **ALB mTLS (preferred for most use cases):** ALB validates the client certificate against an ACM Private CA trust store. On successful validation, ALB forwards the cert details as HTTP headers (`x-amzn-mtls-clientcert`, `x-amzn-mtls-clientcert-serial-number`, etc.) to the backend. Backend trusts these headers and uses them for identity — no cert validation logic in the service.
+- **ALB mTLS (preferred for most use cases):** ALB validates the client certificate against an **ELB trust store** (`aws_lb_trust_store`) — a CA certificate bundle you upload to S3 and register with the listener. The bundle can contain your own CAs (exported from ACM Private CA) or an external partner's CA certificates. On successful validation, ALB forwards the cert details as HTTP headers (`x-amzn-mtls-clientcert`, `x-amzn-mtls-clientcert-serial-number`, etc.) to the backend. Backend trusts these headers and uses them for identity — no cert validation logic in the service.
 - **NLB TLS passthrough (when backend must validate):** NLB passes the raw TLS bytes to the backend, which terminates TLS and validates the client cert itself. Required when the backend needs to extract and validate cert extensions (OIDs, SANs) that ALB does not expose as headers.
 
 **When it's wrong:**
 - Using NLB passthrough when multiple backend instances each need their own cert validation logic — certificate authority configuration drifts across instances.
-- Using ALB mTLS when the client cert is not from a CA you control (e.g., a partner uses a public CA cert signed for a specific domain) — ACM Private CA is for your own PKI hierarchy.
+- Using ALB mTLS when the backend must inspect certificate extensions (custom OIDs, SANs) that ALB does not surface as headers — use NLB TLS passthrough so the backend sees the raw handshake.
+- Confusing the trust store with ACM Private CA: ACM PCA *issues* certificates for your own PKI; the ALB trust store *validates* client certs against any CA bundle you upload, including a partner's external CA. You cannot import a partner's CA into ACM PCA.
 
 ---
 
@@ -175,7 +176,7 @@ Use this table to choose the right ingress tier. Start with the protocol row; ea
 | Protocol | TCP, UDP, TLS (L4) | HTTP, HTTPS, WebSocket (L7) | HTTP, WebSocket (L7) |
 | Routing rules | IP + port only | Host, path, header, query string | Path + method; stage variables |
 | WAF support | No | Yes (WebACL attachment) | Yes (WebACL attachment) |
-| mTLS | TLS passthrough only | Yes (ALB mTLS, ACM Private CA) | Yes (mutual TLS on custom domain) |
+| mTLS | TLS passthrough only | Yes (ALB mTLS trust store) | Yes (mutual TLS on custom domain) |
 | Latency | ~1ms (single-digit) | ~5–10ms (TLS termination + L7 parse) | ~10–20ms (managed service overhead) |
 | Cost | Per NLCU; no per-request fee | Per LCU; no per-request fee | Per request + per connection |
 | Best for | Non-HTTP, ultra-low latency, TLS passthrough | Microservices, canary, header routing | Serverless backends, API management features |
@@ -206,7 +207,7 @@ A banking partner must connect to your internal settlement API. They present a c
 
 **Hint:** Think about where you want the certificate validated relative to your services, and what the backend receives after validation.
 
-**Solution sketch:** ALB mTLS (AWS ACM Private CA integration). The partner's CA certificate is imported as a trust anchor into ACM Private CA. ALB validates the client cert against this trust store during the TLS handshake. On success, ALB forwards cert details via `x-amzn-mtls-clientcert-*` headers. The settlement service reads the partner identity from the header — no cert parsing code in the service. This is preferred over application-layer validation because: (1) connection is rejected before HTTP is parsed if cert is invalid, (2) no cert validation logic per service, (3) the CA trust store is managed in one place (ACM).
+**Solution sketch:** ALB mTLS with an ELB trust store. Upload the partner's CA certificate bundle to S3 and create an `aws_lb_trust_store` referencing it, then enable mTLS verify mode on the HTTPS listener with that trust store. ALB validates the client cert against the partner's CA during the TLS handshake. On success, ALB forwards cert details via `x-amzn-mtls-clientcert-*` headers. The settlement service reads the partner identity from the header — no cert parsing code in the service. This is preferred over application-layer validation because: (1) the connection is rejected before HTTP is parsed if the cert is invalid, (2) no cert validation logic per service, (3) the CA trust store is managed in one place at the listener. (Note: ACM Private CA is not involved here — it issues certs for your own PKI; the trust store validates against any CA bundle, including a partner's external CA.)
 
 ---
 
@@ -240,6 +241,7 @@ See `labs/day02/`. The lab provisions an ALB with two target groups (`v1-tg`, `v
 Success signal:
 - `curl http://<alb-dns>/api/payments` — approximately 9 in 10 responses say `"version": "v1"`
 - `curl -H "x-api-version: v2" http://<alb-dns>/api/payments` — always returns `"version": "v2"`
+- A request with `x-fraud-signal: high-risk` increments the WAF `FraudSignalHeader` count metric in CloudWatch (the lab's WAF rules start in Count mode — see the WAF exercise in the lab README)
 
 The `v2_weight` variable controls the canary percentage. Promote v2 by setting `v2_weight = 50`, then `v2_weight = 100`.
 
@@ -267,4 +269,4 @@ If security groups remain:
 aws ec2 delete-security-group --group-id sg-XXXXXXXXXXXXXXXXX --region ap-southeast-1
 ```
 
-Estimated cost if left running: ALB ~$0.008/hour (~$0.19/day), two t3.micro instances ~$0.0104/hour each (~$0.50/day combined). Full lab cost if forgotten overnight: approximately $0.70.
+Estimated cost if left running: ALB ~$0.0225/hour base plus LCU usage (~$0.54/day), two t3.micro instances ~$0.0104/hour each (~$0.50/day combined). Full lab cost if forgotten overnight: approximately $1.05.

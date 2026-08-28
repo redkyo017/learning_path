@@ -129,15 +129,29 @@ resource "local_file" "jwt_authorizer_src" {
         # identitySource under payload_format_version 2.0 is a list
         token = sources[0].replace("Bearer ", "").strip()
 
-        if not token:
-            raise Exception("Unauthorized")
-
-        # Construct an IAM policy that allows invocation of this API
+        # Resolve the resource ARN before deciding allow/deny
         method_arn = event.get("routeArn", event.get("methodArn", "*"))
-        # Generalise to all routes in this API so a single allow covers the stage
+        # Generalise to all routes in this API so a single decision covers the stage
         arn_parts  = method_arn.split(":")
         arn_prefix = ":".join(arn_parts[:6])
         stage_arn  = arn_prefix + ":*"
+
+        if not token:
+            # Return an explicit Deny — API GW responds 403.
+            # Raising an exception here would surface as a 500 to the client.
+            return {
+                "principalId": "anonymous",
+                "policyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": "execute-api:Invoke",
+                            "Effect": "Deny",
+                            "Resource": stage_arn,
+                        }
+                    ],
+                },
+            }
 
         policy = {
             "principalId": "mobile-user",

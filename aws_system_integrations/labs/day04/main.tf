@@ -34,10 +34,6 @@ provider "aws" {
 # DATA SOURCES
 ###############################################################################
 
-data "aws_caller_identity" "current" {}
-
-data "aws_region" "current" {}
-
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -493,7 +489,7 @@ PYTHON
 # Archive files for each Lambda
 data "archive_file" "payment_lambda" {
   type        = "zip"
-  output_path = "/tmp/payment_lambda.zip"
+  output_path = "${path.module}/.lambda_build/payment_lambda.zip"
   source {
     content  = local.payment_lambda_code
     filename = "handler.py"
@@ -502,7 +498,7 @@ data "archive_file" "payment_lambda" {
 
 data "archive_file" "order_lambda" {
   type        = "zip"
-  output_path = "/tmp/order_lambda.zip"
+  output_path = "${path.module}/.lambda_build/order_lambda.zip"
   source {
     content  = local.order_lambda_code
     filename = "handler.py"
@@ -511,7 +507,7 @@ data "archive_file" "order_lambda" {
 
 data "archive_file" "consumer_lambda" {
   type        = "zip"
-  output_path = "/tmp/consumer_lambda.zip"
+  output_path = "${path.module}/.lambda_build/consumer_lambda.zip"
   source {
     content  = local.consumer_lambda_code
     filename = "handler.py"

@@ -66,10 +66,8 @@ Best practice: visibility timeout should be at least 6× the Lambda timeout. Rea
 
 **Expected behavior after setting `consumer_broken = true` and sending 10 messages:**
 
-- Each of the 10 messages is received by Consumer Lambda 3 times (maxReceiveCount = 3).
-- Each invocation throws RuntimeError.
-- After 3 receive attempts per message: 10 messages × 3 attempts = 30 Lambda invocations total.
-- All 10 messages move to the DLQ.
+- Each of the 10 messages is received 3 times (maxReceiveCount = 3), and every receive ends in a RuntimeError.
+- The guaranteed outcome is **all 10 messages in the DLQ**. The Lambda *invocation count* will be between 3 and 30: the event source mapping uses `batch_size = 10` with a 5-second batching window, so multiple messages are often delivered in one invocation, and the whole batch fails together. 30 invocations only occurs if every message is delivered alone.
 
 **Verifying DLQ depth:**
 ```bash

@@ -101,7 +101,7 @@ aws_system_integrations/
   ## The core mental model: integration is about boundaries
 
   Every enterprise integration pattern exists to manage what crosses a boundary
-  and under what terms. Four boundary types in this path:
+  and under what terms. Five boundary types in this path (see STRATEGY.md for the API gateway boundary):
 
   - **Ingress boundary** — client → your system (who can enter, how, at what rate)
   - **Internal boundary** — service → service inside your system (coupling, reliability)
@@ -429,7 +429,7 @@ aws_system_integrations/
 
 - [ ] **Step 7: Write `aws_system_integrations/labs/day02/teardown.md`**
 
-  Checklist: `terraform destroy`, verify ALB deleted, EC2 instances terminated, target groups deleted, security groups deleted (may require manual if dependency graph leaves orphans — include the `aws ec2 delete-security-group` command). Estimated cost if left running: ALB ~$0.008/hour (~$0.19/day).
+  Checklist: `terraform destroy`, verify ALB deleted, EC2 instances terminated, target groups deleted, security groups deleted (may require manual if dependency graph leaves orphans — include the `aws ec2 delete-security-group` command). Estimated cost if left running: ALB ~$0.0225/hour base + LCU (~$0.54/day).
 
 - [ ] **Step 8: Verify all 7 files exist; confirm all exercises have Hint + Solution sketch, Break it exercise in README, Break it answer in SOLUTION**
 
@@ -590,7 +590,7 @@ aws_system_integrations/
 
 - [ ] **Step 7: Write `aws_system_integrations/labs/day04/teardown.md`**
 
-  Checklist: `terraform destroy`, verify internal ALB deleted, SQS queues deleted (including DLQ), Lambda functions deleted, CloudWatch log groups deleted. Estimated cost: Lambda ($0.00 at lab volume), SQS ($0.00 at lab volume), internal ALB (~$0.008/hour).
+  Checklist: `terraform destroy`, verify internal ALB deleted, SQS queues deleted (including DLQ), Lambda functions deleted, CloudWatch log groups deleted. Estimated cost: Lambda ($0.00 at lab volume), SQS ($0.00 at lab volume), internal ALB (~$0.0225/hour base + LCU).
 
 - [ ] **Step 8: Verify all 7 files exist; confirm all exercises have Hint + Solution sketch**
 

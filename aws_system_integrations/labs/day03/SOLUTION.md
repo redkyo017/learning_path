@@ -64,9 +64,8 @@ Account A (provider / card vault)           Account B (consumer / payment proces
 Key points:
 - No VPC CIDRs need to be shared or non-overlapping — PrivateLink uses the ENI, not routing.
 - Account A never sees Account B's VPC — only the endpoint connection request.
-- Endpoint policy in Account A scopes what Account B can call: specific actions on specific resources.
-- Account B IAM policies scope what roles in Account B can use the endpoint.
-- For a real vault, the allowed actions would be `kms:Decrypt` and `kms:GenerateDataKey` only — not `kms:*`.
+- Access control for an endpoint to your own Endpoint Service: `allowed_principals` on the Endpoint Service (who may connect), the endpoint's security group (which sources may reach the ENI), and the vault service's own authentication (mTLS or app-level auth). Endpoint *policies* do not apply here — they exist only on endpoints to AWS services.
+- Account B IAM policies scope which roles in Account B can create or modify the endpoint itself.
 
 ---
 
@@ -114,6 +113,9 @@ Both are set in `main.tf`. Forgetting these is a common source of "why isn't pri
 
 **S3 bucket policy `DenyNonVpcEndpointAccess`:**
 The bucket policy in `main.tf` uses a `Deny` on all access unless `aws:SourceVpce` matches the Gateway Endpoint ID. This means even if someone has valid IAM credentials, they cannot access the bucket from outside the VPC. This is a defense-in-depth control important for PCI environments.
+
+**SQS queue policy `DenySendOutsideVpcEndpoint`:**
+The audit queue applies the same pattern. Note that an `Allow` statement with a `SourceVpce` condition alone does *not* enforce "endpoint only" — a principal with IAM-level `sqs:SendMessage` could still publish from anywhere. The explicit `Deny` with `StringNotEquals` is what closes the non-endpoint path. The Deny is scoped to `SendMessage` only, so queue management (purge, delete, get-attributes) from the console or CLI still works during teardown.
 
 **`acceptance_required = false` in the Endpoint Service:**
 In this single-account lab, auto-acceptance is used for simplicity. In production cross-account PrivateLink, always set `acceptance_required = true` and use `aws_vpc_endpoint_connection_accepter` to approve specific requests — or automate approval only for known principals.

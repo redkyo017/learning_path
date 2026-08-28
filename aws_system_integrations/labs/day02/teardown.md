@@ -4,9 +4,9 @@
 
 | Resource | Rate | Per day |
 |---|---|---|
-| ALB | ~$0.008/hour | ~$0.19 |
+| ALB | ~$0.0225/hour base + LCU usage | ~$0.54+ |
 | 2 × t3.micro EC2 | ~$0.0104/hour each | ~$0.50 combined |
-| **Total** | | **~$0.69/day** |
+| **Total** | | **~$1.05/day** |
 
 Destroy the lab immediately after completing exercises.
 

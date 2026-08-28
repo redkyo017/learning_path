@@ -35,8 +35,6 @@ provider "aws" {
 
 data "aws_caller_identity" "current" {}
 
-data "aws_region" "current" {}
-
 # Availability zones in the region (need at least 2 for multi-AZ endpoints)
 data "aws_availability_zones" "available" {
   state = "available"
@@ -286,7 +284,11 @@ resource "aws_sqs_queue" "audit_queue" {
   }
 }
 
-# Restrict queue to VPC endpoint
+# Restrict queue to VPC endpoint.
+# The Allow alone does not enforce "endpoint only" — an explicit Deny is what
+# blocks SendMessage from outside the endpoint, mirroring the S3 bucket policy.
+# Deny covers SendMessage only, so console/CLI management (purge, delete,
+# get-attributes) still works during teardown.
 resource "aws_sqs_queue_policy" "audit_queue" {
   queue_url = aws_sqs_queue.audit_queue.id
 
@@ -294,7 +296,19 @@ resource "aws_sqs_queue_policy" "audit_queue" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AllowFromVpcEndpointOnly"
+        Sid    = "DenySendOutsideVpcEndpoint"
+        Effect = "Deny"
+        Principal = "*"
+        Action = ["sqs:SendMessage"]
+        Resource = aws_sqs_queue.audit_queue.arn
+        Condition = {
+          StringNotEquals = {
+            "aws:SourceVpce" = aws_vpc_endpoint.sqs.id
+          }
+        }
+      },
+      {
+        Sid    = "AllowLambdaViaEndpoint"
         Effect = "Allow"
         Principal = { AWS = aws_iam_role.lambda_exec.arn }
         Action = [
@@ -413,7 +427,7 @@ resource "aws_iam_role_policy" "lambda_exec" {
 # Inline Lambda code — writes a test record to S3 and publishes a message to SQS
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  output_path = "/tmp/payment_processor.zip"
+  output_path = "${path.module}/.lambda_build/payment_processor.zip"
 
   source {
     content  = <<-PYTHON

@@ -81,6 +81,13 @@ The `Resource` is generalised to `arn:...:api-id/*` (all routes in the API). If 
 
 The `context` map is passed to the Lambda integration as `$context.authorizer.*` — you can use it to forward the `userId` to the BFF without decoding the JWT a second time.
 
+### 401 vs 403 — who rejects the request
+
+Two different components reject unauthenticated requests, with different status codes:
+
+- **Missing `Authorization` header → 401 from API Gateway.** The authorizer's identity source is not present, so API GW rejects the request *without invoking the authorizer Lambda at all*.
+- **Header present but token empty/invalid → 403 from the authorizer's Deny policy.** The authorizer runs and returns an explicit Deny. Do not `raise` an exception for this case — an unhandled authorizer exception surfaces to the client as a 500, which reads as a server bug rather than an auth failure.
+
 ---
 
 ## Usage plan explanation
