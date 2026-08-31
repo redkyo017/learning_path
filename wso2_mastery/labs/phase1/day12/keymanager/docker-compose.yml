@@ -1,0 +1,7 @@
+services:
+  keymanager:
+    build: .
+    ports:
+      - "9444:9444"
+    environment:
+      - PORT=9444

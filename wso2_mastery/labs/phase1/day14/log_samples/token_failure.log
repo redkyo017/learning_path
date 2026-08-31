@@ -1,0 +1,17 @@
+[2026-08-31 14:22:58,011] [http-nio-9443-exec-1] DEBUG {org.wso2.carbon.identity.oauth2.OAuth2Service} - Initiating token request for grant_type: client_credentials
+[2026-08-31 14:22:58,015] [http-nio-9443-exec-1] DEBUG {org.wso2.carbon.identity.oauth.OAuthClientAuthn} - Authenticating client: api-consumer-1
+[2026-08-31 14:22:58,018] [http-nio-9443-exec-1] DEBUG {org.wso2.carbon.identity.oauth2.token.handlers.grant.ClientCredentialsGrantHandler} - Validating client credentials for client_id: api-consumer-1
+[2026-08-31 14:22:58,022] [http-nio-9443-exec-1] DEBUG {org.wso2.carbon.identity.oauth2.OAuth2Service} - Client authenticated successfully for client_id: api-consumer-1
+[2026-08-31 14:22:58,031] [http-nio-9443-exec-1] INFO {org.wso2.carbon.identity.oauth2.OAuth2Service} - Access token issued to [api-consumer-1] for scope [read:orders write:orders]
+[2026-08-31 14:22:58,033] [http-nio-9443-exec-1] DEBUG {org.wso2.carbon.identity.oauth2.OAuth2Service} - Token expiry set to 3600 seconds for client_id: api-consumer-1
+[2026-08-31 14:23:01,100] [http-nio-9443-exec-3] DEBUG {org.wso2.carbon.identity.oauth2.OAuth2Service} - Initiating token request for grant_type: client_credentials
+[2026-08-31 14:23:01,103] [http-nio-9443-exec-3] DEBUG {org.wso2.carbon.identity.oauth.OAuthClientAuthn} - Authenticating client: bad-client
+[2026-08-31 14:23:01,106] [http-nio-9443-exec-3] WARN {org.wso2.carbon.identity.oauth2.token.handlers.clientauth.BasicAuthClientAuthHandler} - Client Authentication failed for client_id: bad-client. Provided secret does not match registered secret.
+[2026-08-31 14:23:01,108] [http-nio-9443-exec-3] WARN {org.wso2.carbon.identity.oauth.OAuthClientAuthn} - Client Authentication failed for client_id: bad-client. Reason: Invalid client credentials
+[2026-08-31 14:23:01,110] [http-nio-9443-exec-3] INFO {org.wso2.carbon.identity.oauth2.OAuth2Service} - Token request rejected for client_id: bad-client. Error: invalid_client
+[2026-08-31 14:23:05,200] [http-nio-9443-exec-5] DEBUG {org.wso2.carbon.identity.oauth2.OAuth2Service} - Received introspection request for token presented by caller: api-consumer-1
+[2026-08-31 14:23:05,205] [http-nio-9443-exec-5] DEBUG {org.wso2.carbon.identity.oauth2.validators.DefaultOAuth2TokenValidator} - Parsing JWT for introspection
+[2026-08-31 14:23:05,210] [http-nio-9443-exec-5] WARN {org.wso2.carbon.identity.oauth2.validators.DefaultOAuth2TokenValidator} - Invalid JWT token. failed: JWT has expired. Expiry time: 2026-08-31 14:22:58, Current time: 2026-08-31 14:23:05 — token is past its TTL
+[2026-08-31 14:23:05,212] [http-nio-9443-exec-5] INFO {org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService} - Token introspection result: active=false. Reason: token_expired
+[2026-08-31 14:23:05,214] [http-nio-9443-exec-5] DEBUG {org.wso2.carbon.identity.oauth2.OAuth2Service} - Introspection response sent: {"active":false}
+[2026-08-31 14:23:05,215] [http-nio-9443-exec-5] DEBUG {org.wso2.carbon.identity.oauth2.validators.DefaultOAuth2TokenValidator} - Introspection complete for caller: api-consumer-1. Token status: EXPIRED
