@@ -1,0 +1,22 @@
+# Copy to terraform.tfvars and fill in. NEVER commit terraform.tfvars.
+aws_region  = "us-east-1"
+name_prefix = "awsdevops"
+
+# Optional: subscribe your own email to this lab's composite/p99/canary
+# alarms. Leave blank if you don't want to receive the page.
+notification_email = ""
+
+# From Day 0, step 4 (CodeConnections -> GitHub console handshake). Same
+# connection Day 2 used — CodeConnections is per-account, not per-pipeline.
+# Looks like: arn:aws:codeconnections:us-east-1:123456789012:connection/<UUID>
+codeconnection_arn = "arn:aws:codeconnections:us-east-1:123456789012:connection/<UUID>"
+
+# From Day 0, step 7 (your own copy of the sample app repo, containing app/
+# at its root).
+github_owner  = "<YOUR_GITHUB_USERNAME>"
+github_repo   = "<YOUR_REPO>"
+github_branch = "main"
+
+# CHECK THE CURRENT SUPPORTED VERSION before applying — see the variable's
+# description in variables.tf.
+canary_runtime_version = "syn-nodejs-puppeteer-9.1"

@@ -1,0 +1,89 @@
+// canary.js.example — CloudWatch Synthetics heartbeat canary for the sample
+// service's /readyz route.
+//
+// This is the SOURCE for the canary Terraform packages into a Lambda
+// function behind the scenes (main.tf's `data "archive_file" "canary"`
+// zips this file's content into nodejs/node_modules/canary.js — the path
+// layout AWS Synthetics' Node.js/Puppeteer runtime requires). You do not
+// need to rename or move this file; Terraform handles that packaging.
+//
+// WHERE THE CANARY'S OWN LOGS LAND:
+//   - Run results and screenshots -> the S3 bucket main.tf creates
+//     (aws_s3_bucket.canary_artifacts), under the "canary/" prefix.
+//   - Execution logs from the canary's own Lambda invocation ->
+//     CloudWatch Logs, log group /aws/lambda/cwsyn-<canary-name>-<id>.
+//   - A rolled-up pass/fail history -> the CloudWatch Synthetics console,
+//     and the SuccessPercent metric this lab's canary_failure alarm and
+//     dashboard both read (namespace CloudWatchSynthetics).
+//
+// TARGET_URL is passed in as an environment variable by
+// aws_synthetics_canary.readyz's run_config block in main.tf, already set
+// to Day 3's ALB DNS name (http://<ALB_DNS_NAME>/readyz) — there should be
+// nothing to fill in here for the URL. The <ALB_DNS_NAME> placeholder
+// below is shown only so this file reads correctly if you ever run it
+// standalone, outside of the Terraform-managed environment variable.
+
+const { URL } = require('url');
+const http = require('http');
+const synthetics = require('Synthetics');
+const log = require('SyntheticsLogger');
+
+const readyzHeartbeat = async function () {
+  // TARGET_URL is injected by Terraform (run_config.environment_variables).
+  // Falls back to a placeholder so the script is still readable on its own.
+  const targetUrl = process.env.TARGET_URL || 'http://<ALB_DNS_NAME>/readyz';
+
+  const requestOptions = new URL(targetUrl);
+  requestOptions.method = 'GET';
+
+  const stepConfig = {
+    includeRequestHeaders: false,
+    includeResponseHeaders: false,
+    includeRequestBody: false,
+    includeResponseBody: false,
+    restrictedHeaders: [],
+    continueOnHttpStepFailure: false,
+  };
+
+  await synthetics.executeStep('readyzHeartbeat', async function () {
+    return new Promise((resolve, reject) => {
+      const req = http.request(requestOptions, (res) => {
+        let body = '';
+        res.on('data', (chunk) => {
+          body += chunk;
+        });
+        res.on('end', () => {
+          // Assert exactly what a user would care about: did /readyz say
+          // "yes, send me traffic"? Anything other than 200 fails the run,
+          // which is what drives SuccessPercent down and trips
+          // canary_failure in main.tf.
+          if (res.statusCode !== 200) {
+            log.error(`readyz returned ${res.statusCode}, expected 200. Body: ${body}`);
+            reject(new Error(`Failed: /readyz returned status ${res.statusCode}`));
+            return;
+          }
+          log.info(`readyz OK (${res.statusCode}): ${body}`);
+          resolve();
+        });
+      });
+
+      req.on('error', (err) => {
+        // A connection failure (DNS, timeout, refused) is just as much a
+        // canary failure as a bad status code — the whole point of this
+        // check is to catch what a real client would experience.
+        log.error(`Request to ${targetUrl} failed: ${err.message}`);
+        reject(err);
+      });
+
+      req.setTimeout(10000, () => {
+        req.destroy(new Error('Request timed out after 10s'));
+      });
+
+      req.end();
+    });
+  }, stepConfig);
+};
+
+exports.handler = async () => {
+  return await readyzHeartbeat();
+};

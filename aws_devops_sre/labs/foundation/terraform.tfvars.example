@@ -1,0 +1,3 @@
+# Copy to terraform.tfvars and adjust. NEVER commit terraform.tfvars.
+aws_region  = "us-east-1"
+name_prefix = "awsdevops"

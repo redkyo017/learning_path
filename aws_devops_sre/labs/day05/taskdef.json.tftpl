@@ -1,0 +1,36 @@
+{
+  "family": "${name_prefix}-task",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::${account_id}:role/${name_prefix}-ecs-execution",
+  "taskRoleArn": "arn:aws:iam::${account_id}:role/${name_prefix}-ecs-task",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "${name_prefix}-app",
+      "image": "<IMAGE1_NAME>",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8080, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "POISON", "value": "false" },
+        { "name": "BURN_RATE", "value": "0" },
+        { "name": "LATENCY_MS", "value": "0" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/${name_prefix}",
+          "awslogs-region": "${region}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars and adjust. NEVER commit terraform.tfvars.
+aws_region  = "us-east-1"
+name_prefix = "awsdevops"
+
+# Your own fork/copy of the sample app repo (Day 0, step 7).
+github_repo_url = "https://github.com/<YOUR_GITHUB_USERNAME>/<YOUR_REPO>"

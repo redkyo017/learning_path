@@ -1,0 +1,24 @@
+# appspec.yaml — the file `aws deploy create-deployment` (README.md) and,
+# on Day 5, CodePipeline's ECS deploy action both consume. It tells
+# CodeDeploy which task definition to stand up in the "green" target group
+# and which container/port on it receives traffic.
+#
+# <TASK_DEFINITION> is a placeholder. On Day 5, CodePipeline substitutes it
+# automatically with the ARN of the task definition revision the pipeline
+# just registered from taskdef.json.example. On Day 3 you substitute it by
+# hand — see README.md's "Run steps" — which is deliberate: it makes the
+# exact seam Day 5 automates visible and concrete before it disappears
+# behind pipeline machinery.
+#
+# ContainerName/ContainerPort must match the container definition in
+# ecs.tf / taskdef.json.example exactly, or CodeDeploy fails the deployment
+# before it ever touches traffic.
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: <TASK_DEFINITION>
+        LoadBalancerInfo:
+          ContainerName: "awsdevops-app"
+          ContainerPort: 8080

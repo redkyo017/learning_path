@@ -1,0 +1,16 @@
+# cp terraform.tfvars.example terraform.tfvars, then fill in image_tag.
+# Never commit terraform.tfvars itself — this repo's teardown/reset flow
+# assumes you re-create it each time you (re)apply this stack.
+
+aws_region  = "us-east-1"
+name_prefix = "awsdevops"
+
+# image_tag has NO default in variables.tf — you must set it. Use a real
+# tag pushed to the foundation ECR repo on Day 1, typically the git
+# short-SHA CodeBuild tagged the image with (check the ECR console, or
+# `aws ecr describe-images --repository-name awsdevops-sample`).
+#
+# There is no "latest" tag anywhere in this path: the ECR repo is
+# image_tag_mutability = "IMMUTABLE", so "latest" wouldn't be a stable
+# pointer to anything — which is the point (see content/day01.md).
+image_tag = "<IMAGE_TAG_FROM_DAY_1>"

@@ -1,0 +1,101 @@
+# Copy this file to .github/workflows/build.yml in YOUR OWN GitHub repo
+# (the one you set up in Day 0, step 7 — the fork/copy containing app/).
+#
+# Do not commit a real role ARN to a public repo before you understand the
+# trust policy it depends on (labs/day02/oidc.tf). The ARN itself isn't a
+# secret — nobody can assume this role without also presenting a valid
+# GitHub-issued OIDC token whose `sub` claim matches
+# repo:<owner>/<repo>:ref:refs/heads/<branch> exactly — but publishing it
+# before you've verified the trust policy is scoped the way you think it is
+# is how the Break-it exercise in labs/day02/README.md becomes a real
+# incident instead of a lab exercise.
+#
+# This workflow does, through GitHub Actions + OIDC, exactly what Day 1's
+# CodeBuild buildspec does through CodePipeline: build the app/ image with
+# the same build args and push it to the same ECR repo. Same work, two
+# different trust models — CodeBuild's build role is an AWS-native IAM role
+# CodePipeline assumes on your behalf; this workflow gets there by
+# presenting a short-lived token instead of ever holding an AWS credential
+# at rest.
+
+name: build
+
+on:
+  push:
+    branches: [main]
+
+# The id-token permission below (write) is what makes OIDC work — it's the
+# permission that lets this job request a token from GitHub's own OIDC
+# issuer (token.actions.githubusercontent.com) in the first place. It is
+# the single most commonly omitted line when people set this up: everything
+# else can be configured correctly and the job will still fail at
+# `aws-actions/configure-aws-credentials` with an opaque "not authorized to
+# perform sts:AssumeRoleWithWebIdentity" error if this permission is
+# missing, because without it there is no token to present at all.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          # Paste labs/day02's github_oidc_role_arn output here. The role's
+          # trust policy (oidc.tf) only accepts a token whose sub claim is
+          # repo:<owner>/<repo>:ref:refs/heads/main — pushes to any other
+          # branch, or a pull_request-triggered run, will be denied at the
+          # AssumeRoleWithWebIdentity call, before this job gets any AWS
+          # credential at all.
+          role-to-assume: <YOUR_GHA_OIDC_ROLE_ARN>
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # linux/arm64 on an ubuntu-latest (x86_64) runner is a cross-platform
+      # build — it needs a builder backed by QEMU emulation or a remote
+      # arm64 node, not the plain default `docker build`. This step sets
+      # that builder up; CodeBuild's `awsdevops-build` project skips it
+      # because it already runs on native ARM_CONTAINER compute (see Day 1's
+      # buildspec.yml), so there's nothing to emulate there.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          # <YOUR_ECR_REPOSITORY_NAME> is the foundation stack's
+          # ecr_repository_name output (default: awsdevops-sample).
+          ECR_REPOSITORY: <YOUR_ECR_REPOSITORY_NAME>
+          # Same tag convention as Day 1's buildspec.yml: the first 12
+          # characters of the commit SHA, not the full 40-character SHA and
+          # not a branch name. Matching Day 1's convention here is what
+          # makes this "identical work, different trust model" rather than
+          # merely similar work.
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          SHORT_SHA=$(echo "$IMAGE_TAG" | cut -c1-12)
+
+          # Same build args, same Dockerfile, same target arch as Day 1's
+          # buildspec.yml — the point of this file is that a learner can
+          # place these two build mechanisms side by side and see them do
+          # identical work through different trust models.
+          docker buildx build \
+            --build-arg VERSION="${SHORT_SHA}" \
+            --build-arg GIT_COMMIT="${{ github.sha }}" \
+            --platform linux/arm64 \
+            --load \
+            -t "${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHORT_SHA}" \
+            app/
+
+          docker push "${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHORT_SHA}"
+
+          echo "Pushed ${ECR_REGISTRY}/${ECR_REPOSITORY}:${SHORT_SHA}"
+          echo "Digest is what a downstream promotion stage should consume — never this mutable tag."

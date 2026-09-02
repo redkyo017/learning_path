@@ -1,0 +1,20 @@
+# kind cluster config for Day 4.
+#
+# Single node (control-plane doubling as the only worker — fine for a
+# conversancy-level lab, not how you'd run a real cluster). The
+# extraPortMappings line maps the NodePort Service's fixed nodePort (30080,
+# see k8s/service.yaml) to host port 8080, so the learner can
+# `curl localhost:8080` directly instead of needing `kubectl port-forward`
+# open in a second terminal.
+#
+# Cost: $0. This is a set of Docker containers running kubelet/kube-apiserver
+# locally — no AWS resource is created anywhere by this file.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: awsdevops-day04
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080 # must match k8s/service.yaml's nodePort
+        hostPort: 8080
+        protocol: TCP

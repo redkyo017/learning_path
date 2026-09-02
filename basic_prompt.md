@@ -54,3 +54,8 @@ you can refer to the resource code from github or I also checkout them at: "/Use
 use the local skill.md file as a standard skill
 Ask me questions before answering it.
 
+I want to master devops and SRE tools of AWS as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 5-day aggreesive practive plan the fast-tracks real results.
+Focus mainly integration pattern use cases and best practice to have a deeply understanding on this fields(codebuild, pipeline, CICD, basis EKS concept...)
+use the local skill.md file as a standard skill
+Ask me questions before answering it.

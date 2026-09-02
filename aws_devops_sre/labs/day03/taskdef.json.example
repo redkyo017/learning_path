@@ -1,0 +1,35 @@
+{
+  "family": "awsdevops-task",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/awsdevops-ecs-execution",
+  "taskRoleArn": "arn:aws:iam::123456789012:role/awsdevops-ecs-task",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "containerDefinitions": [
+    {
+      "name": "awsdevops-app",
+      "image": "<IMAGE1_NAME>",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8080, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "POISON", "value": "false" },
+        { "name": "BURN_RATE", "value": "0" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/awsdevops",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

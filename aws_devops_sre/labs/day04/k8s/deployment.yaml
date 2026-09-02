@@ -1,0 +1,90 @@
+# Day 4 Deployment — the same awsdevops-sample image from Day 1/Day 3,
+# running on Kubernetes instead of ECS Fargate.
+#
+# ECS↔K8s mapping for this file (see content/day04.md Core concepts #6):
+#   this Deployment            ~ ECS service
+#   the ReplicaSet it creates  ~ ECS task set
+#   spec.template (Pod spec)   ~ ECS task definition
+#   replicas: 2                ~ desired_count = 2
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: awsdevops-sample
+  labels:
+    app: awsdevops-sample
+spec:
+  replicas: 2
+  # progressDeadlineSeconds is the K8s analog of what gates a bad rollout
+  # on ECS. On Day 3 that's CodeDeploy's own health-check gate + its
+  # DEPLOYMENT_FAILURE auto-rollback (the service there uses the
+  # CODE_DEPLOY controller, not the ECS rolling-update controller, so the
+  # ECS deployment circuit breaker doesn't apply — see content/day04.md
+  # Core concepts #6 and #4). Unlike Day 3's mechanism, this does NOT roll
+  # back automatically — it only marks the Deployment's `Progressing`
+  # condition False once a rollout has been stuck longer than this many
+  # seconds. A human (or a GitOps controller) still has to run
+  # `kubectl rollout undo`. 120s is short on purpose for this lab so the
+  # Break it step doesn't require a long wait to observe.
+  progressDeadlineSeconds: 120
+  selector:
+    matchLabels:
+      app: awsdevops-sample
+  template:
+    metadata:
+      labels:
+        app: awsdevops-sample
+    spec:
+      containers:
+        - name: awsdevops-sample
+          # Placeholder — this lab does not give the kind cluster ECR pull
+          # credentials, so the default path is the local alternative below.
+          #
+          # Option A (default for this lab, no registry credentials needed):
+          #   docker build -t awsdevops-sample:local ../../../app
+          #   kind load docker-image awsdevops-sample:local --name awsdevops-day04
+          #   then set: image: awsdevops-sample:local
+          #
+          # Option B (if you've set up ECR pull access for kind, e.g. via a
+          # regcred Secret): image: <YOUR_ECR_URL>:<TAG>
+          image: <YOUR_ECR_URL>:<TAG>
+          # IfNotPresent (not Always) so a locally kind-loaded image is used
+          # as-is instead of the kubelet trying to pull it from a registry
+          # kind was never given credentials for.
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: POISON
+              value: "false" # flip to "true" for Break it — see labs/day04/README.md
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          # Readiness = "should this Pod receive traffic?" — the direct
+          # analog of Day 3's ALB target group health check. This is the
+          # deploy gate: a Pod failing this probe never gets added to the
+          # Service's endpoints, which is why a poisoned rollout stalls
+          # instead of shipping (content/day04.md Core concepts #4).
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            failureThreshold: 3
+          # Liveness = "is the process still healthy, or should it be
+          # restarted?" — the analog of ECS/container-level health checks
+          # that decide whether a task gets killed and replaced, independent
+          # of whether it's currently serving traffic.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3

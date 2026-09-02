@@ -1,0 +1,12 @@
+# Copy to terraform.tfvars and fill in. NEVER commit terraform.tfvars.
+aws_region  = "us-east-1"
+name_prefix = "awsdevops"
+
+# From Day 0, step 4 (CodeConnections -> GitHub console handshake).
+# Looks like: arn:aws:codeconnections:us-east-1:123456789012:connection/<UUID>
+codeconnection_arn = "arn:aws:codeconnections:us-east-1:123456789012:connection/<UUID>"
+
+# From Day 0, step 7 (your own copy of the sample app repo).
+github_owner  = "<YOUR_GITHUB_USERNAME>"
+github_repo   = "<YOUR_REPO>"
+github_branch = "main"

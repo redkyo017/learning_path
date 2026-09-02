@@ -1,0 +1,98 @@
+# Day 1 buildspec — produces one immutable, identifiable image.
+#
+# Reused unchanged by Day 2's CodePipeline (Task 7) — this file does not
+# change when the thing driving it changes from `aws codebuild start-build`
+# to a pipeline action. That's the point of separating "what a build does"
+# (this file) from "what triggers a build" (Terraform / CodePipeline).
+#
+# Three environment variables this buildspec depends on — REPO_URI,
+# IMAGE_REPO_NAME, AWS_DEFAULT_REGION — are injected by Terraform via the
+# aws_codebuild_project.build.environment.environment_variable blocks in
+# main.tf, not declared here. (Declaring them again under an `env:
+# variables:` block in this file would not just be redundant — buildspec
+# values take precedence over project values with the same name, so an
+# empty placeholder here would silently blank out the real ones from
+# Terraform. Better to leave them undeclared and let the project supply
+# them.)
+#
+# Caching: this project's `cache` block in main.tf sets LOCAL_DOCKER_LAYER_CACHE
+# and LOCAL_SOURCE_CACHE. Both are host-affinity caches — they work
+# automatically whenever CodeBuild happens to reuse the same build host, with
+# no `cache: paths:` section needed here. (A `cache: paths:` block only
+# matters for the LOCAL_CUSTOM_CACHE mode or S3 caching, neither of which
+# this project uses — see content/day01.md, Core concept 4, for why S3
+# caching isn't worth it here.)
+
+version: 0.2
+
+phases:
+  install:
+    commands:
+      # Nothing to install: the Amazon Linux 2 aarch64 standard image
+      # already ships Docker, and the actual Go compilation happens inside
+      # the multi-stage Dockerfile (stage 1), not on this host. `install` is
+      # the one phase CodeBuild's own docs treat as "for runtime setup" —
+      # shown here doing nothing on purpose, so it's obvious this build has
+      # no runtime dependency to install.
+      - docker --version
+
+  pre_build:
+    commands:
+      - echo "Logging in to $REPO_URI"
+      # REPO_URI is a full repository URI (registry-host/repo-name); docker
+      # login only wants the registry host, so strip everything from the
+      # first "/" onward.
+      - REGISTRY="${REPO_URI%%/*}"
+      # Piping the token through stdin — never passing it as a `docker
+      # login --password ...` argument — is what keeps it out of the build
+      # log. CodeBuild echoes every command it runs, arguments included, to
+      # CloudWatch Logs; a token passed as an argument would be sitting in
+      # plaintext in a log group anyone with logs:GetLogEvents on this
+      # project can read.
+      - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+      # The tag is derived from the resolved source commit — never from a
+      # branch name. CODEBUILD_RESOLVED_SOURCE_VERSION is the full commit
+      # SHA CodeBuild actually checked out; a branch name like "main" points
+      # at a moving target and answers a different question ("what branch"
+      # instead of "what commit") than the one this whole day is about.
+      - IMAGE_TAG=$(echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" | cut -c1-12)
+      - echo "Repository $IMAGE_REPO_NAME, resolved commit $CODEBUILD_RESOLVED_SOURCE_VERSION, tag $IMAGE_TAG"
+
+  build:
+    commands:
+      - echo "Building image $REPO_URI:$IMAGE_TAG"
+      - >-
+        docker build
+        --build-arg VERSION="$IMAGE_TAG"
+        --build-arg GIT_COMMIT="$CODEBUILD_RESOLVED_SOURCE_VERSION"
+        -t "$REPO_URI:$IMAGE_TAG"
+        app/
+
+  post_build:
+    commands:
+      - echo "Pushing $REPO_URI:$IMAGE_TAG"
+      # docker push's own exit code is what CodeBuild checks — a non-zero
+      # exit here fails the build like any other command. The failure mode
+      # to watch for is the opposite: a push whose output is *not* checked
+      # (e.g. piped through something that swallows the exit code) can let
+      # a build report success while nothing actually reached ECR. Nothing
+      # in this line does that, deliberately.
+      - docker push "$REPO_URI:$IMAGE_TAG"
+      # The tag gets you a build. The digest is what Day 2's pipeline and
+      # Day 3's deploy stage actually consume — a tag can (accidentally or
+      # not) come to point at a different image later if immutability is
+      # ever turned off; a digest cannot. Capture it now, while we know
+      # exactly which image we just pushed.
+      - IMAGE_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$REPO_URI:$IMAGE_TAG" | cut -d'@' -f2)
+      # ImageURI must be the FULLY QUALIFIED reference — repo URI plus the
+      # immutable digest (repo@sha256:...) — not the bare repository URI.
+      # This is what CodePipeline/CodeDeploy substitute for <IMAGE1_NAME> in
+      # a task definition template, and it's the field content/day02.md
+      # describes as carrying "the image's digest." A bare repo URI with no
+      # tag or digest identifies nothing.
+      - printf '{"ImageURI":"%s@%s","ImageDigest":"%s","ImageTag":"%s"}' "$REPO_URI" "$IMAGE_DIGEST" "$IMAGE_DIGEST" "$IMAGE_TAG" > imageDetail.json
+      - cat imageDetail.json
+
+artifacts:
+  files:
+    - imageDetail.json

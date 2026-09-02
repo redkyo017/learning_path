@@ -1,0 +1,21 @@
+# NodePort Service — the ECS↔K8s analog of a target group
+# (content/day04.md Core concepts #6). It gives the changing set of Pods a
+# stable address; the Deployment's rolling update can replace every Pod
+# behind it without anything else in the cluster needing to know.
+#
+# type: NodePort (rather than LoadBalancer, which has nothing to provision
+# against on a local kind cluster) with a fixed nodePort of 30080 so it
+# lines up with kind-cluster.yaml's extraPortMappings (30080 -> host 8080).
+apiVersion: v1
+kind: Service
+metadata:
+  name: awsdevops-sample
+spec:
+  type: NodePort
+  selector:
+    app: awsdevops-sample
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+      protocol: TCP
