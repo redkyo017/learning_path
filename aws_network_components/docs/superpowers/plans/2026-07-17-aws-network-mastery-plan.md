@@ -164,10 +164,23 @@ expanding before proceeding.
   - Number of private subnets: `2`
   - NAT gateways: `1 per AZ`
   - VPC endpoints: `None` (we add these on Day 5)
+  - Expand **Customize subnets CIDR blocks** and replace each default with a
+    `/24`, so the Console VPC matches the Terraform lab in Step 3:
+    - Public subnet CIDR block in ap-southeast-1a: `10.0.0.0/24`
+    - Public subnet CIDR block in ap-southeast-1b: `10.0.1.0/24`
+    - Private subnet CIDR block in ap-southeast-1a: `10.0.2.0/24`
+    - Private subnet CIDR block in ap-southeast-1b: `10.0.3.0/24`
+
+  Why the customization matters: left alone, the wizard carves `10.0.0.0/16`
+  into `/20`s — `10.0.0.0/20`, `10.0.16.0/20`, `10.0.128.0/20`, `10.0.144.0/20`.
+  The first of those spans `10.0.0.0`–`10.0.15.255` and therefore already
+  contains `10.0.4.0/24`, so creating the isolated subnets below would fail with
+  *"The CIDR '10.0.4.0/24' conflicts with another subnet"*.
 
   Click **Create VPC** and wait ~3 minutes for NAT Gateways to provision.
 
-  After creation, navigate to **Subnets** and verify 6 subnets exist:
+  After creation, navigate to **Subnets** and verify the wizard created these 4
+  subnets (the isolated pair added below brings the total to 6):
   - `shared-services-subnet-public1-ap-southeast-1a`
   - `shared-services-subnet-public2-ap-southeast-1b`
   - `shared-services-subnet-private1-ap-southeast-1a`
@@ -185,7 +198,15 @@ expanding before proceeding.
   - CIDR: `10.0.4.0/24`
   
   Repeat for AZ-b: name `shared-services-isolated-1b`, CIDR `10.0.5.0/24`
-  
+
+  **Already created the VPC with the wizard's default `/20` subnets?** Subnet
+  CIDRs cannot be edited after creation, but you don't need to rebuild: the
+  isolated tier just needs two free `/24`s inside `10.0.0.0/16`. Use
+  `10.0.32.0/24` (AZ-a) and `10.0.33.0/24` (AZ-b) — both sit in the gap between
+  the public `/20`s and the private `/20`s — and substitute them wherever this
+  plan refers to `10.0.4.0/24` / `10.0.5.0/24` for the Console VPC. (The
+  Terraform lab in Step 3 builds its own VPC, so its CIDRs stay as written.)
+
   Create a new route table: **Route tables → Create route table**
   - Name: `shared-services-isolated-rt`
   - VPC: `shared-services-vpc`
@@ -201,6 +222,47 @@ expanding before proceeding.
   internet. Restore the route before proceeding.
 
 - [ ] **Step 3: Terraform lab — VPC module.**
+
+  **Apple Silicon prerequisite — check this before anything else:**
+
+  ```bash
+  terraform version   # must report: on darwin_arm64
+  ```
+
+  If it says `on darwin_amd64` on an M-series Mac (`uname -m` → `arm64`), stop
+  and install a native build. An x86_64 Terraform asks the registry for the
+  `darwin_amd64` AWS provider — a ~900 MB x86_64 binary whose schema
+  initialization under Rosetta takes minutes, far past Terraform's ~60s plugin
+  start timeout. Every command that needs the provider schema (`validate`,
+  `plan`, `apply`) then dies with:
+
+  ```
+  Error: Failed to load plugin schemas
+  Could not load the schema for provider registry.terraform.io/hashicorp/aws:
+  failed to instantiate provider ... timeout while waiting for plugin to start
+  ```
+
+  The config is fine; the binary architecture is not. Fix:
+
+  ```bash
+  # 1. Install the native arm64 build ahead of any Intel one on PATH
+  curl -sSL -o /tmp/tf.zip \
+    https://releases.hashicorp.com/terraform/1.16.1/terraform_1.16.1_darwin_arm64.zip
+  mkdir -p ~/.local/bin && unzip -oq /tmp/tf.zip -d ~/.local/bin
+  chmod +x ~/.local/bin/terraform
+  # ensure ~/.local/bin precedes /usr/local/bin in PATH
+
+  # 2. Confirm, then drop the amd64 provider cache and re-init
+  terraform version                 # → on darwin_arm64
+  rm -rf .terraform                 # in terraform/envs/sandbox
+  terraform init
+  file .terraform/providers/registry.terraform.io/hashicorp/aws/*/*/terraform-provider-aws*
+  #   → Mach-O 64-bit executable arm64
+  ```
+
+  With the native provider, `terraform validate` returns in seconds instead of
+  timing out. (Homebrew installed under `/usr/local` is the Intel one; a native
+  `brew` lives at `/opt/homebrew`.)
 
   Create `terraform/modules/vpc/variables.tf`:
 
