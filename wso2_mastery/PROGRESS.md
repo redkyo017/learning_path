@@ -10,11 +10,11 @@
 | Phase | Days | Title | Status |
 |---|---|---|---|
 | Phase 1 | 1–15 | Identity Core (OAuth2/OIDC + Key Manager) | ✅ COMPLETE — all content + labs authored |
-| Phase 2 | 16–30 | API Gateway (Mediation + JWT + Throttle) | 🔄 Days 16–18 done, Tasks 2–5 remain |
+| Phase 2 | 16–30 | API Gateway (Mediation + JWT + Throttle) | ✅ COMPLETE — all content + labs authored |
 | Phase 3 | 31–45 | Control Plane + Event Sync | ⬜ Not started |
 | Phase 4 | 46–60 | Production Mastery (Debug + Extend + Deploy) | ⬜ Not started |
 
-**Active phase:** Phase 2 — ready to plan (Days 16–30: API Gateway).
+**Active phase:** Phase 3 — ready to plan (Days 31–45: Control Plane + Event Sync).
 
 ---
 
@@ -26,6 +26,7 @@
 | 2026-08-31 | Phase 1 plan | Plan written: 5 tasks, 15 days, scaffold + content + Go labs. |
 | 2026-08-31 | Phase 1 complete | All 5 tasks done. 15 day files + 15 lab dirs (Go servers + Docker + playbook). |
 | 2026-08-31 | Phase 2 Days 16-18 | Synapse mediation + Go reverse proxy + handler chain + graceful shutdown. |
+| 2026-09-03 | Phase 2 Days 19-30 | JWT validation + subscription enforcement + token-bucket throttle + GW debug playbook. Phase 2 complete. |
 
 ---
 
@@ -37,10 +38,8 @@ Paste this into Claude Code to continue:
 Continue WSO2 mastery learning path. Read PROGRESS.md first, then read the spec at
 docs/superpowers/specs/2026-08-31-wso2-mastery-design.md.
 
-Next step: continue Phase 2 content authoring — Tasks 2–5 (Days 19–30).
-SDD ledger: .superpowers/sdd/2026-08-31-wso2-phase2-plan/progress.md (Tasks 0+1 complete).
-Phase 2 plan: docs/superpowers/plans/2026-08-31-wso2-phase2-plan.md
-Use local skill.md + subagent-driven-development. Switch to Haiku 4.5 to save budget.
+Next step: Phase 3 — write the Phase 3 plan (Days 31–45: Control Plane + Event Sync).
+Use brainstorming → writing-plans. Switch to Haiku 4.5 for content authoring.
 ```
 
 ---

@@ -1,0 +1,52 @@
+[2026-09-03 10:30:00,100] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token received for request ID: req-001
+[2026-09-03 10:30:00,101] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Extracting token from Authorization header
+[2026-09-03 10:30:00,102] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim subscriber: alice
+[2026-09-03 10:30:00,103] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim applicationname: app1
+[2026-09-03 10:30:00,104] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Token expiry: 2026-09-03T11:30:00Z
+[2026-09-03 10:30:00,105] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Current time: 2026-09-03T10:30:00Z (valid)
+[2026-09-03 10:30:00,106] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Signature valid for kid: key-uuid-1234
+[2026-09-03 10:30:00,107] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token validated successfully for application: app1
+[2026-09-03 10:30:00,108] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Checking subscription: app1::hello
+[2026-09-03 10:30:00,109] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Subscription found: tier=gold, keytype=PRODUCTION
+[2026-09-03 10:30:00,110] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Checking throttle: app=app1, tier=gold, bucket=4999
+[2026-09-03 10:30:00,111] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Bucket allows request, count=1
+[2026-09-03 10:30:01,200] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token received for request ID: req-002
+[2026-09-03 10:30:01,201] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Extracting token from Authorization header
+[2026-09-03 10:30:01,202] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Token expiry: 2026-09-02T10:30:00Z
+[2026-09-03 10:30:01,203] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Current time: 2026-09-03T10:30:01Z
+[2026-09-03 10:30:01,204] WARN {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token validation failed: Token expired
+[2026-09-03 10:30:02,300] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token received for request ID: req-003
+[2026-09-03 10:30:02,301] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Extracting token from Authorization header
+[2026-09-03 10:30:02,302] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim subscriber: bob
+[2026-09-03 10:30:02,303] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim applicationname: app2
+[2026-09-03 10:30:02,304] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Token expiry: 2026-09-03T11:30:00Z
+[2026-09-03 10:30:02,305] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Current time: 2026-09-03T10:30:02Z (valid)
+[2026-09-03 10:30:02,306] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Signature valid for kid: key-uuid-1234
+[2026-09-03 10:30:02,307] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token validated successfully for application: app2
+[2026-09-03 10:30:02,308] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Checking subscription: app2::orders
+[2026-09-03 10:30:02,309] WARN {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - API subscription not found for application: app2
+[2026-09-03 10:30:03,400] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token received for request ID: req-004
+[2026-09-03 10:30:03,401] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Extracting token from Authorization header
+[2026-09-03 10:30:03,402] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim subscriber: charlie
+[2026-09-03 10:30:03,403] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim applicationname: app3
+[2026-09-03 10:30:03,404] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Token expiry: 2026-09-03T11:30:00Z
+[2026-09-03 10:30:03,405] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Current time: 2026-09-03T10:30:03Z (valid)
+[2026-09-03 10:30:03,406] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Signature valid for kid: key-uuid-1234
+[2026-09-03 10:30:03,407] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token validated successfully for application: app3
+[2026-09-03 10:30:03,408] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Checking subscription: app3::hello
+[2026-09-03 10:30:03,409] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Subscription found: tier=silver, keytype=PRODUCTION
+[2026-09-03 10:30:03,410] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Checking throttle: app=app3, tier=silver, bucket=2000
+[2026-09-03 10:30:03,411] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Bucket allows request, count=1
+[2026-09-03 10:30:04,500] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token received for request ID: req-005
+[2026-09-03 10:30:04,501] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Extracting token from Authorization header
+[2026-09-03 10:30:04,502] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim subscriber: alice
+[2026-09-03 10:30:04,503] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Claim applicationname: app1
+[2026-09-03 10:30:04,504] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Token expiry: 2026-09-03T11:30:00Z
+[2026-09-03 10:30:04,505] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Current time: 2026-09-03T10:30:04Z (valid)
+[2026-09-03 10:30:04,506] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - Signature valid for kid: key-uuid-1234
+[2026-09-03 10:30:04,507] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.security.JWTValidator} - JWT token validated successfully for application: app1
+[2026-09-03 10:30:04,508] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Checking subscription: app1::hello
+[2026-09-03 10:30:04,509] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.authentication.APIAuthenticationHandler} - Subscription found: tier=gold, keytype=PRODUCTION
+[2026-09-03 10:30:04,510] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Checking throttle: app=app1, tier=gold, bucket=0
+[2026-09-03 10:30:04,511] DEBUG {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Bucket exhausted
+[2026-09-03 10:30:04,512] WARN {org.wso2.carbon.apimgt.gateway.handlers.throttling.ThrottleHandler} - Request throttled for application: app1, tier: gold
