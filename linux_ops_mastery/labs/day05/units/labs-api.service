@@ -1,0 +1,11 @@
+[Unit]
+Description=Labs API
+Requires=labs-db.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/labs-api --port 8080
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,47 @@
+# Day 5 overlay: the one container that boots systemd as PID 1.
+#
+# Never used alone. Always layered on the base file, base first:
+#
+#   docker compose -p linuxops \
+#     -f docker-compose.yml -f docker-compose.sysd.yml up -d sysd
+#   docker compose -p linuxops \
+#     -f docker-compose.yml -f docker-compose.sysd.yml exec sysd bash
+#
+# This is the most fragile piece of the whole fleet on Docker Desktop for
+# macOS. If `sysd` exits immediately, read the Day 5 section and the Colima
+# fallback in README.md -- do not start editing this file.
+name: linuxops
+
+services:
+
+  sysd:
+    build:
+      context: .
+      dockerfile: Dockerfile.sysd
+    # systemd needs to mount, to write cgroup files, and to talk to the
+    # kernel as if it owned the box. Nothing less than privileged works.
+    privileged: true
+    # cgroup: host == `--cgroupns=host`. systemd has to see the real unified
+    # cgroup hierarchy; in a private namespace it fails to mount and dies.
+    cgroup: host
+    volumes:
+      - "/sys/fs/cgroup:/sys/fs/cgroup:rw"
+      # Additive: same read-only labs tree the other containers get, so Day 5
+      # can stage unit files from labs/day05/.
+      - "../:/labs:ro"
+    # /run and /run/lock must be tmpfs and writable, or systemd cannot lay
+    # down its runtime state.
+    tmpfs:
+      - "/run"
+      - "/run/lock"
+    # Also set as STOPSIGNAL in Dockerfile.sysd. Restated here so that
+    # `docker compose stop` is correct even if the image is rebuilt from a
+    # different Dockerfile.
+    stop_signal: "SIGRTMIN+3"
+    stop_grace_period: 30s
+    networks: ["linuxops_net"]
+
+networks:
+  linuxops_net:
+    name: linuxops_net
+    driver: bridge

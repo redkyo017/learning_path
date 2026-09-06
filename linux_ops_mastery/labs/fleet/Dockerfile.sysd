@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1.7
+# sysd -- Day 5 only. A container that actually boots systemd as PID 1, so
+# `systemctl`, unit files, and `journalctl` are the real thing and not a
+# simulation. Brought up through the overlay:
+#
+#   docker compose -p linuxops \
+#     -f docker-compose.yml -f docker-compose.sysd.yml up -d sysd
+FROM ubuntu:24.04
+
+# `container=docker` is what systemd itself reads to know it is containerised
+# and to skip the units that only make sense on bare metal.
+ENV DEBIAN_FRONTEND=noninteractive \
+    container=docker \
+    LANG=C.UTF-8
+
+# One layer, and every package in it must install. Day 5 is the identity,
+# permission and service-management day and it runs entirely in here:
+#   sudo         the denial in verify.sh (`sudo -u appuser cat ...`) and the
+#                audit trail in the journal; without it the day falls back to
+#                `su`, which teaches neither
+#   acl          getfacl / setfacl
+#   libcap2-bin  capsh --decode, getcap, setcap
+# These are not conveniences and they do not belong in a best-effort layer.
+#
+# Nothing here creates a user. Day 5's break.sh creates `appuser` itself and
+# must not collide with a pre-existing one -- do not add a useradd to this
+# image. The `sudo` package ships Debian/Ubuntu's own /etc/sudoers (root
+# ALL=(ALL:ALL) ALL, %sudo ALL=(ALL:ALL) ALL, plus #includedir
+# /etc/sudoers.d), which is what Day 5 reads and edits; no edit is needed at
+# build time.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      systemd systemd-sysv dbus \
+      sudo acl libcap2-bin \
+      procps less vim iproute2 curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+# Mask the units that cannot work in a container. This is exactly what
+# `systemctl mask` does -- a symlink to /dev/null -- done by hand because
+# systemctl is not talking to a running manager at build time.
+RUN for unit in \
+      getty.target \
+      console-getty.service \
+      getty@.service \
+      systemd-udevd.service \
+      systemd-udevd-kernel.socket \
+      systemd-udevd-control.socket \
+      systemd-udev-trigger.service \
+      systemd-logind.service \
+      systemd-firstboot.service \
+      systemd-machine-id-commit.service ; do \
+      ln -sf /dev/null "/etc/systemd/system/${unit}" ; \
+    done
+
+# systemd shuts down on SIGRTMIN+3, not SIGTERM. Without this, `docker stop`
+# on this container is a 10 second wait followed by SIGKILL -- and Day 2's
+# lesson about signals stops being a lesson and starts being an annoyance.
+STOPSIGNAL SIGRTMIN+3
+
+CMD ["/lib/systemd/systemd"]

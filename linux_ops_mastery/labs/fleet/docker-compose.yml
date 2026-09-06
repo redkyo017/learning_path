@@ -1,0 +1,171 @@
+# Linux Operator Mastery -- the lab fleet.
+#
+#   cd linux_ops_mastery/labs/fleet
+#   docker compose -p linuxops up -d --build
+#   docker compose -p linuxops down -v --remove-orphans
+#
+# Every image tag below is pinned and multi-arch, so this file carries no
+# `platform:` key and runs natively on Apple Silicon. See README.md.
+#
+# Day 5's systemd container lives in the overlay, docker-compose.sysd.yml.
+name: linuxops
+
+services:
+
+  # -------------------------------------------------------------------------
+  # ws -- the primary shell. Every day starts here.
+  # -------------------------------------------------------------------------
+  ws:
+    build:
+      context: .
+      dockerfile: Dockerfile.ws
+    # SYS_PTRACE: without it strace fails with
+    #   attach: ptrace(PTRACE_SEIZE): Operation not permitted
+    # Day 2 lives on strace, so this capability is not optional.
+    cap_add: ["SYS_PTRACE"]
+    # Docker's default seccomp profile blocks ptrace on older daemons and
+    # filters personality(); unconfined keeps Day 2 honest.
+    security_opt: ["seccomp=unconfined"]
+    # DEVIATION, deliberate. The design asks for `pid: shareable` here.
+    # Docker's PID mode accepts only "host" or "container:<name>";
+    # "shareable" is an IPC mode, and the daemon rejects it outright with
+    #   Error response from daemon: invalid PID mode: shareable
+    # which stops the whole fleet from coming up. Nothing is lost: a second
+    # container can join this one's PID namespace with no setting at all --
+    #   docker run --rm -it --pid=container:linuxops-ws-1 alpine:3.20 sh
+    # which is how Day 2 gets two views of one process table.
+    #
+    # `ipc: shareable` below is the setting that genuinely means shareable:
+    # it lets another container share this one's SysV IPC and /dev/shm.
+    ipc: shareable
+    # The whole labs/ tree, read only: day scripts, seed fixtures, SOLUTIONs.
+    volumes: ["../:/labs:ro"]
+    networks: ["linuxops_net"]
+    # Also in Dockerfile.ws; restated so `docker compose config` shows it.
+    command: ["sleep", "infinity"]
+
+  # -------------------------------------------------------------------------
+  # slim -- the strip-the-toolbox target. Busybox and nothing else.
+  # DO NOT add packages here. Not now, not for one exercise, not ever:
+  # every day's "Strip the toolbox" section depends on this being bare.
+  # -------------------------------------------------------------------------
+  slim:
+    image: alpine:3.20
+    command: ["sleep", "infinity"]
+    networks: ["linuxops_net"]
+
+  # -------------------------------------------------------------------------
+  # app -- the service under investigation. Days 1, 2, 3, 4 and 6.
+  # -------------------------------------------------------------------------
+  app:
+    build: ./app
+    environment:
+      BIND_ADDR: "0.0.0.0"
+      PORT: "8080"
+      LOG_PATH: "/var/log/app.log"
+      # Day 2 flips this to "1" to make the process ignore SIGTERM.
+      IGNORE_SIGTERM: "0"
+    # Day 1: a small tmpfs is a filesystem that can genuinely fill up, on a
+    # laptop, in seconds, without touching the host disk. mode=1777 so the
+    # sticky bit is there to be read in Day 5.
+    #
+    # 24m, not 64m, and this is a hard constraint:
+    #   tmpfs size + app RSS must stay under mem_limit, or Day 1's ENOSPC
+    #   becomes Day 4's OOM.
+    # tmpfs pages are shmem, and shmem is charged to the memory cgroup of the
+    # process that faults them in. With memswap_limit == mem_limit there is no
+    # swap to push them to, so they are unreclaimable. A 64m tmpfs inside a
+    # 64m limit means `dd` into /var/log kills the container (exit 137) before
+    # the filesystem ever returns ENOSPC -- Day 1's incident would present as
+    # Day 4's. 24m plus python's ~18 MiB RSS leaves headroom, and 24m still
+    # fills in seconds. Do not raise it, and do not raise mem_limit either:
+    # Day 4's thresholds depend on 64m.
+    tmpfs: ["/var/log:size=24m,mode=1777"]
+    # Day 4: the OOM kill. memswap_limit equal to mem_limit disables swap for
+    # this container, so exceeding 64m kills instead of quietly swapping.
+    mem_limit: 64m
+    memswap_limit: 64m
+    # Day 4: one fifth of a CPU, so /burn shows up as throttled time in
+    # /sys/fs/cgroup/cpu.stat rather than just finishing.
+    cpus: 0.20
+    # Keep this. It is not noise, and it is not what Day 4's graded incident
+    # runs on -- that uses /balloon?mb=N&child=1, which kills a forked child
+    # and leaves this container up.
+    #
+    # The policy is here so the fleet survives an ACCIDENTAL container-level
+    # OOM: a plain /balloon?mb=N, a runaway loop, anything that kills python.
+    # PID 1 (`sh`) exits behind it, and without a restart policy the learner
+    # is left with a dead `app` in the middle of an unrelated day.
+    #
+    # Day 4's subsection on why killing PID 1 destroys its own evidence is
+    # what depends on the behaviour: the replacement container is a new runc
+    # task in a new leaf cgroup, so memory.events reads oom_kill=0 and the
+    # proof of the kill dies with the cgroup that recorded it. That is a
+    # content point, demonstrated, not the graded lab.
+    #
+    # Two consequences worth knowing before they surprise you:
+    #   - `docker compose stop app` does NOT trigger a restart -- that is the
+    #     difference between `unless-stopped` and `always`, and it keeps
+    #     Day 2's `docker stop` exercise clean.
+    #   - killing python from inside the container DOES exit it: PID 1 is
+    #     `sh`, `sh` is waiting on python, and when python dies `sh` runs its
+    #     `exit $?` and PID 1 leaves. The policy then restarts the container,
+    #     with a fresh PID and RestartCount incremented by one.
+    restart: unless-stopped
+    # Day 3 runs /labs/fleet/seed/gen-logs.sh from inside this container.
+    volumes: ["../:/labs:ro"]
+    networks: ["linuxops_net"]
+    # Uncomment to reach the service from macOS. Left off by default because
+    # a busy host port turns bring-up into a confusing failure, and every lab
+    # curls from inside ws anyway.
+    # ports: ["8080:8080"]
+
+  # -------------------------------------------------------------------------
+  # db -- real sockets, real file descriptors, real connections. Day 3.
+  # -------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    environment:
+      # Placeholder only. Copy .env.example to .env to override locally.
+      # Never commit a .env; see .env.example.
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-changeme-locally}"
+      POSTGRES_DB: "labs"
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    networks: ["linuxops_net"]
+
+  # -------------------------------------------------------------------------
+  # proxy -- Day 6's connectivity ladder: DNS, route, firewall, listener, app.
+  # -------------------------------------------------------------------------
+  proxy:
+    # Built, not pulled: Day 6 fault 2 manipulates routes and fault 3
+    # adds an nftables DROP rule, and nginx:1.27.5-alpine ships neither a real
+    # `ip` nor `nft`. Dockerfile.proxy is that base tag plus those two
+    # packages -- see the comment at the top of it.
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    volumes: ["./seed/nginx.conf:/etc/nginx/conf.d/default.conf:ro"]
+    depends_on: ["app"]
+    # NET_ADMIN: Day 6 fault 2 adds an unreachable route for app's address
+    # and then removes it again. It does NOT delete the default route: every
+    # fleet service sits on one flat bridge subnet, so the connected route
+    # would still carry the traffic and the fault would silently not
+    # reproduce. Without the capability the route change fails with
+    # RTNETLINK: Operation not permitted.
+    cap_add: ["NET_ADMIN"]
+    networks: ["linuxops_net"]
+    # Uncomment to reach nginx from macOS on http://localhost:8081/.
+    # ports: ["8081:80"]
+
+networks:
+  linuxops_net:
+    # Explicit name: the network is `linuxops_net`, not the default
+    # `linuxops_linuxops_net`. Day 6 and verify-teardown.sh both use this name.
+    name: linuxops_net
+    driver: bridge
+
+volumes:
+  # Becomes the Docker volume `linuxops_pgdata`. `down` without -v leaves it
+  # behind on purpose -- that is what labs/verify-teardown.sh is there to
+  # catch.
+  pgdata:

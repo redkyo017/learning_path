@@ -1,0 +1,27 @@
+# syntax=docker/dockerfile:1.7
+# proxy -- nginx, plus exactly the two network tools Day 6 needs.
+#
+# This is the one service that is built rather than pulled. Day 6's fault
+# ladder takes this container's network apart from the inside:
+#
+#   fault 2  ip route del default        -> needs iproute2 (real `ip`)
+#   fault 3  nft add rule ... drop       -> needs nftables (`nft`)
+#
+# nginx:1.27.5-alpine ships neither. Its busybox `ip` applet is unreliable
+# absent and there is no `nft` at all, so two of Day 6's five rungs would
+# simply be unrunnable. The base tag stays pinned; the only change is two
+# packages in one layer.
+#
+# This does NOT relax the never-add-packages rule. That rule is about `slim`,
+# which is the strip-the-toolbox target for every single day and stays pure
+# busybox forever.
+# Pinned to the exact patch, not the 1.27 minor: seed/nginx.conf uses
+# `resolver local=on`, which needs nginx >= 1.27.3. The 1.27 branch closed at
+# 1.27.5, so this pin is stable and the version risk is gone.
+FROM nginx:1.27.5-alpine
+
+RUN apk add --no-cache iproute2 nftables
+
+# ENTRYPOINT and CMD are inherited from the base image on purpose: nginx's own
+# docker-entrypoint.sh still runs, and seed/nginx.conf is still mounted at
+# /etc/nginx/conf.d/default.conf by compose.

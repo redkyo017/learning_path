@@ -59,3 +59,12 @@ Skip the traditional learning path - give me the unconventional strategy that th
 Focus mainly integration pattern use cases and best practice to have a deeply understanding on this fields(codebuild, pipeline, CICD, basis EKS concept...)
 use the local skill.md file as a standard skill
 Ask me questions before answering it.
+
+I want to master linux and vim(neovim) as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 21-hours aggreesive practive plan the fast-tracks real results.
+Focus mainly linux structure understandig, commandline, operations and manage system, processes... as a master of adminstrator and operator
+given i'm a sofware engineer who work day by day on linux server system and learn PLI certificates (but it was so many years ago, now only work as a habit), my daily job somtime have to access to AWS ECS/EC2 or some kind of similar linux server to monitor, debug...
+now i want to recall and consolidate them systematically, i'm uisng macos but can use docker for practicing 
+the vim(neovim) as a code editor is a nice to have (normally i use vscode and iterm) but i think it's necessary on linux server
+use the local skill.md file as a standard skill
+Ask me questions before answering it.
