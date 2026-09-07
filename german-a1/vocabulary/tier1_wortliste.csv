@@ -1,0 +1,651 @@
+german,article,plural,english,vietnamese,example,note
+Name,der,die Namen,name,tên,Mein Name ist Anna.,01_personal
+Alter,das,die Alter,age,tuổi,Das Alter ist nicht wichtig.,01_personal
+Land,das,die Länder,country,đất nước,Mein Land ist Vietnam.,01_personal
+Sprache,die,die Sprachen,language,ngôn ngữ,Ich spreche drei Sprachen.,01_personal
+Frage,die,die Fragen,question,câu hỏi,Ich habe eine Frage.,01_personal
+Antwort,die,die Antworten,answer,câu trả lời,Die Antwort ist richtig.,01_personal
+Buchstabe,der,die Buchstaben,letter (alphabet),chữ cái,Das Wort hat fünf Buchstaben.,01_personal
+Adresse,die,die Adressen,address,địa chỉ,Wie ist deine Adresse?,01_personal
+Telefonnummer,die,die Telefonnummern,phone number,số điện thoại,Das ist meine Telefonnummer.,01_personal
+Herr,der,die Herren,Mr / gentleman,ông,Der Herr heißt Müller.,01_personal
+Frau,die,die Frauen,Mrs / woman,bà / phụ nữ,Die Frau heißt Schmidt.,01_personal
+Nationalität,die,die Nationalitäten,nationality,quốc tịch,Meine Nationalität ist vietnamesisch.,01_personal
+Wort,das,die Wörter,word,từ,Ich lerne heute ein Wort.,01_personal
+Satz,der,die Sätze,sentence,câu,Bitte schreib einen Satz.,01_personal
+heißen,,,to be called,tên là,Ich heiße Anna.,01_personal
+sein,,,to be,thì / là,Ich bin Student.,01_personal
+kommen,,,to come,đến,Ich komme aus Vietnam.,01_personal
+wohnen,,,to live (reside),sống,Ich wohne in Berlin.,01_personal
+sprechen,,,to speak,nói,Ich spreche Deutsch.,01_personal
+buchstabieren,,,to spell,đánh vần,Kannst du das buchstabieren?,01_personal
+fragen,,,to ask,hỏi,Darf ich fragen?,01_personal
+antworten,,,to answer,trả lời,Bitte antworte schnell.,01_personal
+sagen,,,to say,nói,Was sagst du?,01_personal
+verstehen,,,to understand,hiểu,Ich verstehe das nicht.,01_personal
+wiederholen,,,to repeat,lặp lại,Kannst du das wiederholen?,01_personal
+schreiben,,,to write,viết,Ich schreibe meinen Namen.,01_personal
+lesen,,,to read,đọc,Ich lese ein Buch.,01_personal
+hören,,,to hear / listen,nghe,Ich höre gut zu.,01_personal
+lernen,,,to learn,học,Ich lerne Deutsch.,01_personal
+üben,,,to practice,luyện tập,Wir üben jeden Tag.,01_personal
+danken,,,to thank,cảm ơn,Ich danke dir sehr.,01_personal
+grüßen,,,to greet,chào,Ich grüße meinen Lehrer.,01_personal
+wie,,,how,thế nào,Wie heißt du?,01_personal
+was,,,what,cái gì,Was ist das?,01_personal
+wer,,,who,ai,Wer bist du?,01_personal
+wo,,,where,ở đâu,Wo wohnst du?,01_personal
+woher,,,from where,từ đâu,Woher kommst du?,01_personal
+wann,,,when,khi nào,Wann kommst du?,01_personal
+warum,,,why,tại sao,Warum lernst du Deutsch?,01_personal
+bitte,,,please,xin vui lòng,"Ein Kaffee, bitte.",01_personal
+danke,,,thanks,cảm ơn,Danke für die Hilfe.,01_personal
+ja,,,yes,vâng,"Ja, das stimmt.",01_personal
+nein,,,no,không,"Nein, das ist falsch.",01_personal
+hallo,,,hello,xin chào,"Hallo, wie geht es dir?",01_personal
+tschüss,,,bye,tạm biệt,"Tschüss, bis morgen!",01_personal
+auch,,,also / too,cũng,Ich komme auch aus Asien.,01_personal
+sehr,,,very,rất,Das ist sehr gut.,01_personal
+Familie,die,die Familien,family,gia đình,Meine Familie ist groß.,02_family
+Vater,der,die Väter,father,cha / bố,Mein Vater arbeitet viel.,02_family
+Mutter,die,die Mütter,mother,mẹ,Meine Mutter kocht gern.,02_family
+Sohn,der,die Söhne,son,con trai,Der Sohn spielt Fußball.,02_family
+Tochter,die,die Töchter,daughter,con gái,Die Tochter lernt Deutsch.,02_family
+Bruder,der,die Brüder,brother,anh / em trai,Mein Bruder ist jung.,02_family
+Schwester,die,die Schwestern,sister,chị / em gái,Meine Schwester wohnt hier.,02_family
+Kind,das,die Kinder,child,đứa trẻ,Das Kind spielt im Garten.,02_family
+Eltern,die,die Eltern,parents,cha mẹ,Meine Eltern wohnen in Hanoi.,02_family
+Großvater,der,die Großväter,grandfather,ông,Mein Großvater ist alt.,02_family
+Großmutter,die,die Großmütter,grandmother,bà,Meine Großmutter kocht sehr gut.,02_family
+Onkel,der,die Onkel,uncle,chú / bác,Mein Onkel wohnt in Berlin.,02_family
+Tante,die,die Tanten,aunt,cô / dì,Meine Tante ist Lehrerin.,02_family
+Mann,der,die Männer,man / husband,đàn ông / chồng,Der Mann heißt Peter.,02_family
+Freund,der,die Freunde,friend (male),bạn trai / bạn nam,Mein Freund heißt Tom.,02_family
+Freundin,die,die Freundinnen,friend (female),bạn gái / bạn nữ,Meine Freundin heißt Lisa.,02_family
+Ehe,die,die Ehen,marriage,hôn nhân,Die Ehe ist glücklich.,02_family
+Baby,das,die Babys,baby,em bé,Das Baby schläft jetzt.,02_family
+Person,die,die Personen,person,người,Diese Person ist nett.,02_family
+Nachbar,der,die Nachbarn,neighbor,hàng xóm,Mein Nachbar ist freundlich.,02_family
+verheiratet,,,married,đã kết hôn,Ich bin verheiratet.,02_family
+ledig,,,single (unmarried),độc thân,Er ist noch ledig.,02_family
+geschieden,,,divorced,đã ly hôn,Sie ist geschieden.,02_family
+jung,,,young,trẻ,Meine Schwester ist jung.,02_family
+alt,,,old,già,Mein Großvater ist alt.,02_family
+verwitwet,,,widowed,góa,Meine Oma ist verwitwet.,02_family
+heiraten,,,to marry,kết hôn,Sie heiraten im Sommer.,02_family
+lieben,,,to love,yêu,Ich liebe meine Familie.,02_family
+haben,,,to have,có,Ich habe zwei Brüder.,02_family
+leben,,,to live (be alive),sống,Meine Großeltern leben noch.,02_family
+besuchen,,,to visit,thăm,Ich besuche meine Eltern.,02_family
+helfen,,,to help,giúp đỡ,Ich helfe meiner Mutter.,02_family
+kennen,,,to know (a person),quen biết,Ich kenne diese Familie gut.,02_family
+mögen,,,to like,thích,Ich mag meine Schwester.,02_family
+treffen,,,to meet,gặp,Ich treffe meinen Freund.,02_family
+nett,,,nice / kind,tốt bụng,Mein Nachbar ist nett.,02_family
+klein,,,small / little,nhỏ,Das Kind ist noch klein.,02_family
+groß,,,big / tall,to lớn / cao,Meine Familie ist groß.,02_family
+glücklich,,,happy,hạnh phúc,Wir sind sehr glücklich.,02_family
+zusammen,,,together,cùng nhau,Wir wohnen zusammen.,02_family
+Cousin,der,die Cousins,cousin (male),anh em họ (nam),Mein Cousin wohnt in München.,02_family
+Cousine,die,die Cousinen,cousin (female),chị em họ (nữ),Meine Cousine studiert Medizin.,02_family
+Ehemann,der,die Ehemänner,husband,chồng,Ihr Ehemann arbeitet in Berlin.,02_family
+Ehefrau,die,die Ehefrauen,wife,vợ,Seine Ehefrau ist Ärztin.,02_family
+jemand,,,someone,ai đó,Jemand klopft an der Tür.,02_family
+niemand,,,no one,không ai,Niemand ist zu Hause.,02_family
+null,,,zero,số không,Null ist eine Zahl.,03_time
+eins,,,one,một,Ich habe eins.,03_time
+zwei,,,two,hai,Ich habe zwei Brüder.,03_time
+drei,,,three,ba,Wir sind drei Personen.,03_time
+vier,,,four,bốn,Das Zimmer hat vier Wände.,03_time
+fünf,,,five,năm,Ich habe fünf Bücher.,03_time
+sechs,,,six,sáu,Der Kurs dauert sechs Wochen.,03_time
+sieben,,,seven,bảy,Eine Woche hat sieben Tage.,03_time
+acht,,,eight,tám,Ich stehe um acht Uhr auf.,03_time
+neun,,,nine,chín,Der Film beginnt um neun Uhr.,03_time
+zehn,,,ten,mười,Ich zähle bis zehn.,03_time
+elf,,,eleven,mười một,Die Pause dauert elf Minuten.,03_time
+zwanzig,,,twenty,hai mươi,Ich bin zwanzig Jahre alt.,03_time
+dreißig,,,thirty,ba mươi,Er ist dreißig Jahre alt.,03_time
+vierzig,,,forty,bốn mươi,Sie arbeitet vierzig Stunden.,03_time
+fünfzig,,,fifty,năm mươi,Das Zimmer kostet fünfzig Euro.,03_time
+sechzig,,,sixty,sáu mươi,Eine Stunde hat sechzig Minuten.,03_time
+siebzig,,,seventy,bảy mươi,Meine Oma ist siebzig Jahre alt.,03_time
+Tag,der,die Tage,day,ngày,Ich lerne jeden Tag Deutsch.,03_time
+Montag,der,die Montage,Monday,thứ hai,Am Montag beginnt die Arbeit.,03_time
+Dienstag,der,die Dienstage,Tuesday,thứ ba,Am Dienstag habe ich Deutschkurs.,03_time
+Mittwoch,der,die Mittwoche,Wednesday,thứ tư,Am Mittwoch treffe ich meine Freundin.,03_time
+Donnerstag,der,die Donnerstage,Thursday,thứ năm,Am Donnerstag arbeite ich lange.,03_time
+Freitag,der,die Freitage,Friday,thứ sáu,Am Freitag gehe ich einkaufen.,03_time
+Samstag,der,die Samstage,Saturday,thứ bảy,Am Samstag bleibe ich zu Hause.,03_time
+Sonntag,der,die Sonntage,Sunday,chủ nhật,Am Sonntag besuche ich meine Familie.,03_time
+Januar,der,die Januare,January,tháng một,Der Januar ist sehr kalt.,03_time
+Februar,der,die Februare,February,tháng hai,Im Februar schneit es oft.,03_time
+März,der,die Märze,March,tháng ba,Im März beginnt der Frühling.,03_time
+April,der,die Aprile,April,tháng tư,Im April regnet es viel.,03_time
+Mai,der,die Maie,May,tháng năm,Im Mai blühen die Blumen.,03_time
+Juni,der,die Junis,June,tháng sáu,Im Juni beginnt der Sommer.,03_time
+Juli,der,die Julis,July,tháng bảy,Im Juli ist es sehr warm.,03_time
+August,der,die Auguste,August,tháng tám,Im August fahren wir in Urlaub.,03_time
+September,der,die September,September,tháng chín,Im September beginnt die Schule.,03_time
+Oktober,der,die Oktober,October,tháng mười,Im Oktober werden die Blätter bunt.,03_time
+November,der,die November,November,tháng mười một,Im November ist es oft neblig.,03_time
+Dezember,der,die Dezember,December,tháng mười hai,Im Dezember feiern wir Weihnachten.,03_time
+Frühling,der,die Frühlinge,spring,mùa xuân,Ich mag den Frühling.,03_time
+Sommer,der,die Sommer,summer,mùa hè,Der Sommer ist warm.,03_time
+Herbst,der,die Herbste,autumn,mùa thu,Der Herbst ist bunt.,03_time
+Winter,der,die Winter,winter,mùa đông,Der Winter ist kalt.,03_time
+Uhr,die,die Uhren,clock / o'clock,đồng hồ / giờ,Es ist neun Uhr.,03_time
+Zeit,die,die Zeiten,time,thời gian,Ich habe keine Zeit.,03_time
+Woche,die,die Wochen,week,tuần,Die Woche hat sieben Tage.,03_time
+Monat,der,die Monate,month,tháng,Der Monat hat vier Wochen.,03_time
+Jahr,das,die Jahre,year,năm,Das Jahr hat zwölf Monate.,03_time
+immer,,,always,luôn luôn,Ich bin immer pünktlich.,03_time
+oft,,,often,thường xuyên,Ich koche oft zu Hause.,03_time
+Haus,das,die Häuser,house,ngôi nhà,Das Haus ist neu.,04_home
+Wohnung,die,die Wohnungen,apartment,căn hộ,Die Wohnung ist klein.,04_home
+Zimmer,das,die Zimmer,room,phòng,Das Zimmer ist hell.,04_home
+Küche,die,die Küchen,kitchen,nhà bếp,Die Küche ist sauber.,04_home
+Bad,das,die Bäder,bathroom,phòng tắm,Das Bad ist modern.,04_home
+Schlafzimmer,das,die Schlafzimmer,bedroom,phòng ngủ,Mein Schlafzimmer ist ruhig.,04_home
+Wohnzimmer,das,die Wohnzimmer,living room,phòng khách,Das Wohnzimmer ist gemütlich.,04_home
+Balkon,der,die Balkone,balcony,ban công,Der Balkon ist klein.,04_home
+Garten,der,die Gärten,garden,khu vườn,Der Garten ist grün.,04_home
+Tisch,der,die Tische,table,cái bàn,Der Tisch ist groß.,04_home
+Stuhl,der,die Stühle,chair,cái ghế,Der Stuhl ist bequem.,04_home
+Bett,das,die Betten,bed,cái giường,Das Bett ist bequem.,04_home
+Schrank,der,die Schränke,closet / cupboard,tủ,Der Schrank ist voll.,04_home
+Lampe,die,die Lampen,lamp,cái đèn,Die Lampe ist hell.,04_home
+Fenster,das,die Fenster,window,cửa sổ,Das Fenster ist offen.,04_home
+Tür,die,die Türen,door,cửa ra vào,Die Tür ist zu.,04_home
+Miete,die,die Mieten,rent,tiền thuê nhà,Die Miete ist hoch.,04_home
+Straße,die,die Straßen,street,con đường,Die Straße ist lang.,04_home
+Stadt,die,die Städte,city,thành phố,Die Stadt ist schön.,04_home
+Sofa,das,die Sofas,sofa,ghế sofa,Das Sofa ist neu.,04_home
+Spiegel,der,die Spiegel,mirror,cái gương,Der Spiegel ist groß.,04_home
+Teppich,der,die Teppiche,carpet,thảm,Der Teppich ist bunt.,04_home
+Nummer,die,die Nummern,house number,con số,Die Nummer ist zehn.,04_home
+Schlüssel,der,die Schlüssel,key,chìa khóa,Der Schlüssel ist weg.,04_home
+mieten,,,to rent,thuê,Wir mieten eine Wohnung.,04_home
+kochen,,,to cook,nấu ăn,Ich koche in der Küche.,04_home
+putzen,,,to clean,dọn dẹp,Ich putze das Zimmer.,04_home
+öffnen,,,to open,mở,Ich öffne das Fenster.,04_home
+schließen,,,to close,đóng,Bitte schließe die Tür.,04_home
+kaufen,,,to buy,mua,Wir kaufen ein Sofa.,04_home
+suchen,,,to search / look for,tìm kiếm,Ich suche eine Wohnung.,04_home
+umziehen,,,to move house,chuyển nhà,Wir ziehen um.,04_home
+liegen,,,to lie / be located,nằm ở,Das Haus liegt in der Stadt.,04_home
+stehen,,,to stand,đứng / đặt,Der Tisch steht im Zimmer.,04_home
+neu,,,new,mới,Das Sofa ist neu.,04_home
+hell,,,bright,sáng,Das Zimmer ist hell.,04_home
+dunkel,,,dark,tối,Der Keller ist dunkel.,04_home
+ruhig,,,quiet,yên tĩnh,Die Straße ist ruhig.,04_home
+laut,,,loud,ồn ào,Die Stadt ist laut.,04_home
+teuer,,,expensive,đắt,Die Miete ist teuer.,04_home
+billig,,,cheap,rẻ,Die Wohnung ist billig.,04_home
+sauber,,,clean,sạch sẽ,Die Küche ist sauber.,04_home
+schmutzig,,,dirty,bẩn,Das Zimmer ist schmutzig.,04_home
+in,,,in,trong,Ich wohne in Berlin.,04_home
+auf,,,on,trên,Das Buch liegt auf dem Tisch.,04_home
+unter,,,under,dưới,Die Katze ist unter dem Bett.,04_home
+neben,,,next to,bên cạnh,Der Stuhl steht neben dem Tisch.,04_home
+Brot,das,die Brote,bread,bánh mì,Ich esse Brot zum Frühstück.,05_food
+Butter,die,kein Plural,butter,bơ,Ich esse Brot mit Butter.,05_food
+Wasser,das,kein Plural,water,nước,Ich trinke Wasser.,05_food
+Milch,die,kein Plural,milk,sữa,Ich trinke gern Milch.,05_food
+Kaffee,der,die Kaffees,coffee,cà phê,Ich trinke gern Kaffee.,05_food
+Tee,der,die Tees,tea,trà,Der Tee ist heiß.,05_food
+Saft,der,die Säfte,juice,nước ép,Der Saft ist frisch.,05_food
+Bier,das,die Biere,beer,bia,Das Bier ist kalt.,05_food
+Wein,der,die Weine,wine,rượu vang,Der Wein ist teuer.,05_food
+Apfel,der,die Äpfel,apple,quả táo,Der Apfel ist rot.,05_food
+Banane,die,die Bananen,banana,quả chuối,Die Banane ist gelb.,05_food
+Ei,das,die Eier,egg,quả trứng,Das Ei ist frisch.,05_food
+Fleisch,das,kein Plural,meat,thịt,Ich esse selten Fleisch.,05_food
+Käse,der,kein Plural,cheese,phô mai,Der Käse schmeckt gut.,05_food
+Fisch,der,die Fische,fish,cá,Der Fisch ist lecker.,05_food
+Obst,das,kein Plural,fruit,trái cây,Ich esse gern Obst.,05_food
+Gemüse,das,kein Plural,vegetables,rau củ,Das Gemüse ist frisch.,05_food
+Kartoffel,die,die Kartoffeln,potato,khoai tây,Die Kartoffel ist billig.,05_food
+Tomate,die,die Tomaten,tomato,cà chua,Die Tomate ist rot.,05_food
+Reis,der,kein Plural,rice,gạo,Ich esse jeden Tag Reis.,05_food
+Brötchen,das,die Brötchen,bread roll,bánh mì nhỏ,Ich kaufe zwei Brötchen.,05_food
+Kuchen,der,die Kuchen,cake,bánh ngọt,Der Kuchen ist süß.,05_food
+Zucker,der,kein Plural,sugar,đường,Der Kuchen braucht viel Zucker.,05_food
+Suppe,die,die Suppen,soup,súp,Die Suppe ist warm.,05_food
+Salz,das,kein Plural,salt,muối,Die Suppe braucht Salz.,05_food
+Frühstück,das,die Frühstücke,breakfast,bữa sáng,Das Frühstück ist fertig.,05_food
+Mittagessen,das,die Mittagessen,lunch,bữa trưa,Das Mittagessen schmeckt gut.,05_food
+Abendessen,das,die Abendessen,dinner,bữa tối,Das Abendessen ist bereit.,05_food
+Restaurant,das,die Restaurants,restaurant,nhà hàng,Das Restaurant ist voll.,05_food
+Geschäft,das,die Geschäfte,shop,cửa hàng,Das Geschäft ist offen.,05_food
+Supermarkt,der,die Supermärkte,supermarket,siêu thị,Der Supermarkt ist neu.,05_food
+Bäckerei,die,die Bäckereien,bakery,tiệm bánh,Die Bäckerei ist um die Ecke.,05_food
+Preis,der,die Preise,price,giá,Der Preis ist hoch.,05_food
+Euro,der,die Euro,euro,euro,Das kostet zehn Euro.,05_food
+Flasche,die,die Flaschen,bottle,chai,Ich kaufe eine Flasche Wasser.,05_food
+Glas,das,die Gläser,glass,ly,Ich trinke ein Glas Wasser.,05_food
+Kilo,das,die Kilos,kilogram,ký,Ich kaufe ein Kilo Äpfel.,05_food
+essen,,,to eat,ăn,Ich esse gern Obst.,05_food
+trinken,,,to drink,uống,Ich trinke Wasser.,05_food
+bestellen,,,to order,gọi món,Ich bestelle eine Suppe.,05_food
+bezahlen,,,to pay,thanh toán,Ich bezahle an der Kasse.,05_food
+kosten,,,to cost,có giá,Das Brot kostet zwei Euro.,05_food
+schmecken,,,to taste,có vị,Der Kuchen schmeckt süß.,05_food
+probieren,,,to try (food),thử,Ich probiere den Käse.,05_food
+lecker,,,delicious,ngon,Das Essen ist lecker.,05_food
+süß,,,sweet,ngọt,Der Kuchen ist süß.,05_food
+sauer,,,sour,chua,Der Apfel ist sauer.,05_food
+salzig,,,salty,mặn,Die Suppe ist salzig.,05_food
+frisch,,,fresh,tươi,Das Gemüse ist frisch.,05_food
+warm,,,warm,ấm,Die Suppe ist warm.,05_food
+kalt,,,cold,lạnh,Das Bier ist kalt.,05_food
+hungrig,,,hungry,đói,Ich bin hungrig.,05_food
+viel,,,much / a lot,nhiều,Ich habe viel Hunger.,05_food
+wenig,,,little / not much,ít,Ich habe wenig Geld.,05_food
+mehr,,,more,nhiều hơn,Ich möchte mehr Reis.,05_food
+Kopf,der,die Köpfe,head,đầu,Mein Kopf tut weh.,06_health
+Auge,das,die Augen,eye,mắt,Meine Augen sind müde.,06_health
+Ohr,das,die Ohren,ear,tai,Mein Ohr tut weh.,06_health
+Nase,die,die Nasen,nose,mũi,Meine Nase ist rot.,06_health
+Mund,der,die Münder,mouth,miệng,Der Mund ist trocken.,06_health
+Zahn,der,die Zähne,tooth,răng,Der Zahn tut weh.,06_health
+Hals,der,die Hälse,neck / throat,cổ họng,Mein Hals tut weh.,06_health
+Arm,der,die Arme,arm,cánh tay,Mein Arm ist verletzt.,06_health
+Hand,die,die Hände,hand,bàn tay,Meine Hand ist kalt.,06_health
+Bein,das,die Beine,leg,chân,Mein Bein tut weh.,06_health
+Fuß,der,die Füße,foot,bàn chân,Mein Fuß tut weh.,06_health
+Bauch,der,die Bäuche,stomach / belly,bụng,Mein Bauch tut weh.,06_health
+Rücken,der,die Rücken,back,lưng,Mein Rücken tut weh.,06_health
+Herz,das,die Herzen,heart,tim,Mein Herz schlägt schnell.,06_health
+Arzt,der,die Ärzte,doctor (male),bác sĩ (nam),Der Arzt untersucht mich.,06_health
+Ärztin,die,die Ärztinnen,doctor (female),bác sĩ (nữ),Die Ärztin ist sehr nett.,06_health
+Krankenhaus,das,die Krankenhäuser,hospital,bệnh viện,Das Krankenhaus ist groß.,06_health
+Apotheke,die,die Apotheken,pharmacy,hiệu thuốc,Die Apotheke ist geschlossen.,06_health
+Medikament,das,die Medikamente,medicine,thuốc,Ich brauche ein Medikament.,06_health
+Tablette,die,die Tabletten,pill / tablet,viên thuốc,Nimm eine Tablette gegen Kopfschmerzen.,06_health
+Termin,der,die Termine,appointment,cuộc hẹn,Ich habe einen Termin beim Arzt.,06_health
+Schmerz,der,die Schmerzen,pain,cơn đau,Ich habe Schmerzen.,06_health
+Fieber,das,kein Plural,fever,sốt,Ich habe Fieber.,06_health
+Erkältung,die,die Erkältungen,cold (illness),cảm lạnh,Ich habe eine Erkältung.,06_health
+Grippe,die,die Grippen,flu,cúm,Die Grippe ist gefährlich.,06_health
+Husten,der,kein Plural,cough,ho,Der Husten ist schlimm.,06_health
+Patient,der,die Patienten,patient,bệnh nhân,Der Patient wartet im Zimmer.,06_health
+Kopfschmerzen,die,kein Plural,headache,đau đầu,Ich habe Kopfschmerzen.,06_health
+Bauchschmerzen,die,kein Plural,stomachache,đau bụng,Ich habe Bauchschmerzen.,06_health
+Rezept,das,die Rezepte,prescription,đơn thuốc,Der Arzt schreibt ein Rezept.,06_health
+Krankenschwester,die,die Krankenschwestern,nurse,y tá,Die Krankenschwester hilft mir.,06_health
+untersuchen,,,to examine,khám,Der Arzt untersucht den Patienten.,06_health
+wehtun,,,to hurt,đau,Mein Bauch tut weh.,06_health
+nehmen,,,to take,uống thuốc / lấy,Ich nehme eine Tablette.,06_health
+brauchen,,,to need,cần,Ich brauche ein Medikament.,06_health
+anrufen,,,to call (phone),gọi điện,Ich rufe den Arzt an.,06_health
+schlafen,,,to sleep,ngủ,Ich schlafe acht Stunden.,06_health
+fühlen,,,to feel,cảm thấy,Ich fühle mich schlecht.,06_health
+warten,,,to wait,chờ đợi,Ich warte beim Arzt.,06_health
+aufstehen,,,to get up,thức dậy,Ich stehe früh auf.,06_health
+krank,,,sick,ốm / bệnh,Ich bin krank.,06_health
+gesund,,,healthy,khỏe mạnh,Ich bin wieder gesund.,06_health
+müde,,,tired,mệt mỏi,Ich bin sehr müde.,06_health
+schlimm,,,bad / severe,tệ / nặng,Der Husten ist schlimm.,06_health
+schwach,,,weak,yếu,Ich fühle mich schwach.,06_health
+stark,,,strong,mạnh,Der Schmerz ist stark.,06_health
+Arbeit,die,die Arbeiten,work / job,công việc,Die Arbeit ist interessant.,07_work
+Beruf,der,die Berufe,profession,nghề nghiệp,Mein Beruf ist Lehrer.,07_work
+Firma,die,die Firmen,company,công ty,Die Firma ist groß.,07_work
+Büro,das,die Büros,office,văn phòng,Das Büro ist modern.,07_work
+Chef,der,die Chefs,boss (male),sếp (nam),Der Chef ist streng.,07_work
+Chefin,die,die Chefinnen,boss (female),sếp (nữ),Die Chefin ist freundlich.,07_work
+Kollege,der,die Kollegen,colleague (male),đồng nghiệp (nam),Mein Kollege ist nett.,07_work
+Kollegin,die,die Kolleginnen,colleague (female),đồng nghiệp (nữ),Meine Kollegin hilft mir.,07_work
+Lehrer,der,die Lehrer,teacher (male),giáo viên (nam),Der Lehrer erklärt gut.,07_work
+Lehrerin,die,die Lehrerinnen,teacher (female),giáo viên (nữ),Die Lehrerin ist geduldig.,07_work
+Student,der,die Studenten,student (male),sinh viên (nam),Der Student lernt viel.,07_work
+Studentin,die,die Studentinnen,student (female),sinh viên (nữ),Die Studentin ist fleißig.,07_work
+Ingenieur,der,die Ingenieure,engineer,kỹ sư,Der Ingenieur baut Brücken.,07_work
+Verkäufer,der,die Verkäufer,salesperson (male),người bán hàng (nam),Der Verkäufer ist hilfsbereit.,07_work
+Verkäuferin,die,die Verkäuferinnen,salesperson (female),người bán hàng (nữ),Die Verkäuferin lächelt oft.,07_work
+Krankenpfleger,der,die Krankenpfleger,male nurse,y tá nam,Der Krankenpfleger arbeitet im Krankenhaus.,07_work
+Kellner,der,die Kellner,waiter,bồi bàn (nam),Der Kellner bringt das Essen.,07_work
+Kellnerin,die,die Kellnerinnen,waitress,bồi bàn (nữ),Die Kellnerin ist freundlich.,07_work
+Fahrer,der,die Fahrer,driver,tài xế,Der Fahrer fährt langsam.,07_work
+Sekretärin,die,die Sekretärinnen,secretary,thư ký,Die Sekretärin organisiert alles.,07_work
+Gehalt,das,die Gehälter,salary,lương,Das Gehalt ist gut.,07_work
+Pause,die,die Pausen,break,giờ nghỉ,Die Pause ist kurz.,07_work
+Besprechung,die,die Besprechungen,meeting,cuộc họp,Die Besprechung beginnt um neun.,07_work
+Projekt,das,die Projekte,project,dự án,Das Projekt ist wichtig.,07_work
+Aufgabe,die,die Aufgaben,task,nhiệm vụ,Die Aufgabe ist einfach.,07_work
+Computer,der,die Computer,computer,máy tính,Der Computer ist neu.,07_work
+arbeiten,,,to work,làm việc,Ich arbeite im Büro.,07_work
+anfangen,,,to begin / start,bắt đầu,Die Arbeit fängt um acht an.,07_work
+aufhören,,,to stop / finish,kết thúc,Die Arbeit hört um fünf auf.,07_work
+verdienen,,,to earn,kiếm được,Ich verdiene gut.,07_work
+telefonieren,,,to phone,gọi điện thoại,Ich telefoniere mit dem Chef.,07_work
+organisieren,,,to organize,tổ chức,Sie organisiert das Meeting.,07_work
+planen,,,to plan,lên kế hoạch,Wir planen das Projekt.,07_work
+beschäftigt,,,busy,bận rộn,Ich bin heute beschäftigt.,07_work
+pünktlich,,,punctual / on time,đúng giờ,Er ist immer pünktlich.,07_work
+fleißig,,,hardworking,chăm chỉ,Die Studentin ist fleißig.,07_work
+freundlich,,,friendly,thân thiện,Die Kollegin ist freundlich.,07_work
+wichtig,,,important,quan trọng,Das Projekt ist wichtig.,07_work
+einfach,,,easy / simple,đơn giản,Die Aufgabe ist einfach.,07_work
+schwierig,,,difficult,khó,Die Arbeit ist schwierig.,07_work
+bei,,,at / with,tại,Ich arbeite bei einer Firma.,07_work
+für,,,for,cho,Ich arbeite für die Firma.,07_work
+Zug,der,die Züge,train,tàu hỏa,Der Zug kommt pünktlich.,08_travel
+Bus,der,die Busse,bus,xe buýt,Ich fahre mit dem Bus.,08_travel
+Bahnhof,der,die Bahnhöfe,train station,ga tàu,Der Bahnhof ist groß.,08_travel
+Flughafen,der,die Flughäfen,airport,sân bay,Der Flughafen ist weit.,08_travel
+Flugzeug,das,die Flugzeuge,airplane,máy bay,Das Flugzeug fliegt hoch.,08_travel
+Fahrkarte,die,die Fahrkarten,ticket (transport),vé xe,Ich kaufe eine Fahrkarte.,08_travel
+Flugticket,das,die Flugtickets,plane ticket,vé máy bay,Das Flugticket ist teuer.,08_travel
+Gepäck,das,kein Plural,luggage,hành lý,Mein Gepäck ist schwer.,08_travel
+Koffer,der,die Koffer,suitcase,vali,Der Koffer ist voll.,08_travel
+Reisepass,der,die Reisepässe,passport,hộ chiếu,Ich brauche einen Reisepass.,08_travel
+Abfahrt,die,die Abfahrten,departure,giờ khởi hành,Die Abfahrt ist um acht Uhr.,08_travel
+Ankunft,die,die Ankünfte,arrival,giờ đến,Die Ankunft ist verspätet.,08_travel
+Gleis,das,die Gleise,platform,sân ga,Der Zug fährt von Gleis drei.,08_travel
+Fahrplan,der,die Fahrpläne,timetable,lịch trình,Der Fahrplan hängt an der Wand.,08_travel
+Reise,die,die Reisen,journey,chuyến đi,Die Reise war lang.,08_travel
+Urlaub,der,die Urlaube,vacation,kỳ nghỉ,Wir fahren in den Urlaub.,08_travel
+Ausflug,der,die Ausflüge,excursion,chuyến đi chơi,Der Ausflug war schön.,08_travel
+Hotel,das,die Hotels,hotel,khách sạn,Das Hotel ist teuer.,08_travel
+Rezeption,die,die Rezeptionen,reception,lễ tân,Die Rezeption ist im Erdgeschoss.,08_travel
+Taxi,das,die Taxis,taxi,taxi,Ich nehme ein Taxi.,08_travel
+Auto,das,die Autos,car,xe hơi,Das Auto ist neu.,08_travel
+Fahrrad,das,die Fahrräder,bicycle,xe đạp,Ich fahre mit dem Fahrrad.,08_travel
+Schiff,das,die Schiffe,ship,tàu thủy,Das Schiff fährt langsam.,08_travel
+Fähre,die,die Fähren,ferry,phà,Die Fähre fährt über den Fluss.,08_travel
+Landkarte,die,die Landkarten,map,bản đồ,Ich brauche eine Landkarte.,08_travel
+Grenze,die,die Grenzen,border,biên giới,Wir überqueren die Grenze.,08_travel
+Ausland,das,kein Plural,abroad,nước ngoài,Ich reise ins Ausland.,08_travel
+Verspätung,die,die Verspätungen,delay,sự chậm trễ,Der Zug hat Verspätung.,08_travel
+Sitzplatz,der,die Sitzplätze,seat,chỗ ngồi,Ich habe einen Sitzplatz am Fenster.,08_travel
+Kreuzfahrt,die,die Kreuzfahrten,cruise,du lịch bằng tàu,Die Kreuzfahrt dauert eine Woche.,08_travel
+Ausweis,der,die Ausweise,ID card,chứng minh thư,Zeig bitte deinen Ausweis.,08_travel
+Zoll,der,die Zölle,customs,hải quan,Der Zoll kontrolliert das Gepäck.,08_travel
+Rundreise,die,die Rundreisen,round trip,chuyến đi vòng quanh,Die Rundreise dauert zwei Wochen.,08_travel
+Souvenir,das,die Souvenirs,souvenir,quà lưu niệm,Ich kaufe ein Souvenir.,08_travel
+fahren,,,to drive / go,lái xe / đi,Ich fahre nach Berlin.,08_travel
+fliegen,,,to fly,bay,Wir fliegen nach Deutschland.,08_travel
+abfahren,,,to depart,khởi hành,Der Zug fährt um acht ab.,08_travel
+ankommen,,,to arrive,đến nơi,Der Bus kommt pünktlich an.,08_travel
+reisen,,,to travel,du lịch,Ich reise gern.,08_travel
+buchen,,,to book,đặt chỗ,Ich buche ein Hotel.,08_travel
+umsteigen,,,to change trains,chuyển tàu,Ich steige in München um.,08_travel
+packen,,,to pack,đóng gói,Ich packe meinen Koffer.,08_travel
+übernachten,,,to stay overnight,ngủ qua đêm,Wir übernachten im Hotel.,08_travel
+verpassen,,,to miss (transport),lỡ,Ich verpasse den Zug.,08_travel
+verspätet,,,delayed,bị trễ,Der Flug ist verspätet.,08_travel
+direkt,,,direct,trực tiếp,Der Zug fährt direkt.,08_travel
+Rathaus,das,die Rathäuser,city hall,tòa thị chính,Das Rathaus liegt in der Mitte.,09_city
+Kirche,die,die Kirchen,church,nhà thờ,Die Kirche ist alt.,09_city
+Museum,das,die Museen,museum,bảo tàng,Das Museum ist interessant.,09_city
+Park,der,die Parks,park,công viên,Der Park ist grün.,09_city
+Platz,der,die Plätze,square,quảng trường,Der Platz ist voll.,09_city
+Brücke,die,die Brücken,bridge,cây cầu,Die Brücke ist lang.,09_city
+Bank,die,die Banken,bank,ngân hàng,Die Bank ist geschlossen.,09_city
+Post,die,kein Plural,post office,bưu điện,Die Post ist um die Ecke.,09_city
+Briefmarke,die,die Briefmarken,stamp,tem thư,Ich kaufe eine Briefmarke.,09_city
+Brief,der,die Briefe,letter,lá thư,Ich schreibe einen Brief.,09_city
+Paket,das,die Pakete,package,bưu kiện,Ich schicke ein Paket.,09_city
+Polizei,die,kein Plural,police,cảnh sát,Die Polizei hilft uns.,09_city
+Kino,das,die Kinos,cinema,rạp chiếu phim,Das Kino ist neu.,09_city
+Theater,das,die Theater,theater,nhà hát,Das Theater ist berühmt.,09_city
+Bibliothek,die,die Bibliotheken,library,thư viện,Die Bibliothek ist ruhig.,09_city
+Schule,die,die Schulen,school,trường học,Die Schule beginnt um acht.,09_city
+Kreuzung,die,die Kreuzungen,intersection,ngã tư,Die Kreuzung ist gefährlich.,09_city
+Ecke,die,die Ecken,corner,góc phố,Der Laden ist an der Ecke.,09_city
+Ampel,die,die Ampeln,traffic light,đèn giao thông,Die Ampel ist rot.,09_city
+Richtung,die,die Richtungen,direction,hướng,Gehen Sie in diese Richtung.,09_city
+Stadtplan,der,die Stadtpläne,city map,bản đồ thành phố,Der Stadtplan zeigt die Straßen.,09_city
+Eingang,der,die Eingänge,entrance,lối vào,Der Eingang ist hier.,09_city
+Ausgang,der,die Ausgänge,exit,lối ra,Der Ausgang ist dort.,09_city
+Gebäude,das,die Gebäude,building,tòa nhà,Das Gebäude ist hoch.,09_city
+Markt,der,die Märkte,market,chợ,Der Markt ist voll.,09_city
+Zentrum,das,die Zentren,center,trung tâm,Das Zentrum ist lebhaft.,09_city
+Vorort,der,die Vororte,suburb,ngoại ô,Wir wohnen im Vorort.,09_city
+Kasse,die,die Kassen,cashier / counter,quầy thu ngân,Die Kasse ist geöffnet.,09_city
+Konto,das,die Konten,bank account,tài khoản ngân hàng,Ich habe ein Konto.,09_city
+Geld,das,kein Plural,money,tiền,Ich habe kein Geld.,09_city
+Geldautomat,der,die Geldautomaten,ATM,máy rút tiền,Der Geldautomat ist kaputt.,09_city
+Weg,der,die Wege,way / path,con đường,Der Weg ist kurz.,09_city
+Fußgänger,der,die Fußgänger,pedestrian,người đi bộ,Der Fußgänger wartet an der Ampel.,09_city
+gehen,,,to go / walk,đi bộ,Ich gehe zu Fuß.,09_city
+laufen,,,to walk / run,chạy bộ,Ich laufe zum Park.,09_city
+abbiegen,,,to turn,rẽ,Biegen Sie rechts ab.,09_city
+überqueren,,,to cross,băng qua,Ich überquere die Straße.,09_city
+zeigen,,,to show,chỉ,Können Sie mir den Weg zeigen?,09_city
+finden,,,to find,tìm thấy,Ich finde die Bank nicht.,09_city
+links,,,left (direction),bên trái,Gehen Sie nach links.,09_city
+rechts,,,right (direction),bên phải,Gehen Sie nach rechts.,09_city
+geradeaus,,,straight ahead,đi thẳng,Gehen Sie geradeaus.,09_city
+nah,,,near,gần,Die Bank ist nah.,09_city
+weit,,,far,xa,Der Bahnhof ist weit.,09_city
+zwischen,,,between,giữa,Die Bank ist zwischen der Post und dem Park.,09_city
+duschen,,,to shower,tắm vòi sen,Ich dusche jeden Morgen.,10_routine
+waschen,,,to wash,giặt / rửa,Ich wasche die Wäsche.,10_routine
+anziehen,,,to put on (clothes),mặc quần áo,Ich ziehe mich an.,10_routine
+ausziehen,,,to take off (clothes),cởi quần áo,Ich ziehe die Jacke aus.,10_routine
+frühstücken,,,to have breakfast,ăn sáng,Ich frühstücke um sieben.,10_routine
+abwaschen,,,to wash dishes,rửa bát,Ich wasche das Geschirr ab.,10_routine
+staubsaugen,,,to vacuum,hút bụi,Ich staubsauge das Wohnzimmer.,10_routine
+aufräumen,,,to tidy up,dọn dẹp,Ich räume mein Zimmer auf.,10_routine
+bügeln,,,to iron,ủi đồ,Ich bügle die Hemden.,10_routine
+einkaufen,,,to shop,đi mua sắm,Ich kaufe im Supermarkt ein.,10_routine
+füttern,,,to feed,cho ăn,Ich füttere die Katze.,10_routine
+gießen,,,to water (plants),tưới cây,Ich gieße die Blumen.,10_routine
+beeilen,,,to hurry,vội vàng,Ich beeile mich.,10_routine
+vereinbaren,,,to arrange,sắp xếp,Ich vereinbare einen Termin.,10_routine
+absagen,,,to cancel,hủy bỏ,Ich sage den Termin ab.,10_routine
+verschieben,,,to postpone,hoãn lại,Wir verschieben das Treffen.,10_routine
+erledigen,,,to take care of,giải quyết,Ich erledige die Aufgaben.,10_routine
+ausruhen,,,to rest,nghỉ ngơi,Ich ruhe mich aus.,10_routine
+spazieren,,,to stroll,đi dạo,Ich gehe spazieren.,10_routine
+joggen,,,to jog,chạy bộ,Ich jogge jeden Morgen.,10_routine
+abtrocknen,,,to dry (dishes),lau khô,Ich trockne das Geschirr ab.,10_routine
+wecken,,,to wake (someone),đánh thức,Der Wecker weckt mich.,10_routine
+aufwachen,,,to wake up,thức giấc,Ich wache um sechs Uhr auf.,10_routine
+Wecker,der,die Wecker,alarm clock,đồng hồ báo thức,Der Wecker klingelt um sechs.,10_routine
+Morgen,der,die Morgen,morning,buổi sáng,Der Morgen ist kalt.,10_routine
+Abend,der,die Abende,evening,buổi tối,Der Abend ist ruhig.,10_routine
+Mittag,der,die Mittage,noon,buổi trưa,Der Mittag ist heiß.,10_routine
+Nacht,die,die Nächte,night,ban đêm,Die Nacht ist lang.,10_routine
+Wäsche,die,kein Plural,laundry,đồ giặt,Die Wäsche ist nass.,10_routine
+Staubsauger,der,die Staubsauger,vacuum cleaner,máy hút bụi,Der Staubsauger ist laut.,10_routine
+Bügeleisen,das,die Bügeleisen,iron (appliance),bàn ủi,Das Bügeleisen ist heiß.,10_routine
+Geschirr,das,kein Plural,dishes,chén bát,Das Geschirr ist schmutzig.,10_routine
+Müll,der,kein Plural,garbage,rác,Ich bringe den Müll raus.,10_routine
+Verabredung,die,die Verabredungen,appointment,cuộc hẹn,Ich habe eine Verabredung um vier.,10_routine
+Kalender,der,die Kalender,calendar,lịch,Ich schaue in den Kalender.,10_routine
+Alltag,der,kein Plural,everyday life,cuộc sống hàng ngày,Mein Alltag ist stressig.,10_routine
+Gewohnheit,die,die Gewohnheiten,habit,thói quen,Das ist meine Gewohnheit.,10_routine
+Routine,die,die Routinen,routine,thói quen hàng ngày,Meine Routine ist einfach.,10_routine
+Feierabend,der,kein Plural,end of workday,giờ tan tầm,Ich habe endlich Feierabend.,10_routine
+früh,,,early,sớm,Ich stehe früh auf.,10_routine
+spät,,,late,muộn,Ich komme spät nach Hause.,10_routine
+fertig,,,ready / done,xong,Ich bin fertig.,10_routine
+regelmäßig,,,regularly,đều đặn,Ich dusche regelmäßig.,10_routine
+täglich,,,daily,hằng ngày,Ich putze täglich.,10_routine
+sofort,,,immediately,ngay lập tức,Ich erledige das sofort.,10_routine
+zuerst,,,first (order),trước tiên,Zuerst dusche ich.,10_routine
+Kleidung,die,kein Plural,clothing,quần áo,Die Kleidung ist neu.,11_clothes
+Hemd,das,die Hemden,shirt,áo sơ mi,Das Hemd ist weiß.,11_clothes
+Hose,die,die Hosen,trousers,quần dài,Die Hose ist schwarz.,11_clothes
+Rock,der,die Röcke,skirt,chân váy,Der Rock ist kurz.,11_clothes
+Kleid,das,die Kleider,dress,váy đầm,Das Kleid ist schön.,11_clothes
+Jacke,die,die Jacken,jacket,áo khoác,Die Jacke ist warm.,11_clothes
+Mantel,der,die Mäntel,coat,áo choàng,Der Mantel ist lang.,11_clothes
+Pullover,der,die Pullover,sweater,áo len,Der Pullover ist bequem.,11_clothes
+T-Shirt,das,die T-Shirts,T-shirt,áo phông,Das T-Shirt ist blau.,11_clothes
+Schuh,der,die Schuhe,shoe,giày,Der Schuh ist neu.,11_clothes
+Stiefel,der,die Stiefel,boot,giày bốt,Der Stiefel ist warm.,11_clothes
+Socke,die,die Socken,sock,tất,Die Socke ist weiß.,11_clothes
+Mütze,die,die Mützen,cap,mũ len,Die Mütze ist warm.,11_clothes
+Hut,der,die Hüte,hat,mũ,Der Hut ist groß.,11_clothes
+Schal,der,die Schals,scarf,khăn quàng cổ,Der Schal ist weich.,11_clothes
+Handschuh,der,die Handschuhe,glove,găng tay,Die Handschuhe sind warm.,11_clothes
+Gürtel,der,die Gürtel,belt,thắt lưng,Der Gürtel ist braun.,11_clothes
+Tasche,die,die Taschen,bag,túi xách,Die Tasche ist teuer.,11_clothes
+Anzug,der,die Anzüge,suit,bộ vest,Der Anzug ist elegant.,11_clothes
+Krawatte,die,die Krawatten,tie,cà vạt,Die Krawatte ist rot.,11_clothes
+Unterwäsche,die,kein Plural,underwear,đồ lót,Die Unterwäsche ist bequem.,11_clothes
+Bluse,die,die Blusen,blouse,áo cánh,Die Bluse ist elegant.,11_clothes
+Größe,die,die Größen,size,kích cỡ,Welche Größe brauchen Sie?,11_clothes
+Farbe,die,die Farben,color,màu sắc,Welche Farbe magst du?,11_clothes
+Umkleidekabine,die,die Umkleidekabinen,fitting room,phòng thử đồ,Die Umkleidekabine ist frei.,11_clothes
+rot,,,red,đỏ,Die Krawatte ist rot.,11_clothes
+blau,,,blue,xanh dương,Das T-Shirt ist blau.,11_clothes
+gelb,,,yellow,vàng,Das Kleid ist gelb.,11_clothes
+grün,,,green,xanh lá,Die Jacke ist grün.,11_clothes
+schwarz,,,black,đen,Die Hose ist schwarz.,11_clothes
+weiß,,,white,trắng,Das Hemd ist weiß.,11_clothes
+braun,,,brown,nâu,Der Gürtel ist braun.,11_clothes
+grau,,,gray,xám,Der Mantel ist grau.,11_clothes
+rosa,,,pink,hồng,Die Bluse ist rosa.,11_clothes
+lila,,,purple,tím,Der Schal ist lila.,11_clothes
+orange,,,orange,cam,Die Mütze ist orange.,11_clothes
+tragen,,,to wear,mặc,Ich trage ein T-Shirt.,11_clothes
+anprobieren,,,to try on,thử đồ,Ich probiere die Hose an.,11_clothes
+passen,,,to fit,vừa vặn,Die Hose passt gut.,11_clothes
+umtauschen,,,to exchange,đổi hàng,Ich tausche das Hemd um.,11_clothes
+eng,,,tight,chật,Die Hose ist eng.,11_clothes
+kurz,,,short,ngắn,Der Rock ist kurz.,11_clothes
+lang,,,long,dài,Der Mantel ist lang.,11_clothes
+bequem,,,comfortable,thoải mái,Der Pullover ist bequem.,11_clothes
+elegant,,,elegant,sang trọng,Der Anzug ist elegant.,11_clothes
+Wetter,das,kein Plural,weather,thời tiết,Das Wetter ist schön.,12_weather
+Sonne,die,kein Plural,sun,mặt trời,Die Sonne scheint.,12_weather
+Regen,der,kein Plural,rain,mưa,Der Regen fällt stark.,12_weather
+Schnee,der,kein Plural,snow,tuyết,Der Schnee ist weiß.,12_weather
+Wind,der,die Winde,wind,gió,Der Wind ist stark.,12_weather
+Wolke,die,die Wolken,cloud,đám mây,Die Wolke ist grau.,12_weather
+Himmel,der,kein Plural,sky,bầu trời,Der Himmel ist blau.,12_weather
+Nebel,der,kein Plural,fog,sương mù,Der Nebel ist dicht.,12_weather
+Gewitter,das,die Gewitter,thunderstorm,giông bão,Das Gewitter ist laut.,12_weather
+Blitz,der,die Blitze,lightning,tia chớp,Der Blitz ist hell.,12_weather
+Donner,der,kein Plural,thunder,sấm,Der Donner ist laut.,12_weather
+Temperatur,die,die Temperaturen,temperature,nhiệt độ,Die Temperatur steigt.,12_weather
+Grad,der,die Grad,degree,độ,Es sind zwanzig Grad.,12_weather
+Regenschirm,der,die Regenschirme,umbrella,ô dù,Ich brauche einen Regenschirm.,12_weather
+Hitze,die,kein Plural,heat,cái nóng,Die Hitze ist unerträglich.,12_weather
+Kälte,die,kein Plural,cold (temperature),cái lạnh,Die Kälte ist stark.,12_weather
+Jahreszeit,die,die Jahreszeiten,season,mùa,Das Jahr hat vier Jahreszeiten.,12_weather
+Vorhersage,die,die Vorhersagen,forecast,dự báo,Die Vorhersage ist gut.,12_weather
+Regentropfen,der,die Regentropfen,raindrop,giọt mưa,Ein Regentropfen fällt ans Fenster.,12_weather
+Sturm,der,die Stürme,storm,bão,Der Sturm ist gefährlich.,12_weather
+Luft,die,kein Plural,air,không khí,Die Luft ist frisch.,12_weather
+Klima,das,die Klimas,climate,khí hậu,Das Klima ist mild.,12_weather
+Eis,das,kein Plural,ice,băng,Das Eis ist glatt.,12_weather
+Regenmantel,der,die Regenmäntel,raincoat,áo mưa,Ich trage einen Regenmantel.,12_weather
+Feuchtigkeit,die,kein Plural,humidity,độ ẩm,Die Feuchtigkeit ist hoch.,12_weather
+regnen,,,to rain,mưa,Es regnet stark.,12_weather
+schneien,,,to snow,có tuyết rơi,Es schneit im Winter.,12_weather
+scheinen,,,to shine,chiếu sáng,Die Sonne scheint hell.,12_weather
+wehen,,,to blow (wind),thổi,Der Wind weht stark.,12_weather
+sonnig,,,sunny,nắng,Heute ist es sonnig.,12_weather
+regnerisch,,,rainy,có mưa,Der Tag ist regnerisch.,12_weather
+bewölkt,,,cloudy,nhiều mây,Der Himmel ist bewölkt.,12_weather
+windig,,,windy,có gió,Es ist windig.,12_weather
+neblig,,,foggy,sương mù,Der Morgen ist neblig.,12_weather
+heiß,,,hot,nóng,Der Sommer ist heiß.,12_weather
+kühl,,,cool,mát,Der Herbst ist kühl.,12_weather
+trocken,,,dry,khô,Das Wetter ist trocken.,12_weather
+feucht,,,humid,ẩm ướt,Die Luft ist feucht.,12_weather
+frostig,,,frosty,giá lạnh,Der Morgen ist frostig.,12_weather
+stürmisch,,,stormy,có bão,Das Meer ist stürmisch.,12_weather
+mild,,,mild,ôn hòa,Das Klima ist mild.,12_weather
+eisig,,,icy,băng giá,Der Winter ist eisig.,12_weather
+wechselhaft,,,changeable,thất thường,Das Wetter ist wechselhaft.,12_weather
+draußen,,,outside,ở ngoài trời,Draußen ist es kalt.,12_weather
+drinnen,,,inside,ở trong nhà,Drinnen ist es warm.,12_weather
+Hobby,das,die Hobbys,hobby,sở thích,Mein Hobby ist Lesen.,13_freetime
+Sport,der,kein Plural,sport,thể thao,Ich mache gern Sport.,13_freetime
+Fußball,der,kein Plural,football,bóng đá,Ich spiele gern Fußball.,13_freetime
+Tennis,das,kein Plural,tennis,quần vợt,Ich spiele Tennis.,13_freetime
+Musik,die,kein Plural,music,âm nhạc,Ich höre gern Musik.,13_freetime
+Lied,das,die Lieder,song,bài hát,Das Lied ist schön.,13_freetime
+Instrument,das,die Instrumente,instrument,nhạc cụ,Ich spiele ein Instrument.,13_freetime
+Gitarre,die,die Gitarren,guitar,đàn ghi-ta,Ich spiele Gitarre.,13_freetime
+Klavier,das,die Klaviere,piano,đàn piano,Sie spielt Klavier.,13_freetime
+Film,der,die Filme,movie,bộ phim,Der Film ist spannend.,13_freetime
+Fernseher,der,die Fernseher,television set,tivi,Der Fernseher ist neu.,13_freetime
+Sendung,die,die Sendungen,TV program,chương trình,Die Sendung beginnt um acht.,13_freetime
+Nachrichten,die,kein Plural,news,tin tức,Ich sehe die Nachrichten.,13_freetime
+Konzert,das,die Konzerte,concert,buổi hòa nhạc,Das Konzert ist toll.,13_freetime
+Party,die,die Partys,party,bữa tiệc,Die Party ist heute Abend.,13_freetime
+Einladung,die,die Einladungen,invitation,lời mời,Ich bekomme eine Einladung.,13_freetime
+Geschenk,das,die Geschenke,gift,quà tặng,Das Geschenk ist schön.,13_freetime
+Freizeit,die,kein Plural,free time,thời gian rảnh,Meine Freizeit ist kurz.,13_freetime
+Spiel,das,die Spiele,game,trò chơi,Das Spiel macht Spaß.,13_freetime
+Mannschaft,die,die Mannschaften,team,đội,Die Mannschaft gewinnt.,13_freetime
+Verein,der,die Vereine,club,câu lạc bộ,Ich bin im Verein.,13_freetime
+Ausstellung,die,die Ausstellungen,exhibition,triển lãm,Die Ausstellung ist interessant.,13_freetime
+Buch,das,die Bücher,book,quyển sách,Ich lese ein Buch.,13_freetime
+Zeitung,die,die Zeitungen,newspaper,tờ báo,Ich lese die Zeitung.,13_freetime
+Eintrittskarte,die,die Eintrittskarten,entrance ticket,vé vào cửa,Ich kaufe eine Eintrittskarte.,13_freetime
+Ball,der,die Bälle,ball,quả bóng,Der Ball ist rund.,13_freetime
+Freibad,das,die Freibäder,outdoor pool,hồ bơi ngoài trời,Das Freibad ist voll.,13_freetime
+spielen,,,to play,chơi,Ich spiele Fußball.,13_freetime
+singen,,,to sing,hát,Sie singt gern.,13_freetime
+tanzen,,,to dance,nhảy múa,Wir tanzen zusammen.,13_freetime
+malen,,,to paint,vẽ tranh,Ich male ein Bild.,13_freetime
+zeichnen,,,to draw,vẽ,Er zeichnet gut.,13_freetime
+fotografieren,,,to photograph,chụp ảnh,Ich fotografiere gern.,13_freetime
+schwimmen,,,to swim,bơi,Ich schwimme im See.,13_freetime
+wandern,,,to hike,đi bộ đường dài,Wir wandern am Wochenende.,13_freetime
+Rad fahren,,,to cycle,đạp xe,Ich fahre gern Rad.,13_freetime
+einladen,,,to invite,mời,Ich lade dich ein.,13_freetime
+feiern,,,to celebrate,ăn mừng,Wir feiern die Party.,13_freetime
+fernsehen,,,to watch TV,xem tivi,Ich sehe gern fern.,13_freetime
+gewinnen,,,to win,chiến thắng,Unsere Mannschaft gewinnt.,13_freetime
+verlieren,,,to lose,thua,Wir verlieren das Spiel.,13_freetime
+interessant,,,interesting,thú vị,Der Film ist interessant.,13_freetime
+spannend,,,exciting,hồi hộp,Das Buch ist spannend.,13_freetime
+langweilig,,,boring,nhàm chán,Der Film ist langweilig.,13_freetime
+beliebt,,,popular,được yêu thích,Der Sport ist beliebt.,13_freetime
+gemeinsam,,,together / jointly,cùng nhau,Wir spielen gemeinsam.,13_freetime
+Telefon,das,die Telefone,telephone,điện thoại,Das Telefon klingelt.,14_communication
+Handy,das,die Handys,mobile phone,điện thoại di động,Mein Handy ist neu.,14_communication
+E-Mail,die,die E-Mails,email,thư điện tử,Ich schreibe eine E-Mail.,14_communication
+Internet,das,kein Plural,internet,mạng internet,Das Internet ist schnell.,14_communication
+Nachricht,die,die Nachrichten,message,tin nhắn,Ich sende eine Nachricht.,14_communication
+Website,die,die Websites,website,trang web,Die Website ist informativ.,14_communication
+Passwort,das,die Passwörter,password,mật khẩu,Ich vergesse mein Passwort.,14_communication
+Kontakt,der,die Kontakte,contact,liên hệ,Ich speichere den Kontakt.,14_communication
+Anruf,der,die Anrufe,phone call,cuộc gọi,Ich bekomme einen Anruf.,14_communication
+Vorwahl,die,die Vorwahlen,area code,mã vùng,Die Vorwahl ist null eins fünf.,14_communication
+Anhang,der,die Anhänge,attachment,tệp đính kèm,Ich sende den Anhang.,14_communication
+Formular,das,die Formulare,form,biểu mẫu,Ich fülle das Formular aus.,14_communication
+Unterschrift,die,die Unterschriften,signature,chữ ký,Bitte setzen Sie Ihre Unterschrift.,14_communication
+Kurs,der,die Kurse,course,khóa học,Der Kurs beginnt morgen.,14_communication
+Unterricht,der,kein Plural,lessons,buổi học,Der Unterricht dauert zwei Stunden.,14_communication
+Prüfung,die,die Prüfungen,exam,kỳ thi,Die Prüfung ist schwer.,14_communication
+Zeugnis,das,die Zeugnisse,certificate,chứng chỉ,Das Zeugnis ist gut.,14_communication
+Übung,die,die Übungen,exercise,bài tập,Die Übung ist einfach.,14_communication
+Hausaufgabe,die,die Hausaufgaben,homework,bài tập về nhà,Ich mache die Hausaufgabe.,14_communication
+Klasse,die,die Klassen,class,lớp học,Die Klasse ist groß.,14_communication
+Lehrbuch,das,die Lehrbücher,textbook,sách giáo khoa,Das Lehrbuch ist neu.,14_communication
+Stift,der,die Stifte,pen,cây bút,Der Stift ist blau.,14_communication
+Heft,das,die Hefte,notebook,quyển vở,Das Heft ist voll.,14_communication
+Umschlag,der,die Umschläge,envelope,phong bì,Der Umschlag ist leer.,14_communication
+Absender,der,die Absender,sender,người gửi,Der Absender ist unbekannt.,14_communication
+Empfänger,der,die Empfänger,recipient,người nhận,Der Empfänger bekommt den Brief.,14_communication
+WLAN,das,kein Plural,WiFi,wifi,Das WLAN funktioniert nicht.,14_communication
+Anrufbeantworter,der,die Anrufbeantworter,answering machine,hộp thư thoại,Der Anrufbeantworter ist voll.,14_communication
+mailen,,,to email,gửi email,Ich maile dir die Datei.,14_communication
+surfen,,,to surf (internet),lướt web,Ich surfe im Internet.,14_communication
+herunterladen,,,to download,tải xuống,Ich lade die Datei herunter.,14_communication
+hochladen,,,to upload,tải lên,Ich lade das Foto hoch.,14_communication
+ausfüllen,,,to fill out,điền vào,Ich fülle das Formular aus.,14_communication
+unterschreiben,,,to sign,ký tên,Bitte unterschreiben Sie hier.,14_communication
+senden,,,to send,gửi,Ich sende die Nachricht.,14_communication
+empfangen,,,to receive,nhận,Ich empfange die E-Mail.,14_communication
+speichern,,,to save (data),lưu,Ich speichere die Datei.,14_communication
+löschen,,,to delete,xóa,Ich lösche die Nachricht.,14_communication
+klicken,,,to click,nhấp chuột,Ich klicke auf den Link.,14_communication
+drucken,,,to print,in,Ich drucke das Formular.,14_communication
+anmelden,,,to register / log in,đăng ký,Ich melde mich an.,14_communication
+abmelden,,,to log off,đăng xuất,Ich melde mich ab.,14_communication
+bestehen,,,to pass (exam),đậu,Ich bestehe die Prüfung.,14_communication
+durchfallen,,,to fail (exam),trượt,Er fällt bei der Prüfung durch.,14_communication
+online,,,online,trực tuyến,Ich bin online.,14_communication

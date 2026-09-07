@@ -68,3 +68,9 @@ now i want to recall and consolidate them systematically, i'm uisng macos but ca
 the vim(neovim) as a code editor is a nice to have (normally i use vscode and iterm) but i think it's necessary on linux server
 use the local skill.md file as a standard skill
 Ask me questions before answering it.
+
+I want to master Goethe-Zertifikat A1: Start Deutsch 1 as fast as humanly possible.
+Skip the traditional learning path, give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 45-day aggreesive practive plan the fast-tracks real results.(the 45-day is just my assumption, help me to provide a number, alongside that, might help generate a vocabulary of around at least 2000 words with the fastest way to learn and repeatedly learn everyday if can)
+given i'm at the zero level as of now
+use the local skill.md file as a standard skill
+Ask me questions before answering it. make it as a simple version first to save tokens, we can always extend and enhance this later, if there is any useful online resource, link them in the content as well

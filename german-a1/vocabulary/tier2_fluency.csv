@@ -1,0 +1,321 @@
+german,article,plural,english,vietnamese,example,note
+und,,,and,và,Ich trinke Kaffee und esse ein Brötchen.,t2_connectors
+aber,,,but,nhưng,"Ich mag Kaffee, aber ich trinke lieber Tee.",t2_connectors
+oder,,,or,hoặc,Möchtest du Tee oder Kaffee?,t2_connectors
+denn,,,because,vì,"Ich bleibe zu Hause, denn ich bin krank.",t2_connectors
+weil,,,because,bởi vì,"Ich bleibe zu Hause, weil ich krank bin.",t2_connectors
+dass,,,that,rằng,"Ich glaube, dass er nett ist.",t2_connectors
+wenn,,,if / when,nếu / khi,"Wenn es regnet, bleibe ich zu Hause.",t2_connectors
+deshalb,,,therefore,vì vậy,"Es regnet, deshalb bleibe ich zu Hause.",t2_connectors
+deswegen,,,for that reason,vì thế,"Ich bin krank, deswegen komme ich nicht.",t2_connectors
+trotzdem,,,nevertheless,dù vậy,"Es regnet, trotzdem gehe ich raus.",t2_connectors
+dennoch,,,nevertheless,tuy nhiên,"Er ist müde, dennoch arbeitet er weiter.",t2_connectors
+also,,,so / therefore,vậy nên,"Es ist spät, also gehe ich schlafen.",t2_connectors
+dann,,,then,sau đó,"Ich dusche, dann frühstücke ich.",t2_connectors
+danach,,,after that,sau đó,"Ich esse, danach gehe ich zur Arbeit.",t2_connectors
+zum Schluss,,,finally / in the end,cuối cùng,Zum Schluss trinken wir noch einen Kaffee.,t2_connectors
+zunächst,,,first of all,trước tiên hết,Zunächst lese ich die Frage.,t2_connectors
+erstens,,,firstly,thứ nhất,Erstens ist es zu teuer.,t2_connectors
+zweitens,,,secondly,thứ hai,Zweitens habe ich keine Zeit.,t2_connectors
+drittens,,,thirdly,thứ ba,Drittens gefällt mir die Farbe nicht.,t2_connectors
+schließlich,,,finally,cuối cùng,Schließlich habe ich die Antwort gefunden.,t2_connectors
+außerdem,,,besides / moreover,ngoài ra,"Das Zimmer ist klein, außerdem ist es laut.",t2_connectors
+sondern,,,but rather,mà là,"Ich trinke keinen Kaffee, sondern Tee.",t2_connectors
+obwohl,,,although,mặc dù,"Obwohl es regnet, gehe ich spazieren.",t2_connectors
+während,,,while,trong khi,"Während ich koche, hört sie Musik.",t2_connectors
+bevor,,,before,trước khi,"Bevor ich schlafe, lese ich noch.",t2_connectors
+sonst,,,otherwise,nếu không thì,"Beeil dich, sonst kommen wir zu spät.",t2_connectors
+übrigens,,,by the way,nhân tiện,"Übrigens, das Essen war lecker.",t2_connectors
+jedoch,,,however,tuy nhiên,"Der Kurs ist schwer, jedoch macht er Spaß.",t2_connectors
+allerdings,,,however,tuy vậy,"Das Hotel ist teuer, allerdings ist es sehr gut.",t2_connectors
+einerseits,,,on one hand,một mặt,Einerseits mag ich die Stadt.,t2_connectors
+andererseits,,,on the other hand,mặt khác,Andererseits ist sie sehr laut.,t2_connectors
+zum Beispiel,,,for example,ví dụ,"Ich esse gern Obst, zum Beispiel Äpfel.",t2_connectors
+das heißt,,,that means,nghĩa là,"Ich habe frei, das heißt, ich kann schlafen.",t2_connectors
+nämlich,,,namely,cụ thể là,"Ich komme später, ich arbeite nämlich noch.",t2_connectors
+entweder oder,,,either or,hoặc là hoặc là,Wir fahren entweder mit dem Bus oder mit dem Zug.,t2_connectors
+genauso wie,,,just like,giống như,Er kocht genauso wie seine Mutter.,t2_connectors
+anschließend,,,afterward / subsequently,sau đó,"Wir essen, anschließend gehen wir ins Kino.",t2_connectors
+zuletzt,,,lastly,cuối cùng,Zuletzt räumen wir die Küche auf.,t2_connectors
+vor allem,,,above all,trên hết,"Ich mag Obst, vor allem Äpfel.",t2_connectors
+besonders,,,especially,đặc biệt,Ich mag besonders Musik.,t2_connectors
+außer,,,except,trừ,Alle kommen außer Peter.,t2_connectors
+sowie,,,as well as,cũng như,Ich kaufe Brot sowie Milch.,t2_connectors
+insgesamt,,,overall,nhìn chung,Insgesamt war der Kurs gut.,t2_connectors
+kurzum,,,in short,tóm lại,"Kurzum, der Plan war gut.",t2_connectors
+immerhin,,,at least / still,dù sao,Immerhin haben wir es versucht.,t2_connectors
+ich kann,,,I can,tôi có thể,Ich kann gut kochen.,t2_modals
+du kannst,,,you can,bạn có thể,Du kannst mir helfen.,t2_modals
+er kann,,,he can,anh ấy có thể,Er kann sehr schnell laufen.,t2_modals
+wir können,,,we can,chúng tôi có thể,Wir können morgen kommen.,t2_modals
+ihr könnt,,,you all can,các bạn có thể,Ihr könnt hier warten.,t2_modals
+sie können,,,they / you (formal) can,họ có thể,Sie können das Formular hier abgeben.,t2_modals
+ich muss,,,I must / have to,tôi phải,Ich muss jetzt gehen.,t2_modals
+du musst,,,you must,bạn phải,Du musst pünktlich sein.,t2_modals
+er muss,,,he must,anh ấy phải,Er muss heute arbeiten.,t2_modals
+wir müssen,,,we must,chúng tôi phải,Wir müssen den Bus nehmen.,t2_modals
+ihr müsst,,,you all must,các bạn phải,Ihr müsst die Aufgabe machen.,t2_modals
+sie müssen,,,they / you (formal) must,họ phải,Sie müssen das Ticket zeigen.,t2_modals
+ich will,,,I want to,tôi muốn,Ich will nach Hause gehen.,t2_modals
+du willst,,,you want to,bạn muốn,Du willst sicher etwas essen.,t2_modals
+er will,,,he wants to,anh ấy muốn,Er will Deutsch lernen.,t2_modals
+wir wollen,,,we want to,chúng tôi muốn,Wir wollen ins Kino gehen.,t2_modals
+ihr wollt,,,you all want to,các bạn muốn,Ihr wollt bestimmt etwas trinken.,t2_modals
+sie wollen,,,they / you (formal) want to,họ muốn,Sie wollen mehr Informationen bekommen.,t2_modals
+ich darf,,,I may / am allowed to,tôi được phép,Ich darf heute später kommen.,t2_modals
+du darfst,,,you may,bạn được phép,Du darfst hier parken.,t2_modals
+er darf,,,he may,anh ấy được phép,Er darf im Park spielen.,t2_modals
+wir dürfen,,,we may,chúng tôi được phép,Wir dürfen früher gehen.,t2_modals
+ihr dürft,,,you all may,các bạn được phép,Ihr dürft die Pause machen.,t2_modals
+sie dürfen,,,they / you (formal) may,họ được phép,Sie dürfen hier fotografieren.,t2_modals
+ich soll,,,I am supposed to,tôi nên,Ich soll den Chef anrufen.,t2_modals
+du sollst,,,you are supposed to,bạn nên,Du sollst mehr Wasser trinken.,t2_modals
+er soll,,,he is supposed to,anh ấy nên,Er soll früher aufstehen.,t2_modals
+wir sollen,,,we are supposed to,chúng tôi nên,Wir sollen das Formular ausfüllen.,t2_modals
+ihr sollt,,,you all are supposed to,các bạn nên,Ihr sollt leise sein.,t2_modals
+sie sollen,,,they / you (formal) are supposed to,họ nên,Sie sollen den Termin bestätigen.,t2_modals
+ich möchte,,,I would like,tôi muốn,Ich möchte einen Kaffee.,t2_modals
+du möchtest,,,you would like,bạn muốn,Du möchtest bestimmt etwas essen.,t2_modals
+er möchte,,,he would like,anh ấy muốn,Er möchte ein Zimmer buchen.,t2_modals
+wir möchten,,,we would like,chúng tôi muốn,Wir möchten die Rechnung bitte.,t2_modals
+ihr möchtet,,,you all would like,các bạn muốn,Ihr möchtet sicher noch bleiben.,t2_modals
+sie möchten,,,they / you (formal) would like,họ muốn,Sie möchten wahrscheinlich mehr wissen.,t2_modals
+machen,,,to do / to make (Perfekt: hat gemacht),làm,Ich mache die Hausaufgabe.,t2_verbs
+denken,,,to think (Perfekt: hat gedacht),nghĩ,Ich denke oft an meine Familie.,t2_verbs
+glauben,,,to believe (Perfekt: hat geglaubt),tin,Ich glaube dir.,t2_verbs
+wissen,,,to know facts (Perfekt: hat gewusst),biết,Ich weiß die Antwort.,t2_verbs
+lassen,,,to let / to leave (Perfekt: hat gelassen),để cho,Ich lasse das Fenster offen.,t2_verbs
+geben,,,to give (Perfekt: hat gegeben),cho,Ich gebe dir mein Buch.,t2_verbs
+sehen,,,to see (Perfekt: hat gesehen),nhìn thấy,Ich sehe einen Vogel.,t2_verbs
+bleiben,,,to stay (Perfekt: ist geblieben),ở lại,Ich bleibe heute zu Hause.,t2_verbs
+beginnen,,,to begin (Perfekt: hat begonnen),bắt đầu,Der Kurs beginnt um acht Uhr.,t2_verbs
+bringen,,,to bring (Perfekt: hat gebracht),mang đến,Ich bringe dir Kaffee.,t2_verbs
+bekommen,,,to receive / to get (Perfekt: hat bekommen),nhận được,Ich bekomme ein Geschenk.,t2_verbs
+lachen,,,to laugh (Perfekt: hat gelacht),cười,Die Kinder lachen laut.,t2_verbs
+weinen,,,to cry (Perfekt: hat geweint),khóc,Das Baby weint.,t2_verbs
+sich setzen,,,to sit down (Perfekt: hat sich gesetzt),ngồi xuống,Ich setze mich auf den Stuhl.,t2_verbs
+sitzen,,,to sit (Perfekt: hat gesessen),ngồi,Ich sitze am Tisch.,t2_verbs
+stellen,,,to put standing (Perfekt: hat gestellt),đặt,Ich stelle die Tasse auf den Tisch.,t2_verbs
+legen,,,to lay / to put (Perfekt: hat gelegt),đặt xuống,Ich lege das Buch auf den Tisch.,t2_verbs
+vergessen,,,to forget (Perfekt: hat vergessen),quên,Ich vergesse oft meinen Schlüssel.,t2_verbs
+sich erinnern,,,to remember (Perfekt: hat sich erinnert),nhớ lại,Ich erinnere mich gut an dich.,t2_verbs
+benutzen,,,to use (Perfekt: hat benutzt),sử dụng,Ich benutze mein Handy oft.,t2_verbs
+verkaufen,,,to sell (Perfekt: hat verkauft),bán,Ich verkaufe mein Fahrrad.,t2_verbs
+erzählen,,,to tell / to narrate (Perfekt: hat erzählt),kể,Ich erzähle eine Geschichte.,t2_verbs
+hoffen,,,to hope (Perfekt: hat gehofft),hy vọng,Ich hoffe sehr.,t2_verbs
+versuchen,,,to try (Perfekt: hat versucht),cố gắng,Ich versuche es noch einmal.,t2_verbs
+gefallen,,,to please / to like (Perfekt: hat gefallen),làm hài lòng,Die Stadt gefällt mir sehr.,t2_verbs
+sich interessieren,,,to be interested (Perfekt: hat sich interessiert),quan tâm,Ich interessiere mich für Musik.,t2_verbs
+sich freuen,,,to be happy / glad (Perfekt: hat sich gefreut),vui mừng,Ich freue mich auf den Urlaub.,t2_verbs
+ändern,,,to change (Perfekt: hat geändert),thay đổi,Ich ändere meine Pläne.,t2_verbs
+backen,,,to bake (Perfekt: hat gebacken),nướng bánh,Ich backe einen Kuchen.,t2_verbs
+schneiden,,,to cut (Perfekt: hat geschnitten),cắt,Ich schneide das Brot.,t2_verbs
+riechen,,,to smell (Perfekt: hat gerochen),có mùi,Die Suppe riecht gut.,t2_verbs
+studieren,,,to study at university (Perfekt: hat studiert),học đại học,Ich studiere Medizin.,t2_verbs
+unterrichten,,,to teach (Perfekt: hat unterrichtet),dạy học,Sie unterrichtet Englisch.,t2_verbs
+sparen,,,to save money (Perfekt: hat gespart),tiết kiệm,Ich spare jeden Monat Geld.,t2_verbs
+ausgeben,,,to spend money (Perfekt: hat ausgegeben),chi tiêu,Ich gebe nicht viel Geld aus.,t2_verbs
+steigen,,,to climb / to rise (Perfekt: ist gestiegen),tăng lên,Die Preise steigen.,t2_verbs
+springen,,,to jump (Perfekt: ist gesprungen),nhảy,Das Kind springt hoch.,t2_verbs
+fallen,,,to fall (Perfekt: ist gefallen),rơi,Das Buch fällt vom Tisch.,t2_verbs
+wachsen,,,to grow (Perfekt: ist gewachsen),lớn lên,Die Pflanze wächst schnell.,t2_verbs
+aufwachsen,,,to grow up (Perfekt: ist aufgewachsen),lớn lên,Ich bin in Hanoi aufgewachsen.,t2_verbs
+passieren,,,to happen (Perfekt: ist passiert),xảy ra,Was passiert hier?,t2_verbs
+klappen,,,to work out (Perfekt: hat geklappt),suôn sẻ,Der Plan klappt gut.,t2_verbs
+einsteigen,,,to get on / to board (Perfekt: ist eingestiegen),lên xe,Ich steige in den Bus ein.,t2_verbs
+aussteigen,,,to get off (Perfekt: ist ausgestiegen),xuống xe,Ich steige am Bahnhof aus.,t2_verbs
+mitbringen,,,to bring along (Perfekt: hat mitgebracht),mang theo,Ich bringe einen Kuchen mit.,t2_verbs
+mitkommen,,,to come along (Perfekt: ist mitgekommen),đi cùng,Er kommt heute mit.,t2_verbs
+anbieten,,,to offer (Perfekt: hat angeboten),đề nghị,Ich biete dir Hilfe an.,t2_verbs
+sich entscheiden,,,to decide (Perfekt: hat sich entschieden),quyết định,Ich entscheide mich für den Kurs.,t2_verbs
+überlegen,,,to consider / to think over (Perfekt: hat überlegt),suy nghĩ kỹ,Ich überlege es mir.,t2_verbs
+gratulieren,,,to congratulate (Perfekt: hat gratuliert),chúc mừng,Ich gratuliere dir zum Geburtstag.,t2_verbs
+manchmal,,,sometimes,đôi khi,Ich gehe manchmal ins Kino.,t2_adverbs
+nie,,,never,không bao giờ,Ich rauche nie.,t2_adverbs
+selten,,,rarely,hiếm khi,Wir essen selten Fisch.,t2_adverbs
+gestern,,,yesterday,hôm qua,Gestern war ich im Park.,t2_adverbs
+heute,,,today,hôm nay,Heute ist Montag.,t2_adverbs
+morgen,,,tomorrow,ngày mai,Morgen fahre ich nach Berlin.,t2_adverbs
+gerade,,,right now / just,vừa mới,Ich koche gerade das Abendessen.,t2_adverbs
+schon,,,already,đã rồi,Ich bin schon fertig.,t2_adverbs
+noch,,,still / yet,vẫn còn,Ich bin noch müde.,t2_adverbs
+bald,,,soon,sớm thôi,Der Bus kommt bald.,t2_adverbs
+jetzt,,,now,bây giờ,Ich muss jetzt gehen.,t2_adverbs
+übermorgen,,,the day after tomorrow,ngày kia,Übermorgen habe ich Urlaub.,t2_adverbs
+vorgestern,,,the day before yesterday,hôm kia,Vorgestern habe ich sie getroffen.,t2_adverbs
+einmal,,,once,một lần,Ich war einmal in Paris.,t2_adverbs
+zweimal,,,twice,hai lần,Ich rufe dich zweimal an.,t2_adverbs
+meistens,,,mostly / usually,thường thì,Ich trinke meistens Tee.,t2_adverbs
+normalerweise,,,normally,thông thường,Normalerweise stehe ich früh auf.,t2_adverbs
+gewöhnlich,,,usually,thường lệ,Gewöhnlich arbeite ich bis fünf Uhr.,t2_adverbs
+inzwischen,,,meanwhile,trong lúc đó,Inzwischen koche ich das Essen.,t2_adverbs
+mittlerweile,,,by now,hiện giờ thì,Mittlerweile spreche ich gut Deutsch.,t2_adverbs
+neulich,,,recently,gần đây,Neulich habe ich meinen Freund getroffen.,t2_adverbs
+hier,,,here,ở đây,Ich wohne hier.,t2_adverbs
+da,,,there / here,ở đó,Ich bin gleich da.,t2_adverbs
+dort,,,there,ở đằng kia,Das Auto steht dort.,t2_adverbs
+überall,,,everywhere,khắp nơi,Ich suche dich überall.,t2_adverbs
+irgendwo,,,somewhere,đâu đó,Meine Brille liegt irgendwo.,t2_adverbs
+nirgendwo,,,nowhere,không nơi nào,Ich finde meine Tasche nirgendwo.,t2_adverbs
+allein,,,alone,một mình,Ich wohne allein.,t2_adverbs
+wieder,,,again,lại,Ich sehe dich bald wieder.,t2_adverbs
+nochmal,,,once more,một lần nữa,Kannst du das nochmal sagen?,t2_adverbs
+ungefähr,,,approximately,khoảng chừng,Der Kurs dauert ungefähr zwei Stunden.,t2_adverbs
+gleich,,,right away,ngay bây giờ,Ich komme gleich.,t2_adverbs
+sicher,,,surely / certainly,chắc chắn,Er kommt sicher pünktlich.,t2_adverbs
+vielleicht,,,maybe,có lẽ,Vielleicht regnet es morgen.,t2_adverbs
+wahrscheinlich,,,probably,có lẽ là,Sie kommt wahrscheinlich später.,t2_adverbs
+hoffentlich,,,hopefully,hy vọng là,Hoffentlich scheint morgen die Sonne.,t2_adverbs
+leider,,,unfortunately,tiếc là,Leider habe ich keine Zeit.,t2_adverbs
+zum Glück,,,luckily,may mắn là,Zum Glück regnet es nicht.,t2_adverbs
+eigentlich,,,actually,thật ra,Eigentlich mag ich Kaffee nicht.,t2_adverbs
+natürlich,,,of course,dĩ nhiên,Natürlich helfe ich dir.,t2_adverbs
+sowieso,,,anyway,dù sao thì,Ich komme sowieso zu spät.,t2_adverbs
+endlich,,,finally,cuối cùng thì,Endlich ist der Kurs fertig.,t2_adverbs
+ständig,,,constantly,liên tục,Er ist ständig beschäftigt.,t2_adverbs
+kaum,,,hardly / barely,hầu như không,Ich habe kaum Zeit.,t2_adverbs
+demnächst,,,soon / shortly,trong thời gian tới,Demnächst beginnt der Kurs.,t2_adverbs
+ich finde,,,I find / think,tôi thấy,Ich finde Deutsch interessant.,t2_opinion
+ich glaube,,,I believe,tôi tin là,"Ich glaube, das stimmt.",t2_opinion
+ich denke,,,I think,tôi nghĩ,"Ich denke, das ist richtig.",t2_opinion
+ich meine,,,I mean / think,ý tôi là,"Ich meine, wir gehen jetzt.",t2_opinion
+meiner Meinung nach,,,in my opinion,theo ý kiến của tôi,Meiner Meinung nach ist Deutsch nicht so schwer.,t2_opinion
+ich bin der Meinung,,,I am of the opinion,tôi cho rằng,"Ich bin der Meinung, dass Sport wichtig ist.",t2_opinion
+für mich,,,for me,đối với tôi,Für mich ist Familie sehr wichtig.,t2_opinion
+ich mag,,,I like,tôi thích,Ich mag Musik.,t2_opinion
+ich mag nicht,,,I don't like,tôi không thích,Ich mag Fisch nicht.,t2_opinion
+lieber,,,rather / prefer,thích hơn,Ich trinke lieber Tee.,t2_opinion
+am liebsten,,,most of all,thích nhất,Am liebsten trinke ich Kaffee.,t2_opinion
+am besten,,,best,tốt nhất,Das gefällt mir am besten.,t2_opinion
+besser,,,better,tốt hơn,Deutsch ist für mich besser als Englisch.,t2_opinion
+schlechter,,,worse,tệ hơn,Das Wetter heute ist schlechter als gestern.,t2_opinion
+genauso gut,,,just as good,cũng tốt như vậy,Diese Methode ist genauso gut.,t2_opinion
+ich stimme zu,,,I agree,tôi đồng ý,Ich stimme dir zu.,t2_opinion
+ich stimme nicht zu,,,I disagree,tôi không đồng ý,Ich stimme dir nicht zu.,t2_opinion
+das finde ich auch,,,I think so too,tôi cũng nghĩ vậy,Das finde ich auch!,t2_opinion
+das sehe ich anders,,,I see it differently,tôi thấy khác,Das sehe ich anders.,t2_opinion
+ich bin dafür,,,I am for it,tôi ủng hộ,Ich bin dafür.,t2_opinion
+ich bin dagegen,,,I am against it,tôi phản đối,Ich bin dagegen.,t2_opinion
+es kommt darauf an,,,it depends,còn tùy,Es kommt darauf an.,t2_opinion
+das kann sein,,,that could be,có thể là vậy,Das kann sein.,t2_opinion
+das ist mir egal,,,that's all the same to me,tôi thấy sao cũng được,Das ist mir egal.,t2_opinion
+ich habe keine Ahnung,,,I have no idea,tôi không biết gì cả,Ich habe keine Ahnung.,t2_opinion
+unwichtig,,,unimportant,không quan trọng,Das ist für mich unwichtig.,t2_opinion
+sinnvoll,,,sensible / meaningful,hợp lý,Das finde ich sinnvoll.,t2_opinion
+sinnlos,,,senseless,vô nghĩa,Das ist sinnlos.,t2_opinion
+ich bin sicher,,,I am sure,tôi chắc chắn,"Ich bin sicher, dass es klappt.",t2_opinion
+ich bin nicht sicher,,,I am not sure,tôi không chắc,Ich bin nicht sicher.,t2_opinion
+ich weiß nicht,,,I don't know,tôi không biết,"Ich weiß nicht, was ich sagen soll.",t2_opinion
+ich denke schon,,,I think so,tôi nghĩ vậy,Ich denke schon.,t2_opinion
+ich denke nicht,,,I don't think so,tôi không nghĩ vậy,Ich denke nicht.,t2_opinion
+das ist praktisch,,,that's practical,cái đó thực tế,Das ist praktisch!,t2_opinion
+das ist typisch,,,that's typical,đúng là điển hình,Das ist typisch!,t2_opinion
+anders als,,,different from,khác với,Deutsch ist anders als Englisch.,t2_opinion
+ich ziehe vor,,,I prefer,tôi thích hơn,Ich ziehe Tee vor.,t2_opinion
+am wichtigsten,,,most important,quan trọng nhất,Gesundheit ist am wichtigsten.,t2_opinion
+besonders gern,,,especially like,đặc biệt thích,Ich höre besonders gern Musik.,t2_opinion
+auf keinen Fall,,,no way,không đời nào,Das mache ich auf keinen Fall.,t2_opinion
+auf jeden Fall,,,definitely,chắc chắn rồi,Das mache ich auf jeden Fall.,t2_opinion
+leider nicht,,,unfortunately not,tiếc là không,Leider nicht.,t2_opinion
+das gefällt mir,,,I like that,tôi thích cái đó,Das gefällt mir sehr.,t2_opinion
+das gefällt mir nicht,,,I don't like that,tôi không thích cái đó,Das gefällt mir nicht.,t2_opinion
+genau meine Meinung,,,exactly my opinion,đúng là ý kiến của tôi,Genau meine Meinung!,t2_opinion
+wie geht es dir,,,how are you (informal),bạn khỏe không,Wie geht es dir?,t2_smalltalk
+wie geht es Ihnen,,,how are you (formal),ông bà khỏe không,Wie geht es Ihnen?,t2_smalltalk
+mir geht es gut,,,I'm doing well,tôi khỏe,Mir geht es gut.,t2_smalltalk
+mir geht es nicht so gut,,,I'm not doing so well,tôi không khỏe lắm,Mir geht es nicht so gut.,t2_smalltalk
+und dir,,,and you (informal),còn bạn thì sao,Und dir?,t2_smalltalk
+und Ihnen,,,and you (formal),còn ông bà thì sao,Und Ihnen?,t2_smalltalk
+bis bald,,,see you soon,hẹn sớm gặp lại,Bis bald!,t2_smalltalk
+bis später,,,see you later,hẹn gặp lại sau,Bis später!,t2_smalltalk
+bis dann,,,see you then,hẹn gặp lại lúc đó,Bis dann!,t2_smalltalk
+bis morgen,,,see you tomorrow,hẹn gặp lại ngày mai,Bis morgen!,t2_smalltalk
+auf Wiedersehen,,,goodbye (formal),tạm biệt,Auf Wiedersehen!,t2_smalltalk
+auf Wiederhören,,,goodbye (on the phone),tạm biệt qua điện thoại,Auf Wiederhören!,t2_smalltalk
+freut mich,,,nice to meet you,rất vui được gặp bạn,Freut mich!,t2_smalltalk
+sehr angenehm,,,pleased to meet you,rất hân hạnh,Sehr angenehm!,t2_smalltalk
+kein Problem,,,no problem,không vấn đề gì,Kein Problem!,t2_smalltalk
+alles klar,,,all clear / got it,rõ rồi,Alles klar!,t2_smalltalk
+alles gut,,,all good,mọi thứ đều ổn,Alles gut!,t2_smalltalk
+macht nichts,,,never mind,không sao đâu,Das macht nichts.,t2_smalltalk
+das stimmt,,,that's right,đúng vậy,Das stimmt!,t2_smalltalk
+das stimmt nicht,,,that's not right,không đúng đâu,Das stimmt nicht!,t2_smalltalk
+genau,,,exactly,chính xác,Genau!,t2_smalltalk
+wirklich,,,really,thật à,Wirklich?,t2_smalltalk
+klar,,,sure,tất nhiên,Klar!,t2_smalltalk
+na klar,,,of course,dĩ nhiên rồi,Na klar!,t2_smalltalk
+sicherlich,,,surely,chắc chắn là,Das ist sicherlich richtig.,t2_smalltalk
+kein Wunder,,,no wonder,chẳng có gì lạ,Kein Wunder!,t2_smalltalk
+wie bitte,,,pardon?,xin lỗi bạn nói gì,Wie bitte?,t2_smalltalk
+wie meinen Sie das,,,what do you mean (formal),ý ông bà là gì,Wie meinen Sie das?,t2_smalltalk
+was meinst du,,,what do you mean (informal),ý bạn là gì,Was meinst du?,t2_smalltalk
+ich verstehe,,,I understand,tôi hiểu,Ich verstehe.,t2_smalltalk
+ich verstehe nicht,,,I don't understand,tôi không hiểu,Ich verstehe nicht.,t2_smalltalk
+ich verstehe das nicht,,,I don't understand that,tôi không hiểu cái đó,Ich verstehe das nicht.,t2_smalltalk
+entschuldigung,,,sorry / excuse me,xin lỗi,Entschuldigung!,t2_smalltalk
+es tut mir leid,,,I'm sorry,tôi xin lỗi,Es tut mir leid.,t2_smalltalk
+gerne,,,gladly / you're welcome,rất sẵn lòng,Gerne!,t2_smalltalk
+bitte schön,,,you're welcome,không có gì,Bitte schön!,t2_smalltalk
+bitte sehr,,,here you are,đây bạn,Bitte sehr!,t2_smalltalk
+danke schön,,,thank you very much,cảm ơn rất nhiều,Danke schön!,t2_smalltalk
+danke sehr,,,thanks a lot,cảm ơn nhiều,Danke sehr!,t2_smalltalk
+vielen Dank,,,many thanks,cảm ơn nhiều lắm,Vielen Dank!,t2_smalltalk
+tausend Dank,,,a thousand thanks,ngàn lần cảm ơn,Tausend Dank!,t2_smalltalk
+schon gut,,,it's okay,không sao đâu,Schon gut!,t2_smalltalk
+keine Ursache,,,you're welcome,có gì đâu,Keine Ursache!,t2_smalltalk
+gern geschehen,,,my pleasure,rất vui được giúp,Gern geschehen!,t2_smalltalk
+wie war's,,,how was it,thế nào rồi,Wie war's?,t2_smalltalk
+was gibt es,,,what's up,có gì mới không,Was gibt es?,t2_smalltalk
+nicht viel,,,not much,không nhiều,Nicht viel.,t2_smalltalk
+alles wie immer,,,everything as always,vẫn như mọi khi,Alles wie immer.,t2_smalltalk
+kein Stress,,,no stress,đừng lo lắng,Kein Stress!,t2_smalltalk
+keine Sorge,,,no worries,đừng lo,Keine Sorge!,t2_smalltalk
+wie schade,,,what a pity,tiếc quá,Wie schade!,t2_smalltalk
+na und,,,so what,thì sao,Na und?,t2_smalltalk
+na ja,,,well...,thôi thì,Na ja.,t2_smalltalk
+ach so,,,oh I see,à ra vậy,Ach so!,t2_smalltalk
+echt,,,really?!,thật hả,Echt?,t2_smalltalk
+können Sie das bitte wiederholen,,,can you please repeat that,ông bà có thể nhắc lại được không,Können Sie das bitte wiederholen?,t2_examphrases
+wie schreibt man das,,,how do you write that,viết cái đó thế nào,Wie schreibt man das?,t2_examphrases
+entschuldigung ich verstehe nicht,,,sorry I don't understand,xin lỗi tôi không hiểu,"Entschuldigung, ich verstehe nicht.",t2_examphrases
+können Sie bitte langsamer sprechen,,,can you please speak more slowly,ông bà có thể nói chậm hơn được không,Können Sie bitte langsamer sprechen?,t2_examphrases
+können Sie das bitte buchstabieren,,,can you please spell that,ông bà có thể đánh vần cái đó không,Können Sie das bitte buchstabieren?,t2_examphrases
+wie sagt man das auf Deutsch,,,how do you say that in German,nói cái đó bằng tiếng Đức thế nào,Wie sagt man das auf Deutsch?,t2_examphrases
+was bedeutet das,,,what does that mean,cái đó nghĩa là gì,Was bedeutet das?,t2_examphrases
+was heißt das auf Deutsch,,,what is that called in German,tiếng Đức gọi cái đó là gì,Was heißt das auf Deutsch?,t2_examphrases
+ich habe eine Frage,,,I have a question,tôi có một câu hỏi,Ich habe eine Frage.,t2_examphrases
+darf ich etwas fragen,,,may I ask something,tôi có thể hỏi điều gì đó không,Darf ich etwas fragen?,t2_examphrases
+einen Moment bitte,,,one moment please,xin chờ một chút,"Einen Moment, bitte!",t2_examphrases
+ich muss kurz nachdenken,,,I need to think for a moment,tôi cần suy nghĩ một chút,Ich muss kurz nachdenken.,t2_examphrases
+können Sie mir helfen,,,can you help me,ông bà có thể giúp tôi không,Können Sie mir helfen?,t2_examphrases
+ich brauche Hilfe,,,I need help,tôi cần giúp đỡ,Ich brauche Hilfe.,t2_examphrases
+das habe ich nicht verstanden,,,I didn't understand that,tôi đã không hiểu cái đó,Das habe ich nicht verstanden.,t2_examphrases
+können Sie das bitte erklären,,,can you please explain that,ông bà có thể giải thích cái đó không,Können Sie das bitte erklären?,t2_examphrases
+ich möchte etwas fragen,,,I would like to ask something,tôi muốn hỏi điều gì đó,Ich möchte etwas fragen.,t2_examphrases
+können Sie mir das zeigen,,,can you show me that,ông bà có thể chỉ cho tôi cái đó không,Können Sie mir das zeigen?,t2_examphrases
+ich weiß es nicht genau,,,I don't know exactly,tôi không biết chính xác,Ich weiß es nicht genau.,t2_examphrases
+ich weiß die Antwort nicht,,,I don't know the answer,tôi không biết câu trả lời,Ich weiß die Antwort nicht.,t2_examphrases
+ich habe eine Idee,,,I have an idea,tôi có một ý tưởng,Ich habe eine Idee.,t2_examphrases
+das ist schwierig für mich,,,that's difficult for me,cái đó khó với tôi,Das ist schwierig für mich.,t2_examphrases
+das ist einfach für mich,,,that's easy for me,cái đó dễ với tôi,Das ist einfach für mich.,t2_examphrases
+ich brauche mehr Zeit,,,I need more time,tôi cần thêm thời gian,Ich brauche mehr Zeit.,t2_examphrases
+darf ich noch einmal fragen,,,may I ask once more,tôi có thể hỏi lại lần nữa không,Darf ich noch einmal fragen?,t2_examphrases
+ich sage das anders,,,I'll say it differently,tôi sẽ nói khác đi,Ich sage das anders.,t2_examphrases
+anders gesagt,,,in other words,nói cách khác,Anders gesagt: Ich bin einverstanden.,t2_examphrases
+ich gebe Ihnen ein Beispiel,,,I'll give you an example,tôi sẽ cho ông bà một ví dụ,Ich gebe Ihnen ein Beispiel.,t2_examphrases
+können Sie das bitte aufschreiben,,,can you please write that down,ông bà có thể viết cái đó xuống không,Können Sie das bitte aufschreiben?,t2_examphrases
+ich lese die Frage noch einmal,,,I'll read the question once more,tôi sẽ đọc lại câu hỏi,Ich lese die Frage noch einmal.,t2_examphrases
+ich fange noch einmal an,,,I'll start again,tôi sẽ bắt đầu lại,Ich fange noch einmal an.,t2_examphrases
+das war's,,,that's it,vậy là xong,Das war's!,t2_examphrases
+ich bin fertig,,,I'm done,tôi xong rồi,Ich bin fertig.,t2_examphrases
+ich habe sonst keine Fragen,,,I have no other questions,tôi không còn câu hỏi nào khác,Ich habe sonst keine Fragen.,t2_examphrases
+das war alles,,,that was everything,đó là tất cả,Das war alles.,t2_examphrases
+vielen Dank für Ihre Geduld,,,thank you for your patience,cảm ơn sự kiên nhẫn của ông bà,Vielen Dank für Ihre Geduld!,t2_examphrases
+ich hoffe das war verständlich,,,I hope that was understandable,tôi hy vọng điều đó dễ hiểu,"Ich hoffe, das war verständlich.",t2_examphrases
+haben Sie mich verstanden,,,did you understand me (formal),ông bà có hiểu tôi không,Haben Sie mich verstanden?,t2_examphrases
+habe ich das richtig verstanden,,,did I understand that correctly,tôi hiểu đúng chứ,Habe ich das richtig verstanden?,t2_examphrases
+ich wiederhole die Frage,,,I'll repeat the question,tôi sẽ nhắc lại câu hỏi,Ich wiederhole die Frage.,t2_examphrases
+bitte sprechen Sie langsam,,,please speak slowly,xin hãy nói chậm,Bitte sprechen Sie langsam!,t2_examphrases
+ich spreche nicht so gut Deutsch,,,I don't speak German so well,tôi nói tiếng Đức không giỏi lắm,Ich spreche nicht so gut Deutsch.,t2_examphrases
+mein Deutsch ist noch nicht so gut,,,my German isn't very good yet,tiếng Đức của tôi vẫn chưa tốt lắm,Mein Deutsch ist noch nicht so gut.,t2_examphrases
+ich übe noch,,,I'm still practicing,tôi vẫn đang luyện tập,Ich übe noch.,t2_examphrases
