@@ -250,3 +250,19 @@ going to happen anyway.
 **Explicit non-goal:** this path does not replace VSCode, and does not
 cover plugin managers, LSP, completion, or Treesitter. Neovim here is a
 recovery tool for a server VSCode cannot reach, nothing more.
+
+## The bash extension (days 8–10)
+
+Days 8–10 apply the same underlying-truth doctrine to bash scripting. The
+truth is the process tree: a bash script is a fork from its parent, and it
+spawns a tree of child processes through pipelines, subshells, and command
+substitutions. Every non-obvious bash failure — a pipeline that swallows an
+exit code, a variable that vanishes after a subshell, a trap that does not
+fire on Ctrl-C — is a boundary phenomenon inside that tree.
+
+The move is the same: symptom → process boundary → the behavior that proves it.
+The daily loop is identical to days 1–7. The strip step at the end of each day
+uses sh (dash/POSIX) instead of the Alpine busybox container.
+
+The product is bash/ops-toolkit/: four files the learner builds incrementally
+through the labs and keeps for real use.

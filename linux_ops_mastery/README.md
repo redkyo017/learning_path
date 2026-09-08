@@ -40,6 +40,9 @@ the `sysd` service brought up via its overlay file — see
 | 5 | Process table | 3h | Mode `0777` denied; systemd unit fails to start | `content/day05.md` | `labs/day05/` |
 | 6 | FD table (a socket is a descriptor), plus the network namespace | 3h | Connectivity ladder: DNS, route, firewall, app | `content/day06.md` | `labs/day06/` |
 | 7 | All four | 1.5h nvim + 1.5h gauntlet | Five unseen incidents, timed, no hints | `content/day07.md` | `labs/day07/` |
+| 8 | Exit codes | 2h | Pipeline silently succeeds after `find` permission-denied failure | `content/day08.md` | `labs/day08/` |
+| 9 | Subshells & traps | 2h | Cleanup trap not fired after Ctrl-C inside a pipeline loop | `content/day09.md` | `labs/day09/` |
+| 10 | Argument contract | 2h | Fragile positional arg parser silently operates on wrong target | `content/day10.md` | `labs/day10/` |
 
 ## The daily loop
 

@@ -118,3 +118,49 @@ them inline. Alphabetical; each entry is one to three sentences.
 - **zombie**: A process that has exited but whose parent hasn't yet called wait() to
   collect its exit status, shown as state Z. It holds no resources beyond a process-table
   slot, but a pile of zombies signals a parent that never reaps.
+
+---
+
+## Bash Scripting (days 08–10)
+
+**exit code** — The integer a process returns to its parent when it exits.
+Zero means success; any non-zero value means failure. The parent reads it via
+`$?` immediately after the child exits.
+
+**PIPESTATUS** — A bash array holding the exit code of each stage in the most
+recently executed pipeline. `${PIPESTATUS[0]}` is the first stage's code,
+`${PIPESTATUS[1]}` the second. Bash-only — not available in POSIX sh.
+
+**`set -euo pipefail`** — A four-flag header for reliable bash scripts: `-e`
+aborts on non-zero exit, `-u` aborts on unset variable, `-o pipefail` makes
+the pipeline's exit code the first non-zero stage's code rather than the last
+stage's.
+
+**subshell** — A child process created by the shell to run a group of commands.
+Constructed by `(cmds)`, `$(cmds)`, or any pipeline stage. Inherits the
+parent's environment at fork time; variable assignments inside it are invisible
+to the parent.
+
+**trap** — A shell built-in that registers a handler to run when the shell
+receives a signal or exits. Syntax: `trap 'handler' SIGNAL...`. Common signals:
+`EXIT` (fires on any exit), `INT` (Ctrl-C), `TERM` (kill). Traps are
+per-process — they do not fire in child processes.
+
+**`mktemp -d`** — Creates a uniquely-named temporary directory and prints its
+path. Atomic — safe against concurrent calls. Always pair with
+`trap 'rm -rf "$TMPDIR"' EXIT INT TERM` to ensure cleanup on exit or interrupt.
+
+**`getopts`** — POSIX built-in for parsing `-x` style short option flags. Use
+`shift $((OPTIND - 1))` after the loop to remove parsed flags, leaving
+remaining positional arguments in `$@`.
+
+**argument contract** — The formal interface of a script: which positional
+arguments and flags it accepts, what it considers invalid, and which exit codes
+each outcome produces. Validated at entry with `[[ $# -lt N ]]`, `${1:?msg}`,
+and type checks before any destructive command is reached.
+
+**process substitution** (`<(cmd)`) — A bash construct that runs `cmd` in a
+subshell and presents its output as a file descriptor. `while read line; done
+< <(cmd)` runs the while body in the current shell (not a subshell), so
+variable assignments and trap handlers work correctly. Bash-only — not
+available in POSIX sh.
