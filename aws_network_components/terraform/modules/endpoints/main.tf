@@ -39,14 +39,18 @@ resource "aws_vpc_endpoint" "ec2messages" {
 }
 
 # PrivateLink endpoint service
+# This module does not create the NLB — its ARN is passed in, and defaults to
+# "". Left unconditional, the resource sends network_load_balancer_arns = [""]
+# and the apply fails with InvalidParameter. Gate it on the ARN being set.
 resource "aws_vpc_endpoint_service" "this" {
+  count                      = var.nlb_arn == "" ? 0 : 1
   acceptance_required        = true
   network_load_balancer_arns = [var.nlb_arn]
   tags                       = { Name = "${var.name}-endpoint-service" }
 }
 
 resource "aws_vpc_endpoint_service_allowed_principal" "this" {
-  for_each                = toset(var.allowed_principal_arns)
-  vpc_endpoint_service_id = aws_vpc_endpoint_service.this.id
+  for_each                = var.nlb_arn == "" ? toset([]) : toset(var.allowed_principal_arns)
+  vpc_endpoint_service_id = aws_vpc_endpoint_service.this[0].id
   principal_arn           = each.value
 }

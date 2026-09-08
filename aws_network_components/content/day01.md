@@ -45,10 +45,16 @@ address and its size.
 `10.0.0.0/16` means:
 - Network address: `10.0.0.0`
 - Prefix length: 16 bits fixed
-- Usable host addresses: 2^(32-16) - 5 = 65,531 (AWS reserves 5 per subnet)
+- Total addresses: 2^(32-16) = 65,536
 
-The `/16` gives you 65,536 addresses to divide across subnets. A `/24` subnet
-within it gives you 251 usable host IPs. Choose CIDR ranges that:
+The `/16` gives you 65,536 addresses to divide across subnets. AWS's reservation
+is **per subnet, not per VPC** — every subnet loses 5 addresses (network
+address, VPC router, DNS, a future-use address, and broadcast), so a `/24`
+subnet gives you 256 − 5 = **251** usable host IPs, not 254.
+
+The reservation is charged per subnet, so slicing a VPC into many small subnets
+costs you real address space: thirty `/28`s (16 addresses each) yield only
+11 usable IPs apiece — a third of the range gone to overhead. Choose CIDR ranges that:
 - Don't overlap with other VPCs you will peer or connect via TGW
 - Leave room to grow (a `/20` VPC is too small for a real platform)
 - Avoid the `10.0.0.0/8` ranges your on-prem network already uses

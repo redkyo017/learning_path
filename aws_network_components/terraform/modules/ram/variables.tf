@@ -16,3 +16,9 @@ variable "account_b_id" {
   type        = string
   description = "AWS account ID for account B"
 }
+
+variable "allow_external_principals" {
+  type        = bool
+  default     = true
+  description = "True when account B is outside this AWS Organization"
+}

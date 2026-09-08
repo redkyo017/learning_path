@@ -58,7 +58,10 @@ new attachment, not N new peering connections.
 - Hub-and-spoke topology: all traffic between VPCs flows through the TGW
 - Supports up to 5,000 attachments
 - Crosses account boundaries (via RAM sharing)
-- Cost: $0.05/hr per attachment + $0.02/GB data processed
+- Cost: **$0.05/hr per attachment in `us-east-1`; `ap-southeast-1` (this
+  course's region) is higher, around $0.07/hr** — plus ~$0.02/GB processed.
+  AWS lists TGW pricing per region; check the pricing page rather than
+  assuming the us-east-1 figure, which is the one usually quoted in blog posts.
 
 **TGW route tables:**
 The TGW maintains its own routing table(s), separate from VPC route tables.
@@ -109,7 +112,7 @@ in each VPC's private route table: `destination CIDR → tgw-attachment-id`.
 |---|---|---|
 | VPC count | ≤ 3 | 4+ |
 | Expected growth | Stable | Growing |
-| Cost concern | Free per-hour | $0.05/hr/attachment |
+| Cost concern | Free per-hour | ~$0.05–0.07/hr per attachment, region-dependent |
 | Transitivity needed | No | Yes |
 | Cross-account | Supported | Easier (RAM sharing) |
 | On-prem connectivity | Not supported | Supported (VPN, DX) |

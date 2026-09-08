@@ -2,7 +2,7 @@ resource "aws_vpc" "this" {
   cidr_block           = var.cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
-  tags = { Name = var.name }
+  tags                 = { Name = var.name }
 }
 
 resource "aws_subnet" "public" {
@@ -11,7 +11,7 @@ resource "aws_subnet" "public" {
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.azs[count.index]
   map_public_ip_on_launch = true
-  tags = { Name = "${var.name}-public-${count.index + 1}", Tier = "public" }
+  tags                    = { Name = "${var.name}-public-${count.index + 1}", Tier = "public" }
 }
 
 resource "aws_subnet" "private" {
@@ -19,7 +19,7 @@ resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.this.id
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = var.azs[count.index]
-  tags = { Name = "${var.name}-private-${count.index + 1}", Tier = "private" }
+  tags              = { Name = "${var.name}-private-${count.index + 1}", Tier = "private" }
 }
 
 resource "aws_subnet" "isolated" {
@@ -27,7 +27,7 @@ resource "aws_subnet" "isolated" {
   vpc_id            = aws_vpc.this.id
   cidr_block        = var.isolated_subnet_cidrs[count.index]
   availability_zone = var.azs[count.index]
-  tags = { Name = "${var.name}-isolated-${count.index + 1}", Tier = "isolated" }
+  tags              = { Name = "${var.name}-isolated-${count.index + 1}", Tier = "isolated" }
 }
 
 resource "aws_internet_gateway" "this" {

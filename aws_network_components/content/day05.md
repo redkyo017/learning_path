@@ -140,13 +140,13 @@ application-level connectivity, not network-level connectivity.
 
 ## Choosing between endpoint types
 
-| Factor | Use | Endpoint Type |
-|---|---|---|
-| S3, DynamoDB same region | Gateway (free) |
-| AWS services (SSM, ECR, Secrets Manager) | Interface |
-| Your own service, same VPC | TGW or direct |
-| Your own service, other VPC/account | PrivateLink |
-| High-volume traffic cost concern | Compare NAT GW vs interface endpoint $/GB |
+| What you need to reach | Use |
+|---|---|
+| S3 or DynamoDB, same region | Gateway endpoint (free) |
+| AWS services (SSM, ECR, Secrets Manager) | Interface endpoint |
+| Your own service, same VPC | Direct — no endpoint needed |
+| Your own service, another VPC or account | PrivateLink |
+| High-volume traffic, cost sensitive | Compare NAT GW $/GB vs interface endpoint $/GB |
 
 ---
 

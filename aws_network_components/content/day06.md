@@ -24,6 +24,14 @@ A Site-to-Site VPN connects your on-premises network to AWS over the public
 internet using IPSec tunnels. "Site-to-Site" because you are connecting two
 networks (sites), not a single user device.
 
+> **Cost — today is the most expensive day of the course.** The VPN connection
+> itself is modest (~$0.05/hr, billed whenever the connection exists, whether or
+> not either tunnel is up). What makes today expensive is everything it sits on:
+> two VPCs with four NAT Gateways, a TGW with two attachments, plus the
+> `onprem-sim` VPC with its own NAT Gateway and the strongSwan instance and its
+> Elastic IP. Together that is roughly **$1.10/hr — about $26/day**. Plan to do
+> the whole day in one sitting and tear it down before you stop.
+
 **Components:**
 
 **Customer Gateway (CGW):**

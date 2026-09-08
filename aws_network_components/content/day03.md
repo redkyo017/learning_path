@@ -98,6 +98,13 @@ platform teams also need DNS to cross boundaries:
 This is where Resolver endpoints come in. They are ENIs in your VPC that
 act as DNS proxy endpoints.
 
+> **Cost — read this before the lab.** Resolver endpoints are billed **per IP
+> address, per hour** (~$0.125/hr each in `ap-southeast-1`), not per endpoint.
+> The HA guidance below — two endpoints, two IPs each — therefore costs about
+> **$0.50/hr, roughly $12/day**, and it accrues whether or not any query is ever
+> sent. Nothing else in these eight days is close. There is no free tier for
+> this. Build them, learn from them, and delete them the same day.
+
 **Inbound endpoint:**
 An inbound endpoint is a set of ENIs (one per AZ) in your VPC's private
 subnets. External DNS servers (on-prem) can forward DNS queries to these ENI
@@ -154,6 +161,13 @@ approach is more flexible than pushing custom DNS servers via DHCP.
   default association behaviour.
 - Create inbound and outbound endpoints in at least two AZs (two IP addresses
   each) for HA. A single-AZ endpoint is a single point of failure for DNS.
+  Note the cost consequence: because billing is per IP, HA doubles the price of
+  each endpoint. That is the correct trade in production and an expensive habit
+  to leave running in a sandbox — in the lab, tear them down the same day.
+- Only build the endpoints you actually need. An inbound endpoint is for
+  on-prem resolving *into* AWS; an outbound endpoint is for AWS resolving *out*
+  to on-prem. Many platforms need only one direction, and each unneeded
+  endpoint is ~$0.25/hr of pure waste.
 - Associate outbound Resolver rules with all VPCs that need the forwarding,
   not just the VPC where the endpoint lives. Rules can be shared via RAM.
 

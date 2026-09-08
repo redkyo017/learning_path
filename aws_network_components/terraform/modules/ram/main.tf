@@ -1,6 +1,9 @@
+# Must be true when account B is outside this AWS Organization. Left false for
+# an external account the share is created, the principal association succeeds,
+# and account B never sees it — with no error anywhere.
 resource "aws_ram_resource_share" "subnets" {
   name                      = "${var.name}-subnet-share"
-  allow_external_principals = false
+  allow_external_principals = var.allow_external_principals
   tags                      = { Name = "${var.name}-subnet-share" }
 }
 
@@ -17,7 +20,7 @@ resource "aws_ram_principal_association" "account_b_subnets" {
 
 resource "aws_ram_resource_share" "tgw" {
   name                      = "${var.name}-tgw-share"
-  allow_external_principals = false
+  allow_external_principals = var.allow_external_principals
   tags                      = { Name = "${var.name}-tgw-share" }
 }
 

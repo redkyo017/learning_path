@@ -120,7 +120,7 @@ cleanest integration boundary.
 | Consumer route table changes | None | Yes (add CIDR route) |
 | Network scope | One service (NLB) | Full VPC CIDR (all resources) |
 | Blast radius | Application-level | Network-level |
-| Cost | $0.01/hr endpoint ENI | $0.05/hr TGW attachment |
+| Cost | ~$0.01–0.013/hr per endpoint ENI | ~$0.05–0.07/hr per attachment (region-dependent) |
 | Use case | Expose one service | Full network access between VPCs |
 
 For an integration platform exposing APIs and shared services: PrivateLink.
@@ -196,9 +196,18 @@ entire organisation's network.
 - Always set `acceptance_required = true` for cross-account TGW attachments.
   Auto-acceptance means any account in your org can attach and route traffic
   — verify first.
-- Grant RAM access to the entire Organisation (`allow_external_principals = false`,
-  principal = the org ARN) rather than listing individual account IDs. Adding
-  an account doesn't require a RAM share update.
+- Grant RAM access to the entire Organisation (`allow_external_principals =
+  false`, principal = the org ARN) rather than listing individual account IDs.
+  Adding an account doesn't require a RAM share update.
+
+  **But check which case you are actually in.** `allow_external_principals =
+  false` restricts the share to accounts inside your AWS Organization. If your
+  account B is a *separate personal account* — which is exactly what this
+  course's Day 7 lab allows — the share is created without error, the principal
+  association is accepted, and account B **never sees it**. There is no failure
+  message anywhere; the share simply does nothing. For an account outside your
+  Organization you must set `allow_external_principals = true`. Decide which
+  case you are in before you start debugging the acceptance flow.
 - Create separate TGW route tables for each security domain (prod, dev,
   shared, sandbox) — don't put everything on the default route table.
 - Keep the TerraformDeployRole in spoke accounts narrow: only the permissions

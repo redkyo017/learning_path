@@ -15,6 +15,8 @@ aws_network_components/
 ├── docs/superpowers/
 │   ├── specs/2026-07-17-aws-network-mastery-design.md   ← Design decisions (reference)
 │   └── plans/2026-07-17-aws-network-mastery-plan.md     ← LAB GUIDE — Console + Terraform steps
+├── scripts/
+│   └── sweep.sh                       ← Run after EVERY teardown (see Cost Control)
 └── terraform/
     ├── modules/
     │   ├── vpc/         ← Pre-written module (answer key for Day 1)
@@ -23,14 +25,27 @@ aws_network_components/
     │   ├── tgw/         ← Answer key for Day 4
     │   ├── endpoints/   ← Answer key for Day 5
     │   ├── vpn/         ← Answer key for Day 6
-    │   └── ram/         ← Answer key for Day 7
+    │   ├── ram/         ← Answer key for Day 7
+    │   └── ec2_test/    ← Harness: SSM-managed test instances (Days 2-8)
     └── envs/sandbox/
         ├── main.tf           ← YOU EDIT THIS: add one module block per day
         ├── main.complete.tf  ← Answer key: the fully assembled 8-day main.tf
         ├── outputs.tf        ← Uncomment outputs as you add modules
-        ├── variables.tf      ← All variables (most have defaults)
-        └── terraform.tfvars  ← Your values: region + profile already set
+        ├── variables.tf      ← All variables incl. the enable_* day toggles
+        ├── terraform.tfvars  ← Your values: region + profile already set
+        └── day01…day08.tfvars ← Per-day toggles: which modules that day needs
 ```
+
+**Each day runs on its own.** Every module except the VPC is gated behind an
+`enable_*` flag, and `dayNN.tfvars` turns on exactly what that day needs. You
+can run Day 5 on a clean account without having run Day 4:
+
+```bash
+terraform apply   -var-file=day05.tfvars -auto-approve
+terraform destroy -var-file=day05.tfvars -auto-approve
+```
+
+Always pass the **same** `-var-file` to `destroy` that you passed to `apply`.
 
 **Primary guide each day:** `docs/superpowers/plans/2026-07-17-aws-network-mastery-plan.md`
 Find the `## Day N` section — it has all Console steps and Terraform code verbatim.
@@ -77,7 +92,8 @@ Block 1 — Theory        (30–45 min)   content/dayNN.md
 Block 2 — Console Lab   (45–60 min)   plan file → "Day N: Console Lab" section
 Block 3 — Terraform Lab (30–45 min)   plan file → "Day N: Terraform Lab" section
 Block 4 — Break-it      (15 min)      plan file → "Break-It Exercise" subsection
-Close   — Journal + Teardown          journal.md, then terraform destroy
+Close   — Teardown + Journal          Console checklist -> terraform destroy
+                                      -var-file=dayNN.tfvars -> scripts/sweep.sh
 ```
 
 **Open two files side-by-side:**
@@ -114,14 +130,19 @@ Then uncomment the two outputs in `outputs.tf`.
 **Terraform commands:**
 
 ```bash
-terraform init          # re-init to pick up the new module source
-terraform plan          # review: expect ~18 resources to add
-terraform apply         # ~3 min — VPC, 6 subnets, IGW, 2 NATs, route tables
+terraform init                                  # pick up the new module source
+terraform plan  -var-file=day01.tfvars          # expect exactly 22 to add
+terraform apply -var-file=day01.tfvars          # ~3 min
 ```
+
+22 = 1 VPC + 6 subnets + 1 IGW + 2 EIPs + 2 NAT GWs + 4 route tables
+(1 public, **2** private — one per AZ — and 1 isolated) + 6 associations.
 
 **Verify:** Console → VPC → Your VPCs → `shared-services` visible. Check route tables: public RT has `0.0.0.0/0 → igw-xxx`, each private RT has `0.0.0.0/0 → nat-xxx`, isolated RT has no default route.
 
-**Cost:** 2 NAT Gateways @ ~$0.045/hr each = ~$0.09/hr. Destroy at end of day.
+**Cost:** 2 NAT Gateways @ ~$0.059/hr each ≈ $0.12/hr. Destroy at end of day —
+and note that deleting a Console-built VPC does **not** release its NAT Gateway
+Elastic IPs. Run `./scripts/sweep.sh` to catch them.
 
 ---
 
@@ -148,10 +169,20 @@ module "shared_services_security" {
 
 ```bash
 terraform init
-terraform apply         # ~1 min — SGs, NACL, Flow Logs IAM role + log group
+terraform apply -var-file=day02.tfvars   # ~2 min — 19 security + 8 harness = 27
 ```
 
-**Verify:** Console → VPC → Security Groups — find `shared-services-web`, `shared-services-app`, `shared-services-data`. Console → CloudWatch → Log Groups — find `shared-services-flow-logs`.
+**Verify:** Console → VPC → Security Groups — find `shared-services-web-sg`,
+`shared-services-app-sg`, `shared-services-data-sg`. Console → CloudWatch → Log
+Groups — find `/vpc/shared-services/flow-logs`.
+
+`day02.tfvars` also sets `enable_ec2_test`, giving you two SSM-managed instances
+in the private subnets to test the NACL with. Reach one with:
+
+```bash
+aws ssm start-session --profile sandbox \
+  --target "$(terraform output -json ec2_test_shared_services_ids | jq -r '.[0]')"
+```
 
 **Cost:** Negligible (SGs and NACLs are free; Flow Logs charge per GB ingested, minimal for a quiet sandbox).
 
@@ -161,7 +192,7 @@ terraform apply         # ~1 min — SGs, NACL, Flow Logs IAM role + log group
 
 **Theory:** `content/day03.md` — Route 53 private hosted zones, split-horizon DNS, Resolver inbound/outbound endpoints.
 
-**Goal:** Create a private zone `internal.platform.local`, add a test A record, and set up Resolver to forward queries for `corp.internal` to a simulated on-prem DNS.
+**Goal:** Create a private zone `internal.platform`, add a test A record, and set up Resolver to forward queries for `corp.internal` to a simulated on-prem DNS.
 
 **Add to `main.tf`** (after Day 2 block):
 
@@ -180,12 +211,16 @@ module "shared_services_dns" {
 
 ```bash
 terraform init
-terraform apply         # ~2 min — hosted zone, A record, resolver endpoints
+terraform apply -var-file=day03.tfvars   # ~2 min
 ```
 
-**Verify:** Console → Route 53 → Hosted Zones → `internal.platform.local`. Check the Resolver outbound endpoint is `OPERATIONAL` (takes ~2 min after apply).
+**Verify:** Console → Route 53 → Hosted Zones → `internal.platform`. Check the Resolver outbound endpoint is `OPERATIONAL` (takes ~2 min after apply).
 
-**Cost:** Resolver endpoints: 2 ENIs × 2 AZs × $0.125/hr = $0.50/hr. Note these down — destroy at end of day.
+**⚠ Cost — the most expensive day of the course.** Resolver endpoints bill
+**per IP address**, ~$0.125/hr each. Two endpoints × two IPs = **~$0.50/hr,
+about $12/day**, accruing whether or not a single query is sent. There is no
+free tier. Destroy at end of day and confirm with `./scripts/sweep.sh` — check
+the `resolver endpoints` row specifically.
 
 ---
 
@@ -228,12 +263,18 @@ module "tgw" {
 
 ```bash
 terraform init
-terraform apply         # ~5–7 min — TGW creation takes time; second VPC adds 2 more NATs
+terraform apply -var-file=day04.tfvars   # ~5–7 min — TGW creation is slow
 ```
+
+Note `day04.tfvars` deliberately leaves `enable_dns = false`. Day 4 doesn't need
+the DNS layer, so you don't pay $0.50/hr for Resolver endpoints today.
 
 **Verify:** Console → VPC → Transit Gateways → `platform` in `available` state. Check Transit Gateway Attachments — both VPCs attached. Check private route tables in each VPC — routes to `10.0.0.0/16` and `10.1.0.0/16` via the TGW attachment.
 
-**Cost warning:** Now 4 NAT Gateways (2 per VPC × 2 VPCs) + TGW ($0.05/hr + $0.02/GB). ~$0.18/hr base. Destroy at day end.
+**Cost warning:** Now 4 NAT Gateways (2 per VPC × 2 VPCs) + TGW attachments
+(~$0.05/hr in us-east-1, ~$0.07/hr in ap-southeast-1, + $0.02/GB). ~$0.40/hr
+base. TGW destroy takes 5–10 min — let it finish, or attachments are orphaned
+and keep billing.
 
 ---
 
@@ -243,7 +284,13 @@ terraform apply         # ~5–7 min — TGW creation takes time; second VPC add
 
 **Goal:** Add S3 gateway endpoint, SSM interface endpoints, and create a PrivateLink endpoint service backed by an NLB.
 
-**Pre-step (Console, optional):** If you want to test a live PrivateLink service, create an NLB manually in the Console and note its ARN. Otherwise leave `privatelink_nlb_arn = ""` in tfvars — the endpoint service will be created without an NLB target (API test only).
+**Pre-step (Console, optional):** If you want to test a live PrivateLink service, create an NLB manually in the Console and note its ARN, then set `privatelink_nlb_arn` in tfvars.
+
+Left at its `""` default the endpoint service is **skipped entirely** — it is
+gated on the ARN with `count = var.nlb_arn == "" ? 0 : 1`. It is not created
+"without an NLB target": an endpoint service requires at least one NLB ARN, and
+passing an empty one fails the apply with `InvalidParameter`. The gate is what
+lets Day 5 run without an NLB.
 
 **Add to `main.tf`** (after Day 4 block):
 
@@ -267,7 +314,7 @@ module "shared_services_endpoints" {
 
 ```bash
 terraform init
-terraform apply         # ~3 min — S3 gateway endpoint, 3 SSM interface endpoints
+terraform apply -var-file=day05.tfvars   # ~3 min
 ```
 
 **Verify:** Console → VPC → Endpoints — find `com.amazonaws.ap-southeast-1.s3` (type: Gateway) and three SSM interface endpoints (type: Interface, status: available). Console → EC2 → Systems Manager → Session Manager — if you have an EC2 in a private subnet, you can now connect without a bastion.
@@ -283,7 +330,9 @@ terraform apply         # ~3 min — S3 gateway endpoint, 3 SSM interface endpoi
 **Goal:** Set up a VPN connection from the TGW to a simulated on-prem Customer Gateway (a t3.micro EC2 with an EIP).
 
 **Pre-step (Console, required):**
-1. Launch a `t3.micro` EC2 in the `shared-services` public subnet (Amazon Linux 2023).
+1. Launch a `t3.micro` EC2 in the **`onprem-sim` VPC's** public subnet (Amazon
+   Linux 2023) — see the plan file's Day 6 Console lab, which builds that VPC
+   first. It represents on-prem, so it must not live inside `shared-services`.
 2. Allocate and associate an Elastic IP to it.
 3. Note the EIP (e.g. `1.2.3.4`).
 4. Add it to `terraform.tfvars`:
@@ -309,7 +358,7 @@ module "vpn" {
 
 ```bash
 terraform init
-terraform apply         # ~2 min — Customer GW + VPN connection (2 tunnels created)
+terraform apply -var-file=day06.tfvars   # ~2 min — Customer GW + VPN (2 tunnels)
 ```
 
 **Verify:** Console → VPN → Site-to-Site VPN Connections → `onprem-sim`. Tunnels will show `DOWN` until strongSwan is configured on the EC2 (follow Day 6 plan for strongSwan setup — that is a Console/SSH step, not Terraform). Download the VPN configuration from Console (Vendor: Generic, IKEv2) to get pre-shared keys.
@@ -320,7 +369,11 @@ terraform output -json | jq '{tunnel1_address, tunnel2_address}'
 ```
 These are marked `sensitive = true` in Terraform — they won't print unless you use `-json`.
 
-**Cost:** VPN connection: $0.05/hr. EC2 t3.micro: ~$0.0052/hr. Minimal, but destroy at day end.
+**⚠ Cost — highest total burn of the course.** The VPN itself is only ~$0.05/hr,
+but today stacks two VPCs (4 NAT GWs), a TGW with 2 attachments, the
+`onprem-sim` VPC with its own NAT GW, and the strongSwan instance + its EIP:
+roughly **$1.10/hr, ~$26/day**. Do the whole day in one sitting. Remember to
+release the strongSwan EIP — terminating the instance does not release it.
 
 ---
 
@@ -359,8 +412,18 @@ module "ram" {
 
 ```bash
 terraform init
-terraform apply         # ~1 min — RAM shares + principal associations
+terraform apply -var-file=day07.tfvars   # ~1 min
 ```
+
+**If account B is outside your AWS Organization** (a separate personal sandbox,
+which is the common case here) you must also set:
+
+```hcl
+allow_external_principals = true
+```
+
+Left `false` for an external account the share is created, the principal
+association succeeds, and account B **never sees it** — with no error anywhere.
 
 **Verify:** Console → Resource Access Manager → Shared by me → two shares: `platform-subnets` and `platform-tgw`. If you have Account B: log in, go to RAM → Shared with me → accept the TGW share. Then create a TGW attachment from Account B.
 
@@ -372,28 +435,29 @@ terraform apply         # ~1 min — RAM shares + principal associations
 
 **Goal:** Use Reachability Analyzer to validate connectivity between two EC2 instances and interpret the analysis output.
 
-**Pre-step (Console, required):**
-1. Launch two `t3.micro` EC2 instances (one in `shared-services` private subnet, one in `app` private subnet).
-2. Note their instance IDs (e.g. `i-0abc123` and `i-0def456`).
-3. Add to `terraform.tfvars`:
-   ```
-   ec2_a_id = "i-0abc123"
-   ec2_b_id = "i-0def456"
-   ```
+**Pre-step: none.** Day 8 is the only day with no Console build step. The test
+instances come from the harness (`enable_ec2_test` is set in `day08.tfvars`), so
+the path resource reads their IDs directly — nothing to paste in, and the
+instances are destroyed with everything else.
+
+Each instance runs an echo server on port 8080, so the port-8080 tests have
+something real to connect to.
 
 **Add to `main.tf`** (after Day 7 block):
 
 ```hcl
 resource "aws_ec2_network_insights_path" "a_to_b" {
-  source           = var.ec2_a_id
-  destination      = var.ec2_b_id
+  count            = var.enable_ec2_test && local.app_vpc_enabled ? 1 : 0
+  source           = one(module.ec2_test_shared_services[*].instance_ids)[0]
+  destination      = one(module.ec2_test_app[*].instance_ids)[0]
   protocol         = "tcp"
   destination_port = 8080
   tags             = { Name = "ec2-a-to-ec2-b-8080" }
 }
 
 resource "aws_ec2_network_insights_analysis" "a_to_b" {
-  network_insights_path_id = aws_ec2_network_insights_path.a_to_b.id
+  count                    = var.enable_ec2_test && local.app_vpc_enabled ? 1 : 0
+  network_insights_path_id = aws_ec2_network_insights_path.a_to_b[0].id
   tags                     = { Name = "ec2-a-to-b-analysis" }
 }
 ```
@@ -402,14 +466,27 @@ resource "aws_ec2_network_insights_analysis" "a_to_b" {
 
 ```bash
 terraform init
-terraform apply         # Creates the path + triggers an analysis run
+terraform apply -var-file=day08.tfvars   # path + one analysis run
 ```
+
+The analysis runs **once, at create time**. After you break something in the
+lab, a re-`apply` will not re-run it — Terraform sees no change. Force it:
+
+```bash
+terraform apply -var-file=day08.tfvars \
+  -replace='aws_ec2_network_insights_analysis.a_to_b[0]' -auto-approve
+```
+
+Each analysis costs ~$0.10, so use the Console for the iterative break-fix loop
+and keep this resource as the "path as code" example.
 
 **Verify:** Console → VPC → Reachability Analyzer → Paths → `ec2-a-to-ec2-b-8080`. Check the analysis result — it will show the full hop path or the exact resource blocking connectivity (SG rule, NACL entry, missing route, etc.).
 
-**Final teardown:** After Day 8, run full destroy and terminate all test EC2s manually:
+**Final teardown:** everything on Day 8 is Terraform-managed, including the test
+instances, so one destroy covers it:
 ```bash
-terraform destroy -auto-approve
+terraform destroy -var-file=day08.tfvars -auto-approve
+./scripts/sweep.sh
 ```
 
 ---
@@ -421,30 +498,65 @@ terraform destroy -auto-approve
 ```bash
 cd aws_network_components/terraform/envs/sandbox
 
-terraform init          # download provider + module sources
-terraform fmt           # format your edits (optional but good habit)
-terraform validate      # syntax check before plan
-terraform plan          # preview resources
-terraform apply         # create resources (prompts "yes" unless -auto-approve)
+terraform init                            # download provider + module sources
+terraform fmt                             # format your edits
+terraform validate                        # syntax check before plan
+terraform plan  -var-file=day01.tfvars    # preview resources
+terraform apply -var-file=day01.tfvars    # create them
 ```
 
 ### Every Subsequent Day
 
 ```bash
-# 1. Add the day's module block(s) to main.tf (see above)
+# 1. Add the day's module block(s) to main.tf, each gated on its enable_* flag
 # 2. Then:
-terraform init          # always re-init after adding a new module source
-terraform plan          # verify only the new resources appear in the diff
-terraform apply
+terraform init                            # re-init after adding a module source
+terraform plan  -var-file=dayNN.tfvars    # only the new resources should appear
+terraform apply -var-file=dayNN.tfvars
 ```
 
-### End-of-Day Teardown
+### Running the Console lab without collisions
+
+Every day's Console lab builds by hand the same thing that day's module builds
+in code, so applying `dayNN.tfvars` *before* the Console lab guarantees a name
+collision (duplicate SG names and log groups fail the apply outright). Stand the
+Console lab up on the VPC-only baseline plus test instances:
 
 ```bash
-terraform destroy -auto-approve
+terraform apply -var-file=day01.tfvars -var enable_ec2_test=true -auto-approve
 ```
 
-This destroys ALL resources tracked in `terraform.tfstate`. Resources created manually in the Console (EC2 instances, NLBs, EIPs) are NOT destroyed by Terraform — terminate those manually.
+A command-line `-var` overrides the file. Switch to `dayNN.tfvars` only after
+the Console resources are deleted.
+
+### End-of-Day Teardown — both halves, in this order
+
+**1. Console teardown.** Terraform has no record of anything you built by hand,
+and `destroy` will not touch it. Each day in the plan file ends with an ordered
+checklist — follow it. The traps that bite most often:
+
+- Security groups must be deleted **data → app → web**; AWS refuses while
+  another group's rule still references one.
+- A NACL cannot be deleted while it has subnet associations — move the subnets
+  to the default NACL first.
+- Delete the NLB **before** its target group; the consumer endpoint **before**
+  the endpoint service.
+- **Deleting a VPC does not release its NAT Gateway Elastic IPs.** They stay
+  allocated and keep billing.
+
+**2. Terraform teardown** — same var-file you applied with:
+
+```bash
+terraform destroy -var-file=dayNN.tfvars -auto-approve
+```
+
+**3. Verify:**
+
+```bash
+./scripts/sweep.sh
+```
+
+Expect `ALL CLEAR`. Anything marked DIRTY is still on a meter.
 
 ### Targeting a Single Module (if apply fails midway)
 
@@ -470,27 +582,39 @@ The `modules/` directory is fully pre-written. Reading it alongside the theory f
 
 ## Cost Control
 
-| Resource           | Rate (ap-southeast-1) | Daily risk if not destroyed |
-|--------------------|----------------------|-----------------------------|
-| NAT Gateway        | $0.045/hr each        | 4 NATs from Day 4 = ~$4.32/day |
-| Resolver Endpoints | $0.125/hr each        | 2 endpoints = ~$6/day       |
-| Transit Gateway    | $0.05/hr attachment   | 2 attachments = ~$2.40/day  |
-| VPN Connection     | $0.05/hr              | ~$1.20/day                  |
-| Interface Endpoints| $0.01/hr each         | 6 ENIs (3 ep × 2 AZ) = ~$1.44/day |
+| Resource | Rate (ap-southeast-1) | Daily risk if not destroyed |
+|---|---|---|
+| Resolver endpoint | ~$0.125/hr **per IP** | 2 endpoints × 2 IPs = **~$12/day** |
+| NAT Gateway | ~$0.059/hr each | 4 NATs from Day 4 = ~$5.66/day |
+| TGW attachment | ~$0.05–0.07/hr each | 2 attachments = ~$3.40/day |
+| VPN connection | ~$0.05/hr | ~$1.20/day |
+| Interface endpoint | ~$0.013/hr per AZ | 3 ep × 2 AZ = ~$1.87/day |
+| Network Load Balancer | ~$0.0243/hr | ~$0.58/day |
+| **Elastic IP (idle or in use)** | ~$0.005/hr | ~$0.12/day each — **survives VPC deletion** |
+| t3.micro | ~$0.0128/hr | ~$0.31/day each |
+| Reachability Analyzer | ~$0.10 per analysis | one-off, not hourly |
+| Gateway endpoint, SGs, NACLs, route tables | free | — |
 
-**Rule: always run `terraform destroy` at the end of every day.**
+Two things people consistently get wrong here. **Resolver endpoints bill per IP,
+not per endpoint** — the HA layout this course builds is ~$0.50/hr, twice what
+you'd guess. And **Elastic IPs bill whether or not they're attached to
+anything**, and outlive the VPC that created them; that is the single most
+common silent leak in this course.
 
-Total if forgotten overnight (8 hrs, Day 4+): ~$15–20. Over a week: significant.
+**Rule: Console teardown, then `terraform destroy -var-file=dayNN.tfvars`, then
+`./scripts/sweep.sh`. Every day.**
 
-Check for orphaned resources after destroy:
+A full Day 6 topology left overnight (16h) is roughly **$18**; left a month,
+about **$800**.
+
+Check for orphans after every destroy:
 ```bash
-aws ec2 describe-nat-gateways --profile sandbox --region ap-southeast-1 \
-  --filter "Name=state,Values=available" \
-  --query "NatGateways[].NatGatewayId"
-
-aws ec2 describe-transit-gateways --profile sandbox --region ap-southeast-1 \
-  --query "TransitGateways[?State=='available'].TransitGatewayId"
+./scripts/sweep.sh                    # defaults to profile sandbox, ap-southeast-1
+./scripts/sweep.sh my-profile us-east-1
 ```
+
+It exits non-zero if anything billable remains, so it also works in a shell
+`&&` chain or a pre-commit style check.
 
 ---
 

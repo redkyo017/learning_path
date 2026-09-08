@@ -10,8 +10,8 @@ By the end of today you should be able to:
 - Explain precisely why Security Groups are stateful and NACLs are stateless,
   and what "stateful" means at the TCP level
 - Name the OSI layer at which each operates
-- Explain why deleting NACL outbound ephemeral port rules breaks TCP
-  connections even when the inbound rule is present
+- Explain why a missing NACL ephemeral-port rule breaks TCP, **in either
+  direction**, and work out which direction's rule a given failure needs
 - Use VPC Flow Logs to confirm whether a packet was allowed or rejected at
   the network level
 - Reference a Security Group by ID in another Security Group's rule, and
@@ -57,8 +57,19 @@ Inbound: TCP 8080 from 10.0.2.0/24
 Inbound: TCP 8080 from sg-0abc123 (web-sg)
 ```
 
-The SG reference also works across accounts within the same VPC peering
-or TGW topology (with some restrictions) — useful for integration platforms.
+SG references also reach across some network boundaries, but the restrictions
+matter more than the capability:
+
+- **Intra-region VPC peering:** supported. **Cross-region peering: not
+  supported** — you must fall back to CIDR rules.
+- **Transit Gateway (same region):** supported, but **off by default**. It has
+  to be turned on explicitly, on both the TGW and the attachment
+  (`security_group_referencing_support = "enable"`). The Day 4 TGW module in
+  this course leaves it disabled, so do not expect a cross-VPC SG reference to
+  work there unless you enable it.
+
+If a SG reference silently behaves as "deny", check that you are in one of the
+supported cases before debugging anything else.
 
 ---
 
@@ -68,22 +79,64 @@ A Network ACL (NACL) is a stateless firewall attached to a subnet. Every
 subnet has exactly one NACL. Rules are evaluated in order by rule number
 (lowest first); the first matching rule wins.
 
-**Stateless** means the NACL has no memory of connections. If inbound TCP
-port 8080 is allowed, the response packet (outbound, on an ephemeral port
-between 1024–65535) is a completely separate, new packet in the NACL's view.
-If there is no outbound rule allowing ephemeral ports, the response is dropped.
-The TCP handshake succeeds (SYN reaches the server), but the connection
-hangs because the SYN-ACK response cannot get back through the NACL.
+**Stateless** means the NACL has no memory of connections. Every packet is
+judged on its own, against the rules for the direction it happens to be
+travelling. A reply is not "the other half of a connection" — it is a brand
+new packet arriving from the opposite direction.
 
-This is the single most common NACL debugging failure. The symptom is a
-connection that appears to establish (no immediate `Connection refused`) but
-then times out. Engineers assume it's an application issue; it's actually a
-missing NACL outbound ephemeral-port rule.
+That single fact produces **two** distinct failure modes, and confusing them is
+the most common mistake in this entire topic. Which ephemeral rule you need
+depends on **who opened the connection**.
+
+**Case 1 — something outside connects *in* to a server in your subnet.**
+Inbound TCP 8080 is allowed, so the client's SYN arrives fine. Your server
+replies with a SYN-ACK **from** port 8080 **to** the client's ephemeral port.
+That reply is an *outbound* packet whose destination port is ephemeral, so it
+is judged by the **outbound** rules. With no outbound ephemeral rule it is
+dropped, and the client's connection hangs.
+
+```
+client:54321  ──SYN──────────▶  server:8080     inbound rule: port 8080   ✅
+client:54321  ◀─SYN-ACK──────   server:8080     OUTBOUND rule: port 54321 ← needs ephemeral
+```
+
+**Case 2 — a client in your subnet connects *out* to something else.**
+This is what any instance doing `yum update`, calling an API, or registering
+with SSM is doing. Your client sends a SYN **from** its ephemeral port **to**
+the server's port 443, judged by the **outbound** rules (destination port 443).
+The server's SYN-ACK comes back **to** your ephemeral port — an *inbound*
+packet, judged by the **inbound** rules.
+
+```
+client:54321  ──SYN──────────▶  server:443      outbound rule: port 443   ✅
+client:54321  ◀─SYN-ACK──────   server:443      INBOUND rule: port 54321  ← needs ephemeral
+```
+
+Same missing concept, opposite rule. **Ask "who sent the first packet?" and the
+direction follows.** Case 1 needs outbound ephemeral; Case 2 needs inbound
+ephemeral. A subnet that both hosts services and makes outbound calls — which
+is nearly every private subnet — needs **both**.
+
+The symptom is identical in both cases: a connection that appears to establish
+(no immediate `Connection refused`) and then times out. Engineers assume it's an
+application issue; it's a NACL missing an ephemeral rule in one direction.
 
 **Ephemeral port range:** TCP clients pick a random source port for each
-connection from the ephemeral range (OS-dependent, but 1024–65535 covers
-all common cases). Your NACL must allow outbound traffic on this range for
-response packets to return to clients.
+connection from the ephemeral range (OS-dependent, but 1024–65535 covers all
+common cases).
+
+**The source/destination CIDR is the part people get wrong.** It is tempting to
+scope the inbound ephemeral rule to your VPC CIDR, "to be safe." But in Case 2
+the reply comes from wherever the server lives — an S3 endpoint, an SSM
+endpoint, some vendor API — so an inbound ephemeral rule scoped to
+`10.0.0.0/16` silently bans every reply from outside the VPC. The instance can
+still talk to its neighbours and nothing else, which reads like a broken NAT
+Gateway or broken DNS and sends you debugging the wrong layer entirely.
+
+The **port range** is the control on an ephemeral rule. The source cannot be.
+Scope inbound ephemeral to `0.0.0.0/0` and rely on the fact that nothing is
+listening on those ports; if you need real inbound protection, that is the SG's
+job, not the NACL's.
 
 **Rule number ordering:** NACL rules are numbered and evaluated in ascending
 order. Rule 100 is checked before rule 200. If rule 100 ALLOWS and rule 200
@@ -171,8 +224,11 @@ if the SG allows it, and vice versa. When debugging, check both.
 - Never use `allow all` as your final NACL configuration. The default NACL
   allows everything — create custom NACLs with explicit rules for any subnet
   that handles sensitive traffic.
-- Always allow outbound ephemeral ports (TCP 1024–65535) in any NACL that
-  also has inbound application port rules.
+- Allow ephemeral ports (TCP 1024–65535) in **both** directions on any NACL
+  attached to a subnet that both serves traffic and makes outbound calls —
+  which is nearly every private subnet. Outbound ephemeral covers replies your
+  servers send; inbound ephemeral covers replies your clients receive. Scope
+  the inbound one to `0.0.0.0/0` — the port range is the control, not the source.
 - Enable Flow Logs on every VPC in production, with 1-minute aggregation.
   The cost is low; the debugging value is high.
 - Put Flow Logs in a separate CloudWatch Log Group per VPC so queries don't
@@ -182,9 +238,15 @@ if the SG allows it, and vice versa. When debugging, check both.
 
 ## Common pitfalls
 
-- **Missing NACL ephemeral outbound rule.** The symptom is a connection that
-  hangs rather than being immediately refused. Always add outbound 1024–65535
-  when you add inbound application ports.
+- **Missing a NACL ephemeral rule — in whichever direction.** The symptom is
+  the same either way: the connection hangs rather than being refused. Work out
+  who opened the connection. Inbound connections to your servers need
+  *outbound* ephemeral; outbound connections from your clients need *inbound*
+  ephemeral. Fixing the wrong direction changes nothing and burns an hour.
+- **Scoping the inbound ephemeral rule to the VPC CIDR.** Replies arrive from
+  wherever the far end lives, which is usually outside the VPC. This one breaks
+  package installs, SSM registration and S3 access while leaving VPC-internal
+  traffic working — a confusing partial failure.
 - **Forgetting SGs are attached to ENIs.** Changing an instance's SG doesn't
   move the SG to a new ENI — if you're using ECS with awsvpc mode, each
   task gets its own ENI and its own SG assignment. Check the task definition,
@@ -204,9 +266,13 @@ if the SG allows it, and vice versa. When debugging, check both.
 
 Answer before starting the lab:
 
-1. A client sends a TCP SYN to port 443 to an EC2 in a private subnet.
-   The NACL has an inbound ALLOW for TCP 443 but no outbound rule for
-   ephemeral ports. What happens? Trace the packet path.
+1. Two scenarios on the same NACL. Trace the packet path for each and name
+   the exact rule direction that is missing:
+   a. A client outside sends a TCP SYN to port 443 on an EC2 in the subnet.
+      The NACL allows inbound 443 but has no outbound ephemeral rule.
+   b. An EC2 in the subnet runs `curl https://example.com`. The NACL allows
+      outbound 443 but has no inbound ephemeral rule.
+   Why is the observed symptom identical, and how would you tell them apart?
 2. You have 5 microservices. Service A must reach Services B, C, and D on
    port 8080, but not Service E. How would you configure SGs so this works
    without any CIDR rules?

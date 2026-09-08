@@ -6,13 +6,13 @@ resource "aws_customer_gateway" "onprem_sim" {
 }
 
 resource "aws_vpn_connection" "onprem_sim" {
-  customer_gateway_id   = aws_customer_gateway.onprem_sim.id
-  transit_gateway_id    = var.tgw_id
-  type                  = "ipsec.1"
-  static_routes_only    = false
-  tunnel1_inside_cidr   = "169.254.10.0/30"
-  tunnel2_inside_cidr   = "169.254.10.4/30"
-  tags                  = { Name = "${var.name}-vpn" }
+  customer_gateway_id = aws_customer_gateway.onprem_sim.id
+  transit_gateway_id  = var.tgw_id
+  type                = "ipsec.1"
+  static_routes_only  = false
+  tunnel1_inside_cidr = "169.254.10.0/30"
+  tunnel2_inside_cidr = "169.254.10.4/30"
+  tags                = { Name = "${var.name}-vpn" }
 }
 
 resource "aws_ec2_transit_gateway_route_table_propagation" "vpn_to_shared_services" {

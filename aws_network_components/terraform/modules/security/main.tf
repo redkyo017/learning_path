@@ -78,15 +78,33 @@ resource "aws_network_acl_rule" "private_inbound_app" {
   to_port        = 8080
 }
 
+# Ephemeral inbound must be 0.0.0.0/0: this is the return path for every
+# connection an instance in this subnet opens outward, and the far end is
+# normally outside the VPC. Scoped to var.vpc_cidr it silently blocks package
+# installs, SSM registration and S3 while leaving VPC-internal traffic working.
 resource "aws_network_acl_rule" "private_inbound_ephemeral" {
   network_acl_id = aws_network_acl.private.id
   rule_number    = 200
   egress         = false
   protocol       = "tcp"
   rule_action    = "allow"
-  cidr_block     = var.vpc_cidr
+  cidr_block     = "0.0.0.0/0"
   from_port      = 1024
   to_port        = 65535
+}
+
+# Outbound 443 to the internet via NAT — required for SSM agent registration
+# before the Day 5 interface endpoints exist. Without this, instances in this
+# subnet never become SSM-managed and Session Manager stays greyed out.
+resource "aws_network_acl_rule" "private_outbound_https" {
+  network_acl_id = aws_network_acl.private.id
+  rule_number    = 110
+  egress         = true
+  protocol       = "tcp"
+  rule_action    = "allow"
+  cidr_block     = "0.0.0.0/0"
+  from_port      = 443
+  to_port        = 443
 }
 
 resource "aws_network_acl_rule" "private_outbound_app" {
