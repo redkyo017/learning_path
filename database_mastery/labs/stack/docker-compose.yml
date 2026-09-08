@@ -1,0 +1,106 @@
+# dbmastery local lab stack
+#
+# The password `dbmastery` used throughout this file (Postgres, MySQL root
+# and app users) is a LOCAL-ONLY development credential. It is acceptable
+# specifically because every published port below is bound to
+# `127.0.0.1:<port>:<container-port>`, not a bare `<port>:<container-port>`
+# — a bare mapping publishes on 0.0.0.0 and would make these databases,
+# with this documented password, reachable from anything on the same
+# network as the learner's machine (a coffee-shop or hotel Wi-Fi, a shared
+# office LAN, etc). The explicit 127.0.0.1 prefix keeps every one of these
+# ports reachable only from the host itself.
+#
+# The host ports (55432, 53306, 57017) are deliberately non-default
+# (Postgres/MySQL/Mongo normally listen on 5432/3306/27017) so this stack
+# does not collide with any database already running on the learner's
+# machine.
+#
+# Compose project name: run everything with `-p dbmastery`, e.g.
+#   docker compose -p dbmastery up -d --build
+# `name:` below sets the same default so the project name is consistent
+# even if a command omits `-p`.
+name: dbmastery
+
+services:
+  pg:
+    build:
+      context: .
+      dockerfile: Dockerfile.pg
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    environment:
+      POSTGRES_DB: payments
+      POSTGRES_USER: dbm
+      POSTGRES_PASSWORD: dbmastery
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - ./conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - pgdata:/var/lib/postgresql/data
+      # archive_command (see conf/postgresql.conf) copies WAL segments here.
+      # Day 6's point-in-time recovery lab restores from this volume.
+      - pgarchive:/var/lib/postgresql/archive
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbm -d payments"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  my:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: dbmastery
+      MYSQL_DATABASE: payments
+      MYSQL_USER: dbm
+      MYSQL_PASSWORD: dbmastery
+    ports:
+      - "127.0.0.1:53306:3306"
+    volumes:
+      - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - mydata:/var/lib/mysql
+    healthcheck:
+      # $$ escapes compose's own variable interpolation so the literal
+      # string "$MYSQL_ROOT_PASSWORD" reaches the container shell, which
+      # expands it from the environment set above.
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongo:
+    image: mongo:7
+    # replication.replSetName in conf/mongod.conf is the single source of
+    # truth for the replica set name — don't duplicate it here as a
+    # command-line flag too.
+    command: ["--config", "/etc/mongod.conf"]
+    ports:
+      - "127.0.0.1:57017:27017"
+    volumes:
+      - ./conf/mongod.conf:/etc/mongod.conf:ro
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ping:1})'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  ws:
+    build:
+      context: .
+      dockerfile: Dockerfile.ws
+    working_dir: /work
+    volumes:
+      - ../..:/work
+    command: ["sleep", "infinity"]
+    depends_on:
+      pg:
+        condition: service_healthy
+      my:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  pgarchive:
+  mydata:
+  mongodata:

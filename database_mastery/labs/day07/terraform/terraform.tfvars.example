@@ -1,0 +1,16 @@
+# Copy this file to terraform.tfvars and fill in real values there.
+# Never put a real value in this .example file -- everything below is a
+# placeholder, not a working default.
+#
+# terraform.tfvars, terraform.tfstate and .terraform/ are all listed in
+# labs/day07/terraform/.gitignore, right next to this file -- confirm
+# that ignore rule is actually in effect (e.g. `git check-ignore -v
+# terraform.tfvars` reports a match against that file) before you run
+# `terraform apply`, rather than trusting this comment. terraform.tfstate
+# matters as much as terraform.tfvars: Terraform copies db_password into
+# state in plaintext, so an ignored tfvars next to a committed state file
+# leaks the same password anyway.
+
+region      = "eu-west-1"
+db_password = "CHANGE_ME_use_a_password_manager"
+my_ip_cidr  = "203.0.113.4/32" # TEST-NET-3, RFC 5737 -- replace with your own /32

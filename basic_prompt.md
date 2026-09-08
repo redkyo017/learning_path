@@ -74,3 +74,13 @@ Skip the traditional learning path, give me the unconventional strategy that the
 given i'm at the zero level as of now
 use the local skill.md file as a standard skill
 Ask me questions before answering it. make it as a simple version first to save tokens, we can always extend and enhance this later, if there is any useful online resource, link them in the content as well
+
+I want to master databases as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 21-hours aggreesive practive plan the fast-tracks real results.
+Focus mainly DB structure understanding, administration, system design, optimizing, query optimizing, Normal Forms, transactions... as a master of adminstrator, operator and system design in both SQL and NoSQL and in generalization
+given i'm a sofware engineer who work day by day on postgres,mysql and mongoDB I leart theoretical (but it was so many years ago, now only work as a habit), my daily job somtime have to access to AWS RDS and MongoDB server to monitor, debug...
+now i want to recall and consolidate them systematically
+we can use docker, my personal AWS, mongoDB account to practice, even we can use any DBs that you think it is suitable, make it as general as possible
+the 21-hours is just my estimation yo can choose a number that you think it's suitable
+use the local skill.md file as a standard skill
+Ask me questions before answering it.

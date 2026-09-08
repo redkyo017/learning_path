@@ -1,0 +1,39 @@
+# dbmastery lab stack — custom `pg` image.
+#
+# Built FROM the official postgres:16 image. That image is itself built
+# using the PGDG apt repository, and it leaves that repository's
+# sources.list.d entry and trusted signing key in place (only the apt
+# cache under /var/lib/apt/lists is cleared to save space) — so `apt-get
+# update && apt-get install` for other PGDG packages works here without
+# re-adding the repo or key.
+#
+# Two fixes over the stock image, both required for later labs:
+#
+#  1. Pre-create /var/lib/postgresql/archive, owned by `postgres`, in this
+#     image layer. Docker only inherits ownership into a fresh NAMED
+#     VOLUME from content that already exists at the mount target inside
+#     the image (this is exactly why the stock `pgdata:/var/lib/postgresql
+#     /data` mount already works — the base image pre-creates and chowns
+#     that path). A target path with no prior content in the image is
+#     created root:root 0755 when the volume is first mounted, which the
+#     unprivileged `postgres` process cannot write to. Without this fix,
+#     `archive_command` (see conf/postgresql.conf) fails permission-denied
+#     on every WAL segment; with archive_mode=on, PostgreSQL then keeps
+#     every WAL segment in pg_wal forever (never archived, never
+#     recycled), pg_wal grows unbounded, and the server eventually wedges
+#     when the pgdata volume fills up.
+#  2. Install postgresql-16-repack SERVER-SIDE (the pg_repack.so library
+#     and its extension control/SQL files under
+#     /usr/lib/postgresql/16/lib and /usr/share/postgresql/16/extension).
+#     The same-named package installed in Dockerfile.ws only puts the
+#     `pg_repack` client CLI on `ws`; without the matching server
+#     extension here, `CREATE EXTENSION pg_repack;` fails, which breaks
+#     Day 6's pg_repack remediation option entirely.
+FROM postgres:16
+
+RUN set -eux; \
+    mkdir -p /var/lib/postgresql/archive; \
+    chown postgres:postgres /var/lib/postgresql/archive; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends postgresql-16-repack; \
+    rm -rf /var/lib/apt/lists/*

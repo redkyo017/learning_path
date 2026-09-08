@@ -1,0 +1,14 @@
+# Ignore the two places a real secret ends up once you run this
+# Terraform: the tfvars file you copied from terraform.tfvars.example and
+# filled in with a real db_password, and every Terraform state file.
+#
+# State matters as much as tfvars, not less: Terraform writes db_password
+# into terraform.tfstate IN PLAINTEXT so it can detect drift on the next
+# plan/apply. An ignored terraform.tfvars sitting next to a committed
+# terraform.tfstate still leaks the same password -- ignoring only the
+# file you typed the secret into and not the file Terraform copied it
+# into is not a fix, it only moves which file leaks it.
+terraform.tfvars
+*.tfstate
+*.tfstate.*
+.terraform/
