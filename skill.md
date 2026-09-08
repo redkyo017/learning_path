@@ -7,7 +7,9 @@ description: Use when asked to build a structured learning path, mastery plan, o
 
 ## Overview
 
-Three-phase workflow: **Spec → Plan → Content**. Each phase has a model gate — you must ask the user which model to use before proceeding to each phase. No git commits during any phase; the learner handles all VCS.
+Three-phase workflow: **Spec → Plan → Content**, preceded by **Phase 0 — Scratch branch**. Each of the
+three phases has a model gate — you must ask the user which model to use before proceeding to each one.
+The learner handles all official VCS: nothing is ever pushed, and the scratch branch is deleted before handoff.
 
 **Announce at start:** "I'm using the building-learning-path skill."
 
@@ -56,6 +58,89 @@ For **applied/engineering** paths: initialize `labs/` (Terraform for cloud paths
 
 ---
 
+## Phase 0 — Scratch branch (applies to all paths)
+
+Authoring a path creates thousands of lines of new files. Without a git baseline, every review and every
+fix-round re-review has to be handed the **full contents** of every file it reviews, repeatedly. On a
+15-task path that dominates the entire token cost — measured at 27,000+ lines of review packages on one
+run, where diffs would have been a fraction.
+
+Before Phase 1, create the authoring branch:
+
+    git checkout -b authoring/<subject>
+
+Then commit after each completed task, so `superpowers:subagent-driven-development`'s
+`scripts/review-package PLAN_FILE BASE HEAD` can produce a diff. Record BASE (`git rev-parse HEAD`)
+before dispatching each implementer.
+
+**Never push. Not once, not to any remote.**
+
+### Two rules learned the hard way
+
+**Only checkpoint when no implementer is running.** A commit taken while a subagent is mid-edit captures
+its work-in-progress, and the next round's diff comes back empty because the changes are already
+committed. Wait for the completion notification, then commit.
+
+**Diffs only help where files already exist in the baseline.** Every file in a new path is new, so a diff
+of the whole tree against `master` equals its full contents — the *final whole-branch review* gets no
+benefit and should be pointed at a file manifest instead, letting it read selectively. The saving is in
+the per-task fix rounds, which is where most of the review volume actually is.
+
+### Teardown before handoff — exact sequence
+
+A plain `git switch master` while the commits live only on the scratch branch **removes every authored
+file from the working tree**. Use this order:
+
+    git reset --soft master        # branch pointer back to master, all changes staged
+    git switch master              # safe now: both refs identical, index and worktree preserved
+    git reset                      # unstage, so the path directory is untracked again
+    git branch -D authoring/<subject>
+    git status                     # verify: path untracked, the learner's own edits still theirs
+
+Result: `master` untouched, every authored file present as an untracked change for the learner to commit
+and push themselves. Stage only the path's own directory — never sweep up the learner's unrelated edits.
+
+### When git is not reachable from here
+
+Sometimes git lives only inside a container while this session runs outside it, or the sandbox blocks it.
+Do not silently fall back to full-content review packages — **ask the learner and hand them the exact
+commands to run**, at both ends. Give them something they can paste, not a description of what you want.
+
+At the start:
+
+> "I can't run git from here. Please run this and tell me when it's done:
+> `git checkout -b authoring/<subject>`"
+
+At each checkpoint:
+
+> "Task N is complete and no agent is running. Please run:
+> `git add <subject>/ && git commit -m 'WIP: task N (scratch)'`
+> then paste me the output of `git rev-parse --short HEAD` so I can use it as the next diff baseline."
+
+At teardown, give all five lines at once and ask them to paste back the final `git status`:
+
+> "All tasks are done. Please run these in this exact order — the order matters, because a plain
+> `git switch master` first would delete every authored file from your working tree:
+> ```
+> git reset --soft master
+> git switch master
+> git reset
+> git branch -D authoring/<subject>
+> git status
+> ```
+> Then paste me the `git status` output so I can confirm the path is untracked and nothing was pushed."
+
+**Batch the checkpoints when the learner is the one running them.** Committing after every task means
+interrupting them fifteen times, which nobody sustains — the scheme gets abandoned halfway and you end up
+with neither diffs nor a clean history. Ask for a checkpoint every three or four tasks instead, or at
+natural boundaries such as the end of a batch of parallel day-tasks. Fewer, larger diffs still beat full
+file contents by a wide margin.
+
+If they decline entirely, say plainly that reviews will fall back to full file contents and cost
+substantially more, then proceed that way without raising it again.
+
+---
+
 ## Phase 1 — Spec (docs/superpowers/specs/)
 
 **File:** `<subject>/docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
@@ -101,7 +186,7 @@ Required sections:
 
 Plan header must include:
 - Pointer to the spec file
-- Global constraints block (no credentials, no git commits, no running real infra)
+- Global constraints block (no credentials, no git commands **in subagents**, no running real infra)
 - Project layout diagram (target end-state)
 - Per-day task list using `- [ ]` checkboxes
 
@@ -148,6 +233,20 @@ See `labs/dayNN/`. The goal: <one line>. Success signal: <one line>.
 <checklist leaving zero billable resources>
 ```
 
+### Verification commands — make the check match the rule's scope
+
+Every task's final step ships `grep`/`bash -n` checks. Two failure modes cost real rework on a past path:
+
+- **A check narrower than the rule it enforces.** The forbidden-word sweep ran over `content/` and
+  `labs/dayNN/` only, so the stack and seed files were never swept and shipped nine violations. If a rule
+  says "anywhere", the check must say `-r` over the whole tree.
+- **A check that greps for a literal the code never contains.** `grep -q 'lib/common.sh'` fails against
+  the correct idiom `. "$(cd "$(dirname "${BASH_SOURCE[0]}")/../lib" && pwd)/common.sh"`, and reported all
+  eight day files as broken when every one was fine. Grep for a distinctive fragment, not a path you
+  imagine the file spells out.
+
+When a check fails across *every* file it inspects, suspect the check before the files.
+
 ### Practice problems — standing rule
 
 **Every exercise ships with hints + solution sketches.** Never ship a bare problem. This is non-negotiable for all path types.
@@ -158,7 +257,7 @@ See `labs/dayNN/`. The goal: <one line>. Success signal: <one line>.
 
 | Constraint | Rule |
 |---|---|
-| Git commits | Never commit on the learner's behalf. No `git commit`, `git push`, or `git add` during authoring. |
+| Git commits | Commits are permitted ONLY on the Phase 0 scratch branch, purely so reviews can use diffs. **Never `git push`.** Never commit on the learner's behalf to `master`. Delete the scratch branch before handoff. |
 | Credentials in files | Never write real secrets, keys, tokens, or account IDs into any file. Use placeholders + fill-in comments. Ship `*.tfvars.example` / `*.env.example`. |
 | Git commands in subagents | Skip all `git status/diff/log` in implementer and reviewer dispatches. |
 | Running real infra | Labs are *written*, not run, during authoring. |
@@ -192,6 +291,7 @@ Pure science paths omit `code/` and `labs/`.
 ## Quick Checklist
 
 - [ ] Step 0: clarify (subject, learner profile, time budget, lab env, path type)
+- [ ] Phase 0: create the scratch branch (or ask the learner to, if git is unreachable here)
 - [ ] Model gate: spec phase
 - [ ] Classify path type (pure science / applied / hybrid)
 - [ ] Write spec → `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
@@ -201,3 +301,5 @@ Pure science paths omit `code/` and `labs/`.
 - [ ] Dispatch subagents (no git in dispatches, no real infra)
 - [ ] Verify: all exercises have hints + solutions, all labs have README + SOLUTION + teardown
 - [ ] Verify: no credentials or real secrets in any file
+- [ ] Phase 0 teardown: `reset --soft` → `switch master` → `reset` → `branch -D`, then verify the
+      path is untracked on `master` and nothing was pushed
