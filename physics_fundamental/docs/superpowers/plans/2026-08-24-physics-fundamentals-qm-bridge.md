@@ -551,7 +551,7 @@ Written-to-be-re-read note: open the file with an italic line — "*Read this da
 
 *Connection to QM:* $E=hf$ is the first quantum equation of your course; "each field mode is a quantized oscillator" is the seed of quantum optics — the photon states your photonics-flavored course manipulates in interferometers are exactly these mode quanta.
 
-- [ ] **Step 2: Write `code/day13_blackbody_curves.py`** per Global Constraints. Two panels: (a) Planck spectral curves at T = 3000, 4500, 5800 K with Wien peaks marked by vertical dashed lines, visible band shaded; (b) Planck vs. Rayleigh–Jeans at 5800 K on log-log axes showing agreement at low frequency and divergence at high.
+- [ ] **Step 2: Write `code/day13_blackbody_curves.py`** per Global Constraints. Two panels: (a) Planck spectral curves $u(\lambda)$ vs. wavelength (nm) at T = 3000, 4500, 5800 K with Wien peaks $\lambda_{\max}=b/T$ marked by vertical dashed lines, visible band shaded — must be the wavelength density, since $u(f)$ peaks at $hf\approx2.82k_BT$, not at $c/\lambda_{\max}$; (b) Planck vs. Rayleigh–Jeans at 5800 K on log-log axes showing agreement at low frequency and divergence at high.
 
 - [ ] **Step 3: Run `python3 code/day13_blackbody_curves.py`** — expect clean run; peaks shift blue with T; RJ hugs Planck at low $f$ and explodes at high $f$.
 

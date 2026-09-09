@@ -395,11 +395,14 @@ Before running, predict:
   predominantly higher-$k$ content, and which predominantly lower-$k$
   content?
 - Reduce `NK` (panel (b)/(c)'s number of $k$-samples used to build the
-  packet) to just $3$ — with only 3 discrete $k$'s instead of a fine
-  continuum, does the result still look like a single localized envelope,
-  or does it look more like a multi-wave beat pattern? What does that tell
-  you about how many modes the sum-to-integral limit in the Theory section
-  actually needs to look continuous?
+  packet) to $7$ — with only 7 discrete $k$'s, spaced $2\Delta k$ apart,
+  instead of a fine continuum, does the result still look like a single
+  localized envelope, or does it look more like a multi-wave beat pattern?
+  Then try `NK=3` and predict first: the two outer samples sit at
+  $k_0\pm6\Delta k$ with Gaussian weights $e^{-9}$, so what is actually
+  left of the sum? What does that tell you about how many modes the
+  sum-to-integral limit in the Theory section actually needs to look
+  continuous?
 
 ## Exercises
 

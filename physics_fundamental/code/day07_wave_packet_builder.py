@@ -9,10 +9,12 @@ TWEAK: set ALPHA=0.0 in panel (c) -- the three snapshots should sit exactly
        on top of each other (no dispersion, no spreading, pure translation).
 TWEAK: raise n_terms in N_TERMS_LIST above 33 (e.g. 99) -- the Gibbs
        overshoot near the jump stays about the same height, it just narrows.
-TWEAK: set NK=3 -- with only 3 discrete k-samples instead of a fine
-       continuum, panels (b)/(c) stop looking like a single localized
+TWEAK: set NK=7 -- with only 7 discrete k-samples (spaced 2*dk) instead of
+       a fine continuum, panels (b)/(c) stop looking like a single localized
        envelope and look more like a coarse multi-wave beat pattern; this
        is the sum-to-integral limit (content/day07.md) running in reverse.
+       NK=3 goes further: the outer two samples at k0 +/- 6 dk carry weight
+       exp(-9), so only the carrier cos(k0 x) survives -- a bare sinusoid.
 """
 import numpy as np
 import matplotlib.pyplot as plt

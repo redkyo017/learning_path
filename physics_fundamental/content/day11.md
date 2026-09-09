@@ -296,8 +296,10 @@ contains Day 10's two equations as its two simplest special cases.
 
 **2. Central force in two dimensions: show $\{L_z,H\}=0$ by direct
 computation.** Take $H=\dfrac{p_x^2+p_y^2}{2m}+V(r)$ with
-$r=\sqrt{x^2+y^2}$ (kinetic plus a central potential, Day 10's planar
-form), and $L_z=xp_y-yp_x$ (Day 4's angular momentum, restricted to its
+$r=\sqrt{x^2+y^2}$ (kinetic plus a central potential — the two-coordinate
+version of Day 10's $H=T+V$, which Day 10's natural-system argument
+guarantees because $T$ is homogeneous of degree 2 in the momenta), and
+$L_z=xp_y-yp_x$ (Day 4's angular momentum, restricted to its
 $z$-component in the $xy$-plane; recall today's notation note — this $L_z$
 is angular momentum, not the Lagrangian). Using the two-pair bracket sum
 with $(q_1,q_2,p_1,p_2)=(x,y,p_x,p_y)$:

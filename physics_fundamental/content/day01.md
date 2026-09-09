@@ -503,9 +503,12 @@ The exponential-approach pattern from linear drag is not a one-off either. The
 same shape — a quantity relaxing exponentially toward, or away from, some
 reference value, governed by a single time constant — recurs across physics:
 radioactive decay, RC circuits, and, later in the QM course, the decay of
-unstable quantum states and the factor $e^{-iEt/\hbar}$ that falls directly
-out of separating the time-dependent Schrödinger equation. Recognizing "this
-is the exponential-approach shape again" will save real derivation time later.
+unstable quantum states. The factor $e^{-iEt/\hbar}$ that falls directly out
+of separating the time-dependent Schrödinger equation is the same exponential
+*function* with an imaginary exponent — it has unit modulus, so it rotates a
+phase at constant magnitude rather than relaxing toward anything; the
+separation-of-variables algebra is identical, the physics is not. Recognizing
+"this is the exponential shape again" will save real derivation time later.
 
 Finally, the dimensional-analysis habit built today on the range formula
 transfers unchanged: checking that a computed energy, probability, or

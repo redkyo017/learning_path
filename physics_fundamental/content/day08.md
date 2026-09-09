@@ -140,11 +140,12 @@ fixed line, oscillating back and forth along it, the light is **linearly
 polarized** along that line.
 
 Now suppose two linearly polarized waves of equal amplitude, one along
-$x$ and one along $y$, are combined (Day 6 superposition) with their
-oscillations $90°$ out of phase — one traces $\cos(kx-\omega t)$, the
-other $\cos(kx-\omega t + 90°) = -\sin(kx-\omega t)$. At a fixed point in
-space, the tip of the resulting $\vec E$ vector traces
-$$\vec E(t) \propto \big(\cos\omega t,\ -\sin\omega t\big),$$
+$x$ and one along $y$, both traveling along $z$ (so both are transverse,
+as the bullet above requires), are combined (Day 6 superposition) with
+their oscillations $90°$ out of phase — one traces $\cos(kz-\omega t)$, the
+other $\cos(kz-\omega t + 90°) = -\sin(kz-\omega t)$. At a fixed point in
+space (take $z=0$), the tip of the resulting $\vec E$ vector traces
+$$\vec E(t) \propto \big(\cos\omega t,\ \sin\omega t\big),$$
 a vector of constant length rotating uniformly in the $xy$-plane as time
 advances — this is **circular polarization**. Two equal-amplitude linear
 waves at $90°$ phase have combined into a single rotating field, not into
@@ -267,7 +268,8 @@ linear components.
 
 Fix a phase convention once, since wave plates are exactly where it
 starts to matter: we write a wave's real field as
-$E=\mathrm{Re}\!\left[A\,e^{i(kx-\omega t)}\right]$, so an added optical
+$E=\mathrm{Re}\!\left[A\,e^{i(kz-\omega t)}\right]$ for a wave traveling
+along $z$, so an added optical
 delay $\delta$ multiplies that component's complex amplitude $A$ by
 $e^{+i\delta}$. (The labels "right" and "left" attached to $|R\rangle$
 and $|L\rangle$ above are themselves convention-dependent — different
@@ -466,8 +468,10 @@ forbids field lines appearing/vanishing with no charge present. *Gauss's
 law for $\vec B$:* there is no magnetic charge — field lines never begin
 or end; forbids an isolated magnetic monopole. *Faraday's law:* a
 time-changing magnetic field creates a circulating electric field;
-forbids a static magnetic field from inducing any EMF (only a *changing*
-one can). *Ampère–Maxwell law:* electric current and a time-changing
+forbids a circulating $\vec E$ wherever $\vec B$ is not changing in time
+(an EMF in a *static* $\vec B$ can still arise from a conductor's own
+motion through it, via the $q\vec v\times\vec B$ force — that is a
+generator, not Faraday's circulating $\vec E$). *Ampère–Maxwell law:* electric current and a time-changing
 electric field both create a circulating magnetic field; the
 changing-$\vec E$ term closes the loop, letting a changing $\vec E$
 generate a $\vec B$ in vacuum with no current or charge needed at all —

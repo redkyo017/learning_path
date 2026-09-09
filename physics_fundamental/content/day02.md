@@ -272,6 +272,19 @@ $$E = \tfrac12 mv_{\text{esc}}^2 - \frac{GMm}{R} = 0
 \quad\Longrightarrow\quad v_{\text{esc}} = \sqrt{\frac{2GM}{R}}.$$
 This is worked numerically for Earth in Worked example 3 below.
 
+### One kinematic fact borrowed for Exercise 4: acceleration on a circle
+
+Exercise 4 needs one fact about motion on a circle that Day 1 did not
+derive. A body moving at constant speed $v$ on a circle of radius $R$ has a
+velocity vector of fixed length that turns with the position vector. In a
+short time $\Delta t$ the position sweeps an angle $\Delta\theta =
+v\,\Delta t/R$, and the velocity vector — same length $v$, turned by the same
+angle — changes by $|\Delta\vec v| = v\,\Delta\theta = v^2\Delta t/R$,
+pointing toward the center. So the acceleration has magnitude
+$$a_{\text{in}} = \frac{v^2}{R},$$
+directed inward. Day 4 rebuilds this properly inside its orbit survey; today
+you may simply use it.
+
 ## Worked examples
 
 **1. The double well $V(x)=x^4-2x^2$, classified at three energies.**
@@ -363,7 +376,9 @@ the Solutions.
 4. A small ball starts at rest (given an infinitesimal nudge) at the very
    top of a frictionless hemisphere of radius $R$ and slides down the
    outside. At what angle $\theta$ (measured from the top, i.e. from the
-   vertical through the center) does it leave the surface?
+   vertical through the center) does it leave the surface? (You may use
+   the inward acceleration $v^2/R$ of motion on a circle, from the closing
+   note of Theory.)
 
 **Stretch**
 
@@ -442,12 +457,10 @@ speed $v$), using $V=mgh$:
 $$mgR = mgR\cos\theta + \tfrac12mv^2 \quad\Longrightarrow\quad
 v^2 = 2gR(1-\cos\theta). \tag{i}$$
 The ball leaves the surface when the normal force $N\to0$. Up to that
-point, Newton's second law in the radial direction needs one kinematic
-fact we haven't derived yet: in uniform circular motion the velocity
-vector turns with the position vector, giving an inward acceleration
-$v^2/R$ — a kinematics fact we take as given here (Day 4's orbit survey
-motivates it). With that, and gravity's inward radial component
-$mg\cos\theta$ against the surface pushing outward with $N$:
+point, Newton's second law in the radial direction uses the inward
+acceleration $v^2/R$ of motion on a circle (Theory's closing note). With
+that, and gravity's inward radial component $mg\cos\theta$ against the
+surface pushing outward with $N$:
 $$mg\cos\theta - N = \frac{mv^2}{R} \quad\xrightarrow{N=0}\quad
 v^2 = gR\cos\theta. \tag{ii}$$
 Equating (i) and (ii):

@@ -450,7 +450,7 @@ Before running, predict:
 - At what time has the width doubled? Predict from the formula first,
   then measure it off the plot.
 
-*The script ships separately; the predict-prompts stand on their own.*
+*The script is not yet written; the predict-prompts stand on their own.*
 
 ## Exercises
 

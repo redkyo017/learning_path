@@ -214,8 +214,8 @@ $k$'s into a wave packet, exactly as day 7 built packets by adding plane
 waves. Day 7's uncertainty relation between packet width and the spread of
 $k$'s in it, $\Delta x\,\Delta k \gtrsim 1$, is already the trade-off
 between localization and momentum spread that this whole beat has been
-describing in words; day 16 formalizes it as $\Delta x\,\Delta p \gtrsim
-\hbar$.
+describing in words; day 17 formalizes it as $\Delta x\,\Delta p \ge
+\hbar/2$.
 
 > **Misconception:** "the electron travels along the wave," as if the wave
 > were a track or a pilot signal guiding a small particle through space.

@@ -186,7 +186,7 @@ name. Relabel $\lvert H\rangle=(1,0)^T\to\lvert0\rangle$ and
 $\lvert V\rangle=(0,1)^T\to\lvert1\rangle$. Then:
 
 - **Wave plates are single-qubit unitaries.** A quarter-wave plate acts, in
-  the $e^{i(kx-\omega t)}$ convention Day 8 fixed, as
+  the $e^{i(kz-\omega t)}$ convention Day 8 fixed, as
   $$\mathrm{QWP} = \begin{pmatrix}1&0\\0&i\end{pmatrix},$$
   a diagonal unitary ($\mathrm{QWP}^\dagger\mathrm{QWP}=I$ since
   $\lvert i\rvert^2=1$) — a phase gate, in your course's language, applied

@@ -371,7 +371,7 @@ Before running, predict:
 - In the superposition panel, predict the sloshing period from
   $E_2-E_1$ before reading it off the plot.
 
-*The script ships separately; the predict-prompts stand on their own.*
+*The script is not yet written; the predict-prompts stand on their own.*
 
 ## Exercises
 

@@ -225,8 +225,9 @@ above is fine. But if a system has *infinitely many* accessible modes — and
 Day 13 will show that an electromagnetic field trapped in a box is exactly
 such a system, with one independent oscillator mode for every possible
 standing-wave pattern the box can support, and no upper limit on how many
-wiggles a standing wave can have — then equipartition assigns $\tfrac12k_BT$
-to each of infinitely many modes, and the total predicted energy is
+wiggles a standing wave can have — then equipartition assigns $k_BT$ (two
+quadratic terms per oscillator mode, $\tfrac12k_BT$ each) to each of
+infinitely many modes, and the total predicted energy is
 infinite. At *any* nonzero temperature. This is not a subtle correction
 needed at extreme conditions; it is total, immediate nonsense the moment you
 add up infinitely many equal, nonzero shares. Hold this thought for exactly
@@ -364,7 +365,7 @@ the Solutions.
    mode does *not* saturate the way the two-level system does — its
    average energy keeps climbing as $T$ increases, approaching the
    ordinary equipartition value $k_BT$ once $\varepsilon\ll k_BT$ — but
-   instead **freezes out**, contributing far less than $\tfrac12k_BT$,
+   instead **freezes out**, contributing far less than $k_BT$,
    whenever $\varepsilon\gg k_BT$ (exactly Worked example 1's
    $k_BT=0.1\Delta$ row, with $\varepsilon$ playing the role of $\Delta$).
    Then contrast this with a genuine classical *continuum* of levels (no
@@ -473,7 +474,7 @@ mode would, not a saturation ceiling. But when $\varepsilon\gg k_BT$ —
 exactly Worked example 1's $k_BT=0.1\Delta$ row, with $\varepsilon$ playing
 the role of $\Delta$ — the mode **freezes out**: $e^{\varepsilon/k_BT}$ is
 enormous, so $\langle E\rangle\approx\varepsilon\,e^{-\varepsilon/k_BT}$ is
-exponentially small, far below the equipartition share $\tfrac12k_BT$.
+exponentially small, far below the equipartition share $k_BT$.
 
 A genuine classical *continuum* (no gap at all between neighboring levels,
 i.e. $\varepsilon\to0$) has nothing to freeze out below at any $T$, so it

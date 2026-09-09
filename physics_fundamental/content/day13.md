@@ -368,10 +368,14 @@ Run:
 ```
 python3 code/day13_blackbody_curves.py
 ```
-Two panels: **(a)** Planck spectral curves $u(f)$ at $T=3000,\,4500,\,5800\
-\text{K}$, each with a vertical dashed line marking that curve's Wien peak
-$\lambda_{\max}$ (or $f_{\max}$), and the visible band shaded for
-reference; **(b)** Planck vs. Rayleigh–Jeans at $T=5800\ \text{K}$ on
+Two panels: **(a)** Planck spectral curves $u(\lambda)$ at
+$T=3000,\,4500,\,5800\ \text{K}$, plotted against wavelength in nm, each
+with a vertical dashed line at that curve's Wien peak $\lambda_{\max}=b/T$,
+and the visible band shaded for reference. (The wavelength density is the
+right choice for this panel: the peak of $u(f)$ sits at $hf\approx
+2.82\,k_BT$, a different point from $hc/\lambda_{\max}\approx4.97\,k_BT$,
+so a Wien line drawn on a $u(f)$ plot would not land on that curve's peak.)
+**(b)** Planck vs. Rayleigh–Jeans at $T=5800\ \text{K}$ on
 log-log axes, showing the two curves overlapping at low frequency and the
 Rayleigh–Jeans curve diverging upward while Planck's curve turns over and
 falls at high frequency.
@@ -383,7 +387,7 @@ Before running, predict:
 - Where exactly do the RJ and Planck curves agree, and why there?
 - At the Sun's temperature, is the peak inside the visible band?
 
-*The script ships separately; the predict-prompts stand on their own.*
+*The script is not yet written; the predict-prompts stand on their own.*
 
 ## Exercises
 

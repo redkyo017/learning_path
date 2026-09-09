@@ -123,7 +123,7 @@ The path reuses a small alphabet across eighteen days, so a few symbols carry mo
 
 **Lagrangian ($L=T-V$)** — kinetic energy minus potential energy, the single function from which the entire motion follows via the Euler–Lagrange equation. (Day 9)
 
-**Legendre transform** — the algebraic move that trades a dependence on velocity for a dependence on momentum, carrying you from the Lagrangian to the Hamiltonian. (Day 9)
+**Legendre transform** — the algebraic move that trades a dependence on velocity for a dependence on momentum, carrying you from the Lagrangian to the Hamiltonian. (Day 10)
 
 **Level repulsion** — the generic effect of coupling two energy levels: the upper one moves up and the lower one moves down, so they never cross. It is what a $2\times2$ diagonalization produces every time. (Day 18)
 

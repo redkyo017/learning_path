@@ -343,7 +343,8 @@ $L=0.65\text{ m}$ (here $L$ is a length — not Day 4's angular momentum).
 The wave speed is
 $$v = \sqrt{\frac{T_s}{\mu}} = \sqrt{\frac{80}{0.005}} = \sqrt{16000} \approx 126.5\text{ m/s}.$$
 A string fixed at both ends supports a standing wave only when the length
-fits a half-integer number of wavelengths; the lowest (fundamental) case
+fits an integer number of half-wavelengths, $L=n\lambda/2$; the lowest
+(fundamental) case
 fits exactly half a wavelength along the string, $\lambda_1 = 2L$ (this is
 used here informally as a boundary-condition fact from ordinary
 observation of standing waves; Day 6 derives it properly as a consequence

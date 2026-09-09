@@ -96,6 +96,15 @@ $A=\sqrt{C_1^2+C_2^2}$ and $\tan\phi = -C_2/C_1$. This is the form worth
 memorizing: $A$ is the amplitude, $\phi$ the phase offset, both fixed by
 initial conditions once and for all at $t=0$.
 
+**Period and frequency.** Since $\cos$ repeats whenever its argument
+advances by $2\pi$, the motion repeats with period
+$$T = \frac{2\pi}{\omega_0} = 2\pi\sqrt{\frac{m}{k_s}}, \qquad
+f = \frac{1}{T} = \frac{\omega_0}{2\pi},$$
+the same $T$ Day 2's Exercise 5 extracted from the energy integral. Note
+what is *absent*: the amplitude. $T$ does not depend on $A$ — this
+amplitude-independence is the signature of the harmonic oscillator
+specifically, and it fails for every anharmonic potential.
+
 **Fixing constants from $x(0),\dot x(0)$.** From $x(t)=C_1\cos\omega_0t +
 C_2\sin\omega_0t$: at $t=0$, $x(0)=C_1$ directly. Differentiating,
 $\dot x(t) = -C_1\omega_0\sin\omega_0t + C_2\omega_0\cos\omega_0t$, so

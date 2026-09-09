@@ -3,7 +3,8 @@
 ## Learning objectives
 
 By the end of today you should be able to:
-- Explain, using the fact that accelerating charges radiate (day 8) and a
+- Explain, using the fact that accelerating charges radiate (a consequence
+  of Maxwell's equations, stated here rather than derived) and a
   quoted classical collapse-time estimate, why a classical "planetary"
   atom cannot be stable — and state Bohr's postulates as the fix.
 - Derive the Bohr radius $r_n$ and energy levels $E_n = -13.6\,\text{eV}/n^2$
@@ -49,9 +50,10 @@ Frequency is $f$ throughout, matching day 13's Planck-law convention.
 Rutherford's scattering experiments (a small, dense, positive nucleus with
 electrons orbiting at a distance) fix the *picture* of the atom, but
 classical electromagnetism immediately kills it. Day 8 established that
-oscillating and accelerating charges radiate electromagnetic energy — that
-is how antennas work, and it is a direct consequence of Maxwell's
-equations, not a special atomic phenomenon. An electron in a circular
+electromagnetic fields carry energy; one further consequence of Maxwell's
+equations, which we take here as a stated fact rather than derive, is that
+an *accelerating* charge sheds energy into those fields as radiation — that
+is how antennas work, and it is not a special atomic phenomenon. An electron in a circular
 orbit is constantly accelerating (centripetally, toward the nucleus), so
 classically it must continuously radiate energy, exactly like a
 decelerating charge in an antenna. As it radiates, it loses orbital
@@ -101,7 +103,7 @@ but an honest, inspired guess with three postulates:
    the emitted or absorbed photon carries away exactly the energy
    difference: $hf = E_i - E_f$. While sitting in an allowed orbit, it
    does *not* radiate, in flat contradiction to postulate 1's classical
-   mechanics and to day 8's electromagnetism.
+   mechanics and to Maxwell's electromagnetism.
 
 Postulate 3 is a deliberate, glaring inconsistency — an orbiting charge
 that classically must radiate, declared by fiat not to. Bohr's model is
@@ -346,8 +348,8 @@ momentum fixed entirely by its wavelength.
 two billiard balls — an elastic collision in which both relativistic
 energy and momentum are conserved between the incoming photon, the
 outgoing (longer-wavelength, lower-energy) photon, and the recoiling
-electron. Carrying out that conservation bookkeeping (day 15's and the
-course's proper treatment of relativistic collisions) yields the
+electron. Carrying out that conservation bookkeeping (the course's proper
+treatment of relativistic collisions) yields the
 **Compton formula**, stated here and used, not derived:
 $$\Delta\lambda = \lambda' - \lambda = \frac{h}{m_ec}(1-\cos\theta),$$
 where $\theta$ is the photon's scattering angle and $m_ec$ is the

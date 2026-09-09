@@ -329,7 +329,7 @@ time). The unstable equilibrium is at $\theta=\pi$ (top), where
 $p_\theta=0$; evaluating $H$ there,
 $$E_{\text{sep}} = H(\pi,0) = mg\ell(1-\cos\pi) = mg\ell(1-(-1)) = 2mg\ell.$$
 **Why it takes infinite time to arrive.** The pendulum equation of motion
-(from Hamilton's equations, or equivalently $mL\ddot\theta=-mg\sin\theta$)
+(from Hamilton's equations, or equivalently $m\ell\ddot\theta=-mg\sin\theta$)
 is $\ddot\theta=-(g/\ell)\sin\theta$. Near the top, write
 $\varphi\equiv\pi-\theta$ (small): $\sin\theta=\sin(\pi-\varphi)=\sin\varphi
 \approx\varphi$, and $\ddot\theta=-\ddot\varphi$, so the linearized equation
