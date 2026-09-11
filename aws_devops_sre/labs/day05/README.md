@@ -129,7 +129,7 @@ that same application and group, it does not create its own.
 aws deploy list-deployments \
   --application-name <CODEDEPLOY_APP_NAME> \
   --deployment-group-name <CODEDEPLOY_GROUP_NAME> \
-  --create-time-range startTime=<WINDOW_START>,endTime=<WINDOW_END> \
+  --create-time-range start=<WINDOW_START>,end=<WINDOW_END> \
   --query 'length(deployments)'
 ```
 
@@ -149,7 +149,7 @@ for d in $(aws deploy list-deployments \
   --deployment-group-name <CODEDEPLOY_GROUP_NAME> \
   --query 'deployments[]' --output text); do
   aws deploy get-deployment --deployment-id "$d" \
-    --query '[deploymentId, deploymentInfo.rollbackInfo!=`null`]' --output text
+    --query 'deploymentInfo.[deploymentId, rollbackInfo!=`null`]' --output text
 done
 # count "True" rows ÷ total rows
 ```

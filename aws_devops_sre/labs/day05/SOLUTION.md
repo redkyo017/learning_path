@@ -15,7 +15,7 @@ Sample data below is from one run of Step 3–5 in `README.md`: a bad deploy (BU
 aws deploy list-deployments \
   --application-name awsdevops-app \
   --deployment-group-name awsdevops-group \
-  --create-time-range startTime=2026-08-26T00:00:00Z,endTime=2026-09-02T00:00:00Z \
+  --create-time-range start=2026-08-26T00:00:00Z,end=2026-09-02T00:00:00Z \
   --query 'length(deployments)'
 ```
 
@@ -51,7 +51,7 @@ for d in $(aws deploy list-deployments \
   --application-name awsdevops-app --deployment-group-name awsdevops-group \
   --query 'deployments[]' --output text); do
   aws deploy get-deployment --deployment-id "$d" \
-    --query '[deploymentId, deploymentInfo.rollbackInfo!=`null`]' --output text
+    --query 'deploymentInfo.[deploymentId, rollbackInfo!=`null`]' --output text
 done
 ```
 

@@ -14,6 +14,9 @@ whole path is about learning to tell which. Scheduled work is ~3–4h/day,
 - Docker
 - `kind` + `kubectl` (Day 4 only)
 - Go 1.23
+- The appendix (Days A1–A2) assumes AWS CLI **v2** specifically — it uses
+  v2-only behavior such as auto-pagination and the built-in pager — and every
+  example in it is quoted for `zsh`
 
 This path assumes VPC, IAM, and ALB fundamentals and does not re-teach them —
 if any of those feel shaky, the sibling `aws_network_components/` and
@@ -46,9 +49,29 @@ teardown so nothing keeps billing after you log off.
 | 3 | REVERSE | Promotion is only safe if reversible | Ship a blue/green deploy with alarm rollback | ~$0.13 |
 | 4 | (substrate) | Same chain, different substrate | Map the chain onto Kubernetes | $0.00 |
 | 5 | MEASURE | Close the loop | Define SLOs and measure DORA from your pipeline | ~$0.11 |
+| A1 | (appendix) | Interrogate: what is actually there? | Answer any question about an account by CLI, console closed | ~$0.02 |
+| A2 | (appendix) | Operate: changing things you can undo | Make a change you can predict, verify, and reverse | ~$0.03 |
 
 PROVE has no day of its own — it is distributed across Days 1 and 2. See
 `STRATEGY.md` for why.
+
+## Appendix — AWS CLI mastery
+
+Two days, ~7h, taken after Day 5 or any time after Day 3. They depend on
+Days 1–3 because the drills interrogate the stacks Day 1 left standing
+and the reasoning leans on Day 3's concepts —
+[`content/dayA1.md`](content/dayA1.md) and
+[`labs/dayA1/README.md`](labs/dayA1/README.md) ask twelve questions of
+the `labs/foundation/` and `labs/day01/` resources and create nothing at
+all, while [`content/dayA2.md`](content/dayA2.md) and
+[`labs/dayA2/README.md`](labs/dayA2/README.md) add one small ECS stack —
+no ALB — that you change and change back five times.
+
+[`CLI-MASTERY.md`](CLI-MASTERY.md) is the standalone lookup reference the
+two days produce: identity triage, JMESPath recipes, one-liners indexed by
+the question you are asking. It is usable immediately — before the labs,
+or without them — and it is the file you open on a Tuesday with someone
+waiting.
 
 ## The foundation stack
 
@@ -62,7 +85,7 @@ it only after Day 5, as the very last teardown step.
 ## Cost note
 
 This path is designed so that following every teardown keeps the whole week
-around **~$0.74** (tearing down after each session), rising to at most
+around **~$0.79** (tearing down after each session), rising to at most
 **~$2.40** if you leave the Day 3 and Day 5 stacks up overnight instead —
 see [`COST.md`](COST.md) for the full breakdown,
 per-lab estimates, and the read-only `verify-teardown.sh` script that checks

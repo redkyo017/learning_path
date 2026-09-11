@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars and fill in.
+#
+# image_tag is the git short-SHA tag Day 1's CodeBuild pushed to ECR.
+# Find it with the CLI (the console is not the point of this appendix):
+#
+#   aws ecr describe-images \
+#     --repository-name awsdevops-sample \
+#     --query 'sort_by(imageDetails,&imagePushedAt)[-1].imageTags[0]' \
+#     --output text
+#
+image_tag = "REPLACE_WITH_YOUR_IMAGE_TAG"

@@ -8,7 +8,7 @@ after every session. This file is the reference for both.
 
 **Set the $10/month AWS Budget alarm in Day 0 before you touch anything
 else.** It is non-negotiable, not because this path expects you to blow past
-$10 — it doesn't, the target is ~$0.74 for the whole week if you tear down
+$10 — it doesn't, the target is ~$0.79 for the whole week if you tear down
 after each session (up to ~$2.40 if you leave the Day 3 and Day 5 stacks up
 overnight instead) — but because the
 alarm is what makes the rest of the path *safe to experiment in*. Every lab
@@ -68,6 +68,8 @@ essentially nothing. "Cost after teardown" excludes the foundation stack
 | 3 | Fargate tasks (blue/green briefly doubled), ALB, CodeDeploy (free), CloudWatch alarms | ~$0.13 | ~$0.78 (a full 24h of ALB + one Fargate task accruing hourly, not just the ~4h session) | $0.00 |
 | 4 | `kind` cluster (local, $0) | $0.00 | $0.00 | $0.00 |
 | 5 | Fargate + ALB (re-applied from Day 3), capstone CodeBuild/CodePipeline, Synthetics canary, composite alarm, CloudWatch alarms | ~$0.11 | ~$1.12 (same 24h ALB + Fargate as Day 3, plus a canary still firing every 5 min all night) | $0.00 |
+| A1 | CodeBuild reruns (`ARM_SMALL`, ~6 build-min), existing ECR storage | ~$0.02 | ~$0.02 (no hourly meter) | $0.00 |
+| A2 | One Fargate task (0.25 vCPU / 0.5 GB, arm64), CloudWatch alarms (under the 10 free), 1-day-retention logs | ~$0.03 | ~$0.24 (24h × $0.0099/h) | $0.00 |
 
 **Worked math (Day 3, at this file's reference prices, arm64 Fargate):** a realistic ~4h session is ALB
 `4h × $0.0225/h ≈ $0.09` plus Fargate `4h × $0.0099/h ≈ $0.04` ≈ **$0.13**.
@@ -81,6 +83,15 @@ $0.05` plus Fargate `2h × $0.0099 ≈ $0.02`, together ~$0.06), the capstone Co
 (`$0.0012/run × 12 runs/h × 2h ≈ $0.03`) — **~$0.11** while running. Left overnight, the same 24h
 ALB + Fargate math as Day 3 (~$0.78) plus a canary firing all night
 (`24h × 12 runs/h × $0.0012 ≈ $0.35`) ≈ **~$1.12**.
+
+The two appendix days are the cheapest in the path. Day A1 creates nothing at all — it only reads
+the stacks already standing — so its ~$0.02 is a handful of CodeBuild reruns against Day 1's
+project and the ECR storage you were already paying for. Day A2 stands up one arm64 Fargate task
+for a ~2h working window: `2h × $0.0099/h ≈ $0.02`, plus those same few build-minutes and its
+CloudWatch alarms (inside the 10 free) and 1-day-retention logs, which together round to nothing —
+**~$0.03**. Left a full 24h it is `24h × $0.0099 ≈ $0.24`. That overnight figure is a fraction of
+Day 3's for one reason: **Day A2 has no ALB.** The ALB, not the task, is what makes forgetting
+teardown expensive.
 
 Day 3 and Day 5 are the two days where forgetting teardown has a real
 consequence — the ALB and its Fargate task don't stop billing just because

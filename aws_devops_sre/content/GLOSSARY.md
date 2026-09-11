@@ -1,7 +1,8 @@
 # AWS DevOps / SRE — Glossary
 
-Plain-English reference for terms used across Days 1–5. Day content files
-link here rather than re-defining these terms inline.
+Plain-English reference for terms used across Days 1–5 and the AWS CLI
+appendix (Days A1–A2). Day content files link here rather than re-defining
+these terms inline.
 
 ---
 
@@ -83,6 +84,17 @@ A CloudWatch alarm built from a boolean expression over other alarms (e.g.
 signals to agree before it fires. It matters because a rollback trigger
 built on one twitchy metric pages people for nothing.
 
+## Credential provider chain
+
+The ordered list of places the AWS CLI looks for credentials and region —
+command-line `--profile`/`--region` first, then environment variables, then
+assume-role and IAM Identity Center config, then `~/.aws/credentials` and
+`~/.aws/config`, then container credentials and instance metadata. The order
+is what turns "it worked yesterday" into a solvable problem rather than a
+mystery: something earlier in the chain quietly won. Do not trust the list
+from memory — run `aws configure list` and read the **Type** and
+**Location** columns, which say where each value actually came from.
+
 ## Deployment circuit breaker
 
 An ECS feature that automatically detects a failing deployment (tasks that
@@ -97,6 +109,15 @@ Four metrics (deployment frequency, lead time for changes, change failure
 rate, mean time to recovery) identified by the DevOps Research and
 Assessment team as the strongest predictors of software delivery
 performance. Day 5 has you extract all four from the pipeline you built.
+
+## Drift
+
+The gap between what Terraform's state believes exists and what is actually
+in the account — usually created by someone changing a resource by hand,
+including you at a terminal. It matters because the next `terraform apply`
+either reverts that change without asking or fails on the conflict, so a fix
+nobody wrote down quietly disappears. Day A2 has you create drift on purpose
+and then find it the only reliable way, with `terraform plan`.
 
 ## Error budget
 
@@ -136,6 +157,16 @@ than every pod on a node sharing the node's IAM role. It's the exact
 Kubernetes analog of the ECS **task role**: see `Task role vs execution
 role` below.
 
+## JMESPath
+
+The query language behind the CLI's `--query` flag — what turns a full API
+response into the two fields you actually wanted. It is **client-side**: it
+runs on your machine after the entire response has already crossed the
+network, so it never reduces API calls, bytes, or throttling. Only a
+server-side mechanism (`--filters`, `--filter`, or a service's own named
+parameter) does that, and conflating the two is why a "filtered" command is
+still slow.
+
 ## Lead time for changes
 
 One of the four DORA metrics: the time from a commit landing to that
@@ -166,6 +197,16 @@ AWS IAM role by presenting a short-lived, cryptographically signed token
 instead of a long-lived AWS access key. It matters because a leaked OIDC
 token expires in minutes; a leaked access key is valid until someone
 notices and rotates it.
+
+## Paginator
+
+The CLI machinery that walks a multi-page API response for you — in v2 it
+runs by default, so a `list-` command returns everything without you asking.
+`--page-size` sets the per-request API page size, `--max-items` is a
+client-side cap that emits a continuation token, and `--no-paginate` issues
+exactly one API call. The trap is `--max-items` combined with a filter: the
+cap applies *before* your projection runs, so an empty result is a fact
+about the cap, not about the account.
 
 ## Promotion
 
@@ -198,6 +239,15 @@ shifting traffic or redeploying a stored digest rather than rebuilding
 anything. A rollback plan that requires a rebuild is not really a rollback
 plan — it's a hope that the rebuild works this time.
 
+## Service model
+
+The JSON description of a service's API — its operations, each one's
+required and optional parameters, and the shape of what comes back — that
+the AWS CLI ships and generates its commands from. It is why `aws <service>
+<operation> help` is authoritative rather than approximate: the help text is
+rendered from the same model that validates your request. When a parameter
+name is in dispute, the model settles it and a web search does not.
+
 ## SLI
 
 Service Level Indicator — a specific, measured metric of user-facing
@@ -210,6 +260,16 @@ Service Level Objective — a target value for an SLI over a time window
 (e.g. "99.9% of requests under 300ms, measured over 30 days"). SLOs are
 what turn "the service should be reliable" into something you can alarm
 on, budget against, and defend in a design review.
+
+## SSO session
+
+The `[sso-session NAME]` block that `aws configure sso` writes into
+`~/.aws/config`, plus the cached token under `~/.aws/sso/cache/` that
+several profiles can share — which is why one login reaches several
+accounts. It matters because it expires, and expiry surfaces as a
+token-loading or refresh error, **not** as `AccessDenied`. Reading an IAM
+policy in response to a token error is debugging the wrong thing; the fix is
+`aws sso login --profile NAME`.
 
 ## Target group
 
@@ -244,3 +304,13 @@ The general term for moving live traffic between two versions or targets
 over time — the mechanism underneath both canary deployments (shift
 gradually) and blue/green (shift all at once). Every rollback in this path
 is really traffic shifting run in reverse.
+
+## Waiter
+
+A built-in CLI command that polls an API on a fixed interval until a
+resource reaches a named state — `aws ecs wait services-stable --cluster C
+--services S` — and exits non-zero once it runs out of attempts rather than
+blocking forever. It matters because a mutating command's own response is
+not evidence that anything converged; the waiter is what turns "I asked" into
+"it happened." Check `aws ecs wait services-stable help` for the interval and
+attempt count instead of assuming them.

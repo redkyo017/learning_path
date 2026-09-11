@@ -63,6 +63,7 @@ Every day, in order:
 | Treating rollback as an afterthought | Reversibility is a build-time property, not an incident-time one. If the artifact is not immutable and addressable, there is nothing to roll back *to*. |
 | Learning EKS before learning delivery | Kubernetes is a substrate, not a delivery model. Learners who start there acquire `kubectl` muscle memory and no promotion strategy. |
 | Ignoring cost until the bill arrives | NAT gateways and idle ALBs teach an expensive lesson that a $10 budget alarm teaches for free. |
+| Treating the AWS CLI as a list of incantations to copy | Produces someone who can rerun this path's commands and cannot write a new one. The CLI is four things — an identity, an operation, a response, and a projection — and every confusion is a mislocation of which one broke. See the appendix. |
 
 ## What the top 1% do differently
 
