@@ -398,3 +398,9 @@ out, err := client.GetParameter(ctx, &ssm.GetParameterInput{
 2. After deploying a new version, the ALB returns 502 for all gRPC calls but the ECS tasks are marked HEALTHY. What is the most likely misconfiguration on the ALB/target group, and what CLI command verifies it?
 
 3. Your gRPC service starts and the health check passes, but gRPC clients connecting through the ALB get `UNAVAILABLE: transport: connection error: code = Unavailable`. The service works fine when clients connect directly to the Fargate task IP. What property of the ALB listener is almost certainly wrong?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 16** section for the hands-on build steps.

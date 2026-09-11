@@ -355,3 +355,9 @@ Disable reflection in production or gate it behind a build tag — it exposes yo
 2. A client sends a request that arrives after the client's deadline. The server handler is mid-execution when the deadline fires. Which gRPC status code does the client receive, and which status code should the server use if it detects the cancellation and returns early?
 
 3. Your team is debating whether to add `reflection.Register(s)` to the production binary for on-call debugging convenience. List two security risks this introduces and one mitigation short of disabling it entirely.
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 13** section for the hands-on build steps.

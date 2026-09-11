@@ -354,3 +354,9 @@ func (s *server) StreamEvents(req *pb.Req, stream pb.Svc_StreamEventsServer) err
 2. You have a bidi streaming handler that launches a goroutine to read from `stream.Recv()` and uses the main goroutine to send periodic heartbeats. The client sends EOF (closes its send side) while the server's heartbeat goroutine is mid-sleep. Write the select statement in the send loop that handles this cleanly without leaking the receive goroutine.
 
 3. Your server streaming handler processes events and must stop sending if no event arrives within 5 seconds (producer timeout), but must also stop if the client disconnects. Write the select statement that implements both conditions without a goroutine leak.
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 14** section for the hands-on build steps.

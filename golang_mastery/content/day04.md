@@ -454,3 +454,9 @@ check `ctx.Done()` to honor it.
    `RLock` and calls another method that calls `Lock`. What happens?
 
 (answers are in the code — run the lab to verify)
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 4** section for the hands-on build steps.

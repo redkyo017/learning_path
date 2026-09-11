@@ -152,8 +152,8 @@ maps.Copy(dst, extra)  // dst is now {"a":1, "b":99, "c":3}
 // Delete by predicate — remove all pairs where f returns true
 maps.DeleteFunc(dst, func(k string, v int) bool { return v > 2 })
 
-// Keys iteration (returns iter.Seq[K] — use range or collect manually)
-for k := range maps.Keys(src) {
+// Key iteration — plain range loop (Go 1.22 compatible)
+for k := range src {
     fmt.Println(k)
 }
 
@@ -164,11 +164,17 @@ maps.Equal(src, dst)
 Common pattern: get sorted keys of a map (maps deliberately have no order):
 
 ```go
-keys := slices.Collect(maps.Keys(src))
+// Go 1.22: collect keys manually, then sort
+keys := make([]string, 0, len(src))
+for k := range src {
+    keys = append(keys, k)
+}
 slices.Sort(keys)
 for _, k := range keys {
     fmt.Printf("%s: %d\n", k, src[k])
 }
+// Note: maps.Keys / maps.Values returning iter.Seq were added in Go 1.23.
+// On Go 1.22, use a plain range loop to collect keys.
 ```
 
 ---
@@ -364,7 +370,7 @@ err := errors.Join(err1, err2, err3)
 | `sort.Search(n, func(i int) bool { ... })` | `slices.BinarySearch(s, target)` | `slices` |
 | Manual dedup loop | `slices.Sort(s); slices.Compact(s)` | `slices` |
 | `make([]T, len(src)); copy(dst, src)` | `slices.Clone(src)` | `slices` |
-| `for k := range m {}` to get keys | `maps.Keys(m)` + `slices.Collect` | `maps` |
+| `for k := range m {}` to get keys | collect manually + `slices.Sort` (Go 1.22); `maps.Keys` + `slices.Collect` requires Go 1.23 | `slices` |
 | `if err == ErrNotFound` | `errors.Is(err, ErrNotFound)` | `errors` |
 | `err.(*MyError)` type assertion | `errors.As(err, &target)` | `errors` |
 | `log.Printf("msg key=%v", val)` | `slog.Info("msg", "key", val)` | `log/slog` |
@@ -468,3 +474,9 @@ produces a malformed log line because the key should be a string.
    every function call. What `slog` pattern do you use?
 
 (answers are in the code — run the lab to verify)
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 3** section for the hands-on build steps.

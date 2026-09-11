@@ -334,3 +334,9 @@ dramatic. Correctness first, benchmark if it matters.
    satisfies this constraint but is not `int` or `string` itself.
 
 (answers are in the code — run the lab to verify)
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 2** section for the hands-on build steps.

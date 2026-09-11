@@ -226,3 +226,9 @@ Long-running handlers should check `r.Context().Done()`. If the client disconnec
 1. What is the minimum interface a type must satisfy to act as an HTTP handler in Go? Write the method signature from memory.
 2. `http.HandleFunc("/path", myFunc)` and `http.Handle("/path", http.HandlerFunc(myFunc))` — are these equivalent? What does each do under the hood?
 3. You add a `w.Header().Set("X-Request-ID", id)` call in your handler, but the header never appears in the response. What is the most likely cause, and how do you fix it?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 6** section for the hands-on build steps.

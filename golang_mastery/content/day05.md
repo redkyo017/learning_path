@@ -437,3 +437,9 @@ or use a channel to collect results into a single goroutine.
    are drained?
 
 (answers are in the code — run the lab to verify)
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 5** section for the hands-on build steps.

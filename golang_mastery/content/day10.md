@@ -376,3 +376,9 @@ The 5x slowdown is the cost of correctness. A race condition in production means
 1. You have a `PaymentService` struct that directly constructs a `*stripe.Client`. Why is this untestable, and what change would make it testable without modifying the test itself?
 2. Your handler test calls `handler.CreateUser(w, req)` directly. The handler uses `c.Param("id")` — a Gin context method. What goes wrong and how do you fix the test?
 3. `go test -bench=. -benchmem` reports `10000 B/op` for a function you expected to be zero-allocation. Name two tools or techniques you would use to find where the allocation is happening.
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 10** section for the hands-on build steps.

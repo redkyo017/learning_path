@@ -324,3 +324,9 @@ proxy.Rewrite = func(pr *httputil.ProxyRequest) {
 2. Your upstream registry returns the same `Upstream` for `/api/v1/users` and `/api/v1/users/profile`. A client requests `/api/v1/users/profile/avatar`. Which entry wins, and why does the ordering of entries in the registry matter?
 
 3. A client sends a request that the upstream processes successfully and returns 200. An hour later, ops reports that some clients are seeing 502 errors with the message "upstream unavailable". Is `ErrorHandler` involved? What is the most likely cause?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 17** section for the hands-on build steps.

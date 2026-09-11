@@ -250,3 +250,9 @@ In the 1.16–1.18 era:
 2. Your team wants to remove the `middle_name` field (field number 7) from a message that has been in production for six months. Write the exact proto3 syntax that makes this safe for future reuse of the schema.
 
 3. You need an RPC that accepts a request with no meaningful payload. Which well-known type do you use as the request type, and what is its import path in the `.proto` file?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 12** section for the hands-on build steps.

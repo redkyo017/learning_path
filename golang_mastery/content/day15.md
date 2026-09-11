@@ -393,3 +393,9 @@ Log `status.Code(err)` not `err.Error()`. The code is structured and queryable i
 2. Your retry policy includes `INTERNAL` in `retryableStatusCodes`. A payment handler returns `INTERNAL` because it partially committed a database transaction before failing. What is the concrete production risk of retrying this, and what should you do instead?
 
 3. You notice that under load, some gRPC connections silently stop receiving messages even though no error is returned. No new connections are being created. Which configuration parameter is most likely the root cause, and what values would you set on both the server and client to diagnose and fix it?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 15** section for the hands-on build steps.

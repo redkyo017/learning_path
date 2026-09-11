@@ -312,3 +312,9 @@ A global limiter means a single heavy user can exhaust the budget for everyone. 
 1. Draw the execution order for this chain: `Logger → Auth → RateLimit → Handler`. Now add `c.Abort()` in the Auth middleware. Which functions still run and in what order?
 2. A user reports they can see each other's data intermittently. You look at the JWT middleware and find it calls `c.Set("claims", claims)`. What race condition might exist with per-user rate limiting using a shared `*rate.Limiter` map, and how do you fix it?
 3. Why is it insufficient to just check `token.Valid == true` after `jwt.ParseWithClaims`, without also checking the returned `err`?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 8** section for the hands-on build steps.

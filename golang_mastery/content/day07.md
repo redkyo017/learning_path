@@ -242,3 +242,9 @@ Logging `r.URL.Path` directly for metrics creates a unique label per user ID. Us
 1. `gin.Default()` and `gin.New()` both return a `*gin.Engine`. What middleware does `gin.Default()` add, and why would you replace it in production?
 2. You have a route `GET /orders/:orderID/items/:itemID`. Write the handler code to extract both path parameters and return them as JSON.
 3. `c.Set("userID", 42)` is called in an auth middleware. A downstream service function accepts `context.Context` and reads the user ID via `ctx.Value("userID")`. Will it find the value? Explain why or why not and how to fix it.
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 7** section for the hands-on build steps.

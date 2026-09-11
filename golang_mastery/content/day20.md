@@ -465,3 +465,9 @@ defer stop()
 2. Your circuit breaker is configured with threshold=5, timeout=30s. Upstream starts failing at 14:00:00 exactly. Walk through the timeline: what happens to requests at 14:00:04, 14:00:05, 14:00:06, 14:00:35, and 14:00:36 (assuming the upstream is still down)?
 
 3. During a rolling deploy, Kubernetes sends `SIGTERM` to the old pod. The pod has 20 in-flight requests averaging 8 seconds each. Your `Shutdown` timeout is 15 seconds. What happens to the in-flight requests, and what should you change?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 20** section for the hands-on build steps.

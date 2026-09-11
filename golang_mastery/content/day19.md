@@ -416,3 +416,9 @@ The biggest practical change: `slog` replaces the need for third-party logging l
 2. A distributed trace shows a 400ms gap between the end of a Gin handler span and the start of the downstream gRPC span. The gRPC call itself takes 50ms. What does this gap likely indicate, and what would you look at first?
 
 3. Your `/readyz` endpoint checks all three downstream services. Service C is non-critical (a recommendation engine). When Service C is unhealthy, Kubernetes stops sending traffic to your gateway pod even though it can still serve requests without Service C. How do you fix this?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 19** section for the hands-on build steps.

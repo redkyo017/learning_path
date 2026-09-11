@@ -388,3 +388,9 @@ The `github.com/golang/protobuf` → `google.golang.org/protobuf` migration is t
 2. Your gateway validates JWTs in a Gin middleware and stores the user ID in the Gin context. The gRPC upstream needs the user ID to authorize the request. Describe the two approaches for passing it to the upstream, and which you prefer for a production gateway.
 
 3. The grpc-gateway generated code handles the `/v1/users/{id}` → `UserService.GetUser` mapping automatically. What capability do you lose compared to writing the handler manually with Gin, and in what kind of production scenario would that matter?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 18** section for the hands-on build steps.

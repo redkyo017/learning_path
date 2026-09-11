@@ -326,3 +326,9 @@ Without this, unique constraint violations surface as generic 500 errors instead
 1. Your Postgres instance has `max_connections = 100` and you run 4 replicas of your Go service. What should you set `MaxOpenConns` to on each replica? Explain the reasoning.
 2. You have `userRepo.GetByID` returning `pgx.ErrNoRows` when a user is not found. Your handler converts this to a 500 error. Fix the flow end-to-end: repository, service, and handler layers.
 3. A new engineer modifies migration `000003_add_index.up.sql` instead of creating `000004_add_index_fix.up.sql`. What goes wrong for environments that have already run migration 3?
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 9** section for the hands-on build steps.

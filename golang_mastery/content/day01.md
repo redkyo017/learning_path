@@ -346,3 +346,9 @@ package with the outside world, it must live outside `internal/`.
    `gofmt` do?
 
 (answers are in the code — run the lab to verify)
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 1** section for the hands-on build steps.

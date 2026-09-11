@@ -378,3 +378,9 @@ If `/readyz` requires a `Bearer` token, Kubernetes cannot call it. If `/readyz` 
 1. Your container runs in Kubernetes with `terminationGracePeriodSeconds: 30`. What timeout should you pass to `srv.Shutdown(ctx)`, and why?
 2. A team member argues that checking database connectivity in `/healthz` gives better visibility into service health. Explain exactly what failure mode this creates in a production Kubernetes cluster.
 3. Your Go binary is built on a MacBook Pro M3 with `docker build -t myapp .` and deployed to an ECS cluster running x86. Describe what happens at runtime and what one Dockerfile change fixes it.
+
+---
+
+## Lab
+
+Open `docs/superpowers/plans/2026-07-21-golang-mastery-plan.md` and follow the **Day 11** section for the hands-on build steps.
