@@ -259,6 +259,40 @@ wait for `ws`.
    `sudo tee` back onto the same path, then `:e!` to reload the file nvim
    now sees on disk and clear the stale "modified" flag.
 
+7. In one `ws` shell, create a config and watch it:
+   `mkdir -p /srv/app && printf 'port=80\nworkers=2\n' > /srv/app/app.conf && tail -f /srv/app/app.conf`.
+   In a second `ws` shell, open it in nvim, append `log=debug`, and `:wq`.
+   The watcher never prints the new line. Prove why, then append a line so
+   that it does. — **Hint:** the file is in `/srv`, not `/tmp`, on purpose —
+   nvim's `backupskip` would hide the effect there. Look at what the
+   watcher's descriptor points at *after* the save. — **Solution sketch:**
+   `ls -l /proc/$(pgrep -x tail)/fd` shows
+   `3 -> /srv/app/app.conf~ (deleted)`. With default `backupcopy=auto`, a
+   single-link file is saved by renaming it to `app.conf~`, writing a new
+   `app.conf`, and deleting the backup — so `tail -f`, which follows its
+   descriptor, sits on an unlinked inode nothing will ever write again
+   (Day 3's table, `nvim-file-ops.md` for the syscall trace). Restart the
+   watcher, then save the next edit with `:set backupcopy=yes` first: the
+   write goes into the existing inode, `tail` prints `log=debug`, and its fd
+   shows a plain `/srv/app/app.conf`. (`tail -F`, following the name, would
+   have survived the first save as well.)
+
+8. Simulate a dropped SSH session: open `/srv/app/app.conf` in nvim, add a
+   line, leave it idle for five seconds, and from a second shell
+   `pkill -9 -x nvim`. Reopen the file, recover the lost line, and leave no
+   swap file behind. — **Hint:** the prompt will claim the old session is
+   `STILL RUNNING`. Check that claim against the process table before you
+   believe it. — **Solution sketch:** E325 shows `modified: YES` (the idle
+   pause let nvim flush the change to the swap file) and
+   `process ID: N (STILL RUNNING)`. `ps -o pid,ppid,stat,args -p N` shows
+   state `Z`, parent `1`: the swap file records nvim's `--embed` child,
+   which was orphaned to `ws`'s `sleep infinity` PID 1 and never reaped —
+   Day 2's zombie, so the PID still exists and `(D)elete it` is not offered.
+   Choose `R`, confirm the recovered line, `:w`, `:q`; then
+   `ls ~/.local/state/nvim/swap/` and `rm` the `%srv%app%app.conf.swp` file
+   by hand. Proof: reopening shows no E325, and `nvim -r` lists no swap
+   file for that path.
+
 ## Anti-patterns / Common mistakes
 
 - Mistake 7 (learning vim from a tutorial): a tutorial completed in a

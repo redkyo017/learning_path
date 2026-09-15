@@ -95,7 +95,9 @@ Confirms zero running containers, no stray volumes, and no leftover
 | `COVERAGE.md` | Every LPIC-1 and LFCS objective mapped to a day, plus deliberate skips |
 | `content/GLOSSARY.md` | Plain-English terms, alphabetical |
 | `content/primers/proc-field-reference.md` | Field-by-field decode of the six kernel files this path relies on |
+| `content/primers/file-ops-reference.md` | Read, search, write, update, copy — GNU and busybox forms side by side, each marked same-inode or new-inode |
 | `content/primers/nvim-cheatsheet.md` | Neovim as a grammar: operator + count + motion/text object |
+| `content/primers/nvim-file-ops.md` | The file side of a Neovim session: opening, writing, what `:w` does to the inode, swap-file recovery |
 | `content/primers/nvim-vscode-setup.md` | **Optional, after Day 7.** Turning Neovim into a VSCode-shaped daily editor on macOS and Linux |
 
 The last one is deliberately outside the 21 hours. This path treats Neovim as a

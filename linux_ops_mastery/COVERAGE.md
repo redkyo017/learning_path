@@ -28,12 +28,12 @@ third category.
 | 102.6 | Linux as a virtualization guest | 4 | containers as namespaced processes, not VMs; cgroup limits |
 | 103.1 | Work on the command line | 3 | shell as an operator language; quoting, exit codes, `set -euo pipefail` |
 | 103.2 | Process text streams using filters | 3 | `grep`/`sed`/`awk` operator subset; `sort \| uniq -c \| sort -rn` |
-| 103.3 | Perform basic file management | 1 | inode vs name, links, `find`, `stat` |
+| 103.3 | Perform basic file management | 1, 3 | inode vs name, links, `find`, `stat` (Day 1); same-inode vs new-inode writes, `mv` across filesystems (Day 3); `primers/file-ops-reference.md` |
 | 103.4 | Use streams, pipes and redirects | 3 | redirection as descriptor surgery; `>file 2>&1` vs `2>&1 >file` |
 | 103.5 | Create, monitor and kill processes | 2 | full day: process table, signals, states, `strace` |
 | 103.6 | Modify process execution priorities | 4 | `nice`/`renice`, and why cgroup quota supersedes them in containers |
-| 103.7 | Search text files using regular expressions | 3 | `grep`/`sed` on real log triage |
-| 103.8 | Basic file editing | 1, 7 | neovim survival (Day 1) and the operator payload (Day 7) |
+| 103.7 | Search text files using regular expressions | 3 | `grep`/`sed` on real log triage; recursive and compressed-log search in `primers/file-ops-reference.md` |
+| 103.8 | Basic file editing | 1, 3, 7 | neovim survival (Day 1), `sed -i` and its bind-mount failure (Day 3), the operator payload plus save semantics and swap recovery (Day 7, `primers/nvim-file-ops.md`) |
 | 104.1 | Create partitions and filesystems | — | **SKIPPED** |
 | 104.2 | Maintain the integrity of filesystems | 1 | `df` vs `du`, ENOSPC, unlinked-but-open inodes; `fsck` **SKIPPED** |
 | 104.3 | Control mounting and unmounting of filesystems | 1 | `/proc/mounts`, `/proc/self/mountinfo`, bind mounts, overlayfs |

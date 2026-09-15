@@ -1,7 +1,7 @@
 # Day 3 — The File Descriptor Table
 
 **Truth of the day:** fd table
-**Budget:** 3 h — 1.5 h fd table and redirection, 1.5 h shell triage toolkit
+**Budget:** 3 h — 1.5 h fd table, redirection, and where a write lands, 1.5 h shell triage toolkit
 
 ## Why this matters
 
@@ -151,6 +151,81 @@ bash runs `cmd`, connects its stdout to a pipe, and hands the *reading*
 end to the outer command as a path like `/dev/fd/63` — which is why
 `diff <(sort a) <(sort b)` works without a temp file.
 
+**A write lands on one of two inodes.** Every command that changes a file
+makes a choice its man page rarely states: keep the inode and replace its
+bytes, or build a new inode and move the name onto it. Day 1 separated the
+name from the inode; this is the same fact seen from the writer's side, and
+every row below was observed in this fleet, not copied from documentation:
+
+| Write form | What it does | Inode afterwards |
+|---|---|---|
+| `>`, `>>`, `: > f`, `truncate -s 0 f` | opens the existing inode with `O_TRUNC` or `O_APPEND` | same |
+| GNU `cp src f`, onto an existing `f` | opens `f` with `O_TRUNC`, copies bytes in | same |
+| `sed -i`, `mv tmp f`, `install src f`, busybox `cp src f` | creates a separate file, then puts it under the name | new |
+| nvim `:w`, default settings | renames `f` to `f~`, writes a fresh `f`, removes `f~` | new, with exceptions — see `content/primers/nvim-file-ops.md` |
+
+*Same inode* has four consequences. Any process holding a descriptor sees
+the new bytes — including half of them, if it reads while the write is still
+in progress. Truncation happens at `open(2)`, before a single byte is read,
+which is why `sort f > f` leaves `f` empty: the shell truncated it before
+`sort` ever opened it (`sort -o f f` is safe, because `sort` reads all its
+input before opening the output). A running executable refuses it — `cp`
+onto `./sleep` while `./sleep` runs fails with `Text file busy`
+(`ETXTBSY`). And hard links and bind mounts survive, because nothing about
+the name changed.
+
+*New inode* has the opposite set:
+
+- A process holding the old descriptor keeps reading the old content, and
+  `ls -l /proc/PID/fd` shows the target as `(deleted)` — Day 1's mechanism,
+  produced by an edit instead of an `rm`. This is the whole difference
+  between `tail -f` (follows the descriptor, so it stays on the dead inode)
+  and `tail -F` (follows the name, so it reopens the new one).
+- Readers see the whole old file or the whole new one, never half:
+  `rename(2)` is atomic — within one filesystem. Across filesystems `mv`
+  gets `EXDEV` from `renameat2` and falls back to copy-then-unlink, which
+  is not atomic. Create the temp file in the target's own directory
+  (`mktemp ./cfg.XXXXXX`), not in `/tmp`.
+- A hard link detaches: `sed -i` through one name leaves the other name on
+  the old content, each with a link count of 1.
+- A symlink is replaced by a regular file: `sed -i` on the link writes the
+  new content to the link's own name. GNU `sed --follow-symlinks` edits the
+  target instead; busybox `sed` has no such flag.
+- It needs write permission on the *directory*, not only the file. A user
+  who can write `cfg` but not its directory gets
+  `sed: couldn't open temporary file lk/sedekqLxH: Permission denied` from
+  `sed -i`, while `echo new > lk/cfg` succeeds — Day 5's directory model.
+- A bind-mounted single file cannot be renamed over. Every container in
+  this fleet has `/etc/hosts`, `/etc/hostname`, and `/etc/resolv.conf` as
+  bind mounts (Day 1, exercise 3), so `sed -i` on them fails —
+  `sed: cannot rename /etc/sedL8Dmgj: Device or resource busy` on `ws`,
+  `sed: can't move '/etc/hostsEGaeDm' to '/etc/hosts': Resource busy` on
+  `slim`. The same-inode form works:
+  `sed 's/old/new/' /etc/hosts > /tmp/hosts.new && cat /tmp/hosts.new > /etc/hosts`.
+
+**Proving which one happened.** Comparing `stat -c %i` before and after is
+not proof: a freed inode number can be handed to the very next file created,
+and in this fleet `install` over a file came back with the *original's*
+number. Hold a reference across the write instead, so the old inode cannot
+be freed:
+
+```sh
+exec 3< f              # fd 3 now pins f's current inode
+sed -i 's/old/new/' f  # or whatever write you are testing
+ls -l /proc/$$/fd/3    # "(deleted)" = new inode; plain path = same inode
+cat <&3                # and this is the content the old inode still holds
+exec 3<&-
+```
+
+The choice, then: a file a process reads **by name** (most config) gets a
+new inode — temp file in the same directory, then `mv` — so no reader ever
+sees half a file. A file that is bind-mounted, hard-linked, or followed
+through an open descriptor you want to keep gets written in place, and you
+accept that it is not atomic. `logrotate` makes the same choice under
+different names: `create` renames, `copytruncate` writes in place — see
+*Where this shows up in AWS* below. The command subset for all of this, GNU
+and busybox side by side, is `content/primers/file-ops-reference.md`.
+
 **The triage trio, the operator subset only:**
 
 - `grep -c` counts matches, `-n` numbers them, `-v` inverts the match,
@@ -243,6 +318,25 @@ slim$ rm -f /tmp/held.log
 slim$ ls -l /proc/[0-9]*/fd/* 2>/dev/null | grep '(deleted)'
 ```
 
+The write-semantics check needs nothing more than that. Busybox `sed -i`
+makes the same new-inode choice as GNU `sed -i`, and the bind-mounted
+`/etc/hosts` refuses it the same way, only with busybox's wording:
+
+```sh
+slim$ echo old > /tmp/w; exec 3< /tmp/w
+slim$ sed -i 's/old/new/' /tmp/w
+slim$ ls -l /proc/$$/fd/3        # -> /tmp/w (deleted)
+slim$ cat <&3                    # old
+slim$ sed -i 's/^#//' /etc/hosts # can't move '/etc/hosts…' to '/etc/hosts': Resource busy
+slim$ exec 3<&-
+```
+
+One place busybox does *not* match `ws`: busybox `cp` onto an existing file
+replaces the inode rather than truncating it, so a descriptor held on the
+old file goes `(deleted)`, and `cp` onto the bind-mounted `/etc/hosts` fails
+with `cp: can't create '/etc/hosts': File exists`. Same command name,
+opposite side of the table — which is why the table lists `cp` twice.
+
 ## Exercises
 
 1. Find the one `status=500` line among the 100 000 in the rotated,
@@ -300,6 +394,43 @@ slim$ ls -l /proc/[0-9]*/fd/* 2>/dev/null | grep '(deleted)'
    plain `$?` that detail is invisible, and under `set -o pipefail` it
    would surface as the pipeline's overall non-zero status.
 
+7. For each of `echo x > f`, `sed -i 's/x/y/' f`, GNU `cp g f`, and
+   `mv g f`, predict whether `f` keeps its inode, then prove it in a way a
+   recycled inode number cannot fool.
+   **Hint:** comparing two `stat -c %i` outputs is a guess — the old number
+   can be reissued the instant it is freed. Pin the old inode first.
+   **Solution sketch:** `>` and GNU `cp` keep the inode; `sed -i` and `mv`
+   replace it. Before each write, `exec 3< f`; afterwards
+   `ls -l /proc/$$/fd/3` shows `f (deleted)` for the two replacements and a
+   plain `f` for the two in-place writes, and `cat <&3` prints whichever
+   content the pinned inode holds. `exec 3<&-` between runs.
+
+8. On `ws`, `sed -i 's/^127\.0\.0\.1.*/& ws-alias/' /etc/hosts` fails.
+   Write the chain, then make the change anyway.
+   **Hint:** read the error for the syscall that failed, not the word
+   "busy"; then ask Day 1 what kind of thing `/etc/hosts` is inside a
+   container.
+   **Solution sketch:** the error is
+   `sed: cannot rename /etc/sedXXXXXX: Device or resource busy` — the edit
+   itself succeeded into a temp file, and the `rename(2)` onto `/etc/hosts`
+   is what failed. `grep ' /etc/hosts ' /proc/self/mountinfo` shows
+   `/etc/hosts` as its own mount entry, and a mountpoint cannot be replaced
+   by a rename. Write into the existing inode instead:
+   `sed 's/^127\.0\.0\.1.*/& ws-alias/' /etc/hosts > /tmp/hosts.new && cat /tmp/hosts.new > /etc/hosts`.
+   Proof: `grep ws-alias /etc/hosts` matches, and the mountinfo entry is
+   still there.
+
+9. `sort -u access.log > access.log` leaves an empty file. Explain why,
+   and give two forms that work.
+   **Hint:** list what the shell does before `sort` runs.
+   **Solution sketch:** the shell performs the redirection first —
+   `open("access.log", O_TRUNC)` — so `sort` opens an already-empty file.
+   Safe forms: `sort -u -o access.log access.log` (`sort` reads all input
+   before opening its output), or
+   `sort -u access.log > access.log.tmp && mv access.log.tmp access.log`
+   (a new inode, so a writer still holding the old one keeps writing to
+   an unlinked file — the incident this whole day is about).
+
 ## Anti-patterns / Common mistakes
 
 - Mistake 3 — reaching for `bat`, `ripgrep`, or `htop` out of muscle
@@ -311,6 +442,10 @@ slim$ ls -l /proc/[0-9]*/fd/* 2>/dev/null | grep '(deleted)'
   `sed -n 'N,Mp'` is just "print this range," `s///` is just
   "substitute"); the model derives any one-liner on demand, and no
   collection of memorized ones covers the log format you haven't seen yet.
+- Mistake 5 — treating `sed -i`'s exit status 0 as proof that the change
+  reached everything that reads the file. It proves a new inode now carries
+  the name; any process still holding the old descriptor is reading the old
+  inode, and only `/proc/PID/fd` can tell you which one it holds.
 
 ## Where this shows up in AWS
 

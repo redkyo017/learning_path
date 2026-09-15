@@ -3,6 +3,11 @@
 Plain-English definitions for terms used across this path without re-explaining
 them inline. Alphabetical; each entry is one to three sentences.
 
+- **atomic rename**: Replacing a file by writing a new one and `rename(2)`-ing it over
+  the old name, so every reader sees either the whole old file or the whole new one. It
+  gives the name a new inode, works only within one filesystem, and fails on a
+  bind-mounted file. See Day 3, *A write lands on one of two inodes*.
+
 - **capability**: A slice of root's privilege, granted independently
   (`CAP_NET_BIND_SERVICE` to bind port 80, `CAP_SYS_PTRACE` to trace another process) so a
   process needs less than full root. See `CapEff` in the /proc primer.
@@ -98,6 +103,10 @@ them inline. Alphabetical; each entry is one to three sentences.
 - **sticky bit**: A permission bit on a directory (classically /tmp) restricting
   deletion/renaming of a file to its owner, the directory's owner, or root - regardless of
   the directory's own write permissions for other users.
+
+- **swap file (editor)**: The file where nvim keeps unsaved changes so they survive a
+  crash - under `~/.local/state/nvim/swap/`, not next to the edited file. Unrelated to
+  swap space. A leftover one is what triggers `E325: ATTENTION` on the next open.
 
 - **TIME_WAIT**: A TCP socket state held by the side that closed a connection first,
   lasting roughly 2x the maximum segment lifetime, to absorb any delayed packets from the

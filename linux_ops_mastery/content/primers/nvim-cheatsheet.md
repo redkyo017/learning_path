@@ -5,6 +5,10 @@ isolated commands doesn't scale; learning the grammar does, because every
 new motion or text object you learn immediately composes with every
 operator you already know. This is that grammar.
 
+The file side of a session — opening read-only, `:w` versus `:x`, range
+writes, what a save does to the inode, and recovering from `E325` — is in
+`nvim-file-ops.md`.
+
 ## The sentence
 
 Every edit is a sentence: `<operator><count><motion|text-object>`. The
