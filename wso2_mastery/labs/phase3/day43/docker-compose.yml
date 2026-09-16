@@ -1,0 +1,69 @@
+version: "3.9"
+
+services:
+  # Identity Server (Phase 1 Day 15 Go KM)
+  is:
+    build:
+      context: ../../../labs/phase1/day15
+      # NOTE: Requires Dockerfile in labs/phase1/day15/ that runs: go run main.go
+    image: wso2-is-go:local
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Control Plane (Phase 3 Day 39 unified CP)
+  cp:
+    build:
+      context: ../../../labs/phase3/day39
+      # NOTE: Requires Dockerfile in labs/phase3/day39/ that runs: go run main.go
+    image: wso2-cp-go:local
+    ports:
+      - "8082:8082"
+    depends_on:
+      is:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Universal Gateway (Phase 2 Day 27 GW)
+  gw:
+    build:
+      context: ../../../labs/phase2/day27
+      # NOTE: Requires Dockerfile in labs/phase2/day27/ that runs: go run main.go
+    image: wso2-gw-go:local
+    ports:
+      - "9090:9090"
+    environment:
+      PORT: "9090"
+      BACKEND_URL: "http://backend:8000"
+      JWKS_URL: "http://is:8080/oauth2/jwks"
+      CP_URL: "http://cp:8082"
+    depends_on:
+      cp:
+        condition: service_healthy
+      is:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # Mock backend (returns a fixed response)
+  backend:
+    image: hashicorp/http-echo:latest
+    command: ["-text=hello from backend", "-listen=:8000"]
+    ports:
+      - "8000:8000"
