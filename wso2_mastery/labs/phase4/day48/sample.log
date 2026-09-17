@@ -1,0 +1,8 @@
+[2026-09-01 10:01:23,100] INFO {org.wso2.carbon.apimgt.gateway.handlers.common.ActivityIDHandler} - [activityId:aaa-111] Request received: POST /petstore/v1/pets
+[2026-09-01 10:01:23,150] INFO {org.wso2.carbon.identity.oauth2.validators.DefaultOAuth2TokenValidator} - [activityId:aaa-111] JWT validated for client demo-client-id
+[2026-09-01 10:01:23,200] INFO {org.wso2.carbon.apimgt.impl.APIManagerImpl} - [activityId:aaa-111] Subscription check passed tier=Gold
+[2026-09-01 10:01:23,220] INFO {org.wso2.carbon.throttle.core.ThrottleHandler} - [activityId:aaa-111] Throttle check passed
+[2026-09-01 10:01:23,300] INFO {org.wso2.carbon.apimgt.gateway.handlers.common.ActivityIDHandler} - [activityId:aaa-111] Response sent: 200
+[2026-09-01 10:02:01,400] INFO {org.wso2.carbon.apimgt.gateway.handlers.common.ActivityIDHandler} - [activityId:bbb-222] Request received: GET /petstore/v1/pets/1
+[2026-09-01 10:02:01,450] INFO {org.wso2.carbon.identity.oauth2.validators.DefaultOAuth2TokenValidator} - [activityId:bbb-222] JWT expired: exp claim in the past
+[2026-09-01 10:02:01,460] INFO {org.wso2.carbon.apimgt.gateway.handlers.common.ActivityIDHandler} - [activityId:bbb-222] Response sent: 401

@@ -11,10 +11,10 @@
 |---|---|---|---|
 | Phase 1 | 1–15 | Identity Core (OAuth2/OIDC + Key Manager) | ✅ COMPLETE — all content + labs authored |
 | Phase 2 | 16–30 | API Gateway (Mediation + JWT + Throttle) | ✅ COMPLETE — all content + labs authored |
-| Phase 3 | 31–45 | Control Plane + Event Sync | 🔵 Plan written — ready to author |
-| Phase 4 | 46–60 | Production Mastery (Debug + Extend + Deploy) | ⬜ Not started |
+| Phase 3 | 31–45 | Control Plane + Event Sync | ✅ COMPLETE — all content + labs authored |
+| Phase 4 | 46–60 | Production Mastery (Debug + Extend + Deploy) | ✅ COMPLETE — all content + labs + capstone authored |
 
-**Active phase:** Phase 3 — plan written 2026-09-16; ready to author content + labs via subagent-driven-development.
+**Path Status:** ✅ **COMPLETE** — All 60 days authored; ready for learner walkthrough and production smoke test.
 
 ---
 
@@ -31,31 +31,40 @@
 | 2026-09-16 | Phase 3 Tasks 0-2 | ✅ COMPLETE: Scaffold + API Registry (days 31-33) + Subscription Manager (days 34-36). All files created, reviewed, fixes applied. Ready for learner use. Next session: Tasks 3-5 (Event Hub, Terraform, Docker Compose). |
 | 2026-09-16 | Phase 3 Tasks 3-5 | ✅ COMPLETE: Event Hub + SSE (days 37-39) + ECS Terraform (days 40-42) + Docker Compose smoke test (days 43-45). All 56 files created, reviewed clean. Phase 3 ship-ready. |
 | 2026-09-16 | OAuth2/OIDC Appendix | ✅ COMPLETE: APPENDIX_OAUTH2_OIDC.md (10 sections, 14 Mermaid diagrams) + GLOSSARY.md (78 entries) authored and reviewed clean. Standalone theory reference ready for learner + teammates. |
+| 2026-09-17 | Phase 4 Capstone (Days 58–60) | ✅ COMPLETE: 3 content files (day58/59/60.md) + 3 lab files (architecture.md, runbook.md, reflection.md) + README Phase 4 section + PROGRESS.md updates. Path complete; ready for learner walkthrough. |
 
 ---
 
 ## Next Session Instructions
 
-Paste this into Claude Code to continue:
+**Path Complete:** All 60 days authored. Next action for the learner:
 
-```
-Continue WSO2 mastery learning path. Read PROGRESS.md first, then read the Phase 3 plan at
-docs/superpowers/plans/2026-09-16-wso2-phase3-plan.md.
+1. **Run the Phase 3 Docker Compose smoke test** (Day 43–45) to verify all 4 services can coordinate
+   ```bash
+   cd wso2_mastery/labs/phase3/day43
+   docker-compose up -d
+   sleep 10
+   TOKEN=$(curl -s -X POST http://localhost:9443/oauth2/token \
+     -d 'grant_type=client_credentials&client_id=demo&client_secret=secret' | jq -r .access_token)
+   curl -H "Authorization: Bearer $TOKEN" http://localhost:8243/petstore/v1/pets
+   ```
 
-Next step: Phase 3 content authoring — execute the plan task-by-task using
-superpowers:subagent-driven-development. Switch to Haiku 4.5 for content authoring.
-```
+2. **Start Day 1** and work through the path sequentially (60 days, ~3 hours/day, local Docker for Phases 1–3)
+
+3. **For Phase 4 Day 56 onward**, the learner will need an AWS dev account to deploy Terraform
+
+**Support:** All day files include 3 exercises with Hint + Solution sketch. Runbook (Day 59) provided for production debugging.
 
 ---
 
 ## Phase Plans
 
-| Phase | Plan file | Status |
+| Phase | Plan file | Content Status |
 |---|---|---|
-| Phase 1 | `docs/superpowers/plans/2026-08-31-wso2-phase1-plan.md` | ✅ Written |
-| Phase 2 | `docs/superpowers/plans/2026-08-31-wso2-phase2-plan.md` | ✅ Written |
-| Phase 3 | `docs/superpowers/plans/2026-09-16-wso2-phase3-plan.md` | ✅ Written |
-| Phase 4 | `docs/superpowers/plans/YYYY-MM-DD-wso2-phase4-plan.md` | ⬜ Not written |
+| Phase 1 | `docs/superpowers/plans/2026-08-31-wso2-phase1-plan.md` | ✅ Days 1–15 complete |
+| Phase 2 | `docs/superpowers/plans/2026-08-31-wso2-phase2-plan.md` | ✅ Days 16–30 complete |
+| Phase 3 | `docs/superpowers/plans/2026-09-16-wso2-phase3-plan.md` | ✅ Days 31–45 complete |
+| Phase 4 | `docs/superpowers/plans/2026-09-17-wso2-phase4-plan.md` | ✅ Days 46–60 complete (capstone) |
 
 ---
 
@@ -78,38 +87,38 @@ superpowers:subagent-driven-development. Switch to Haiku 4.5 for content authori
 
 ---
 
-## ✅ Session 2026-09-16 Complete — Tasks 0-2 Approved
+## ✅ Path Complete — 2026-09-17
 
-**Execution Status:**
-- Task 0: ✅ Complete (scaffold)
-- Task 1: ✅ Complete + Approved (API Registry)
-- Task 2: ✅ Complete + Approved (Subscription Store, 1 fix round)
-- Task 3-5: Ready for next session
+**Final Status:**
+- Phase 1: ✅ Complete (Days 1–15) — 15 content files + 15 lab directories
+- Phase 2: ✅ Complete (Days 16–30) — 15 content files + 15 lab directories
+- Phase 3: ✅ Complete (Days 31–45) — 15 content files + 15 lab directories + Docker Compose smoke test
+- Phase 4: ✅ Complete (Days 46–60) — 15 content files + 15 lab directories + capstone (architecture + runbook + reflection)
 
-**Files Created:** 29 total (6 content, 4 Go servers, 6 lab dirs with README/SOLUTION/teardown, 7 supporting)
+**Capstone Task 5 Deliverables (2026-09-17):**
+- ✅ 3 content files (day58.md, day59.md, day60.md) with 3 exercises each + Hint + Solution sketch
+- ✅ 3 lab files:
+  - `labs/phase4/day58/architecture.md` — text + Mermaid diagrams of full 4-service system
+  - `labs/phase4/day59/runbook.md` — production incident response playbook (60-second triage, per-service debug, escalation)
+  - `labs/phase4/day60/reflection.md` — success criteria verification + Go lab index + next steps
+- ✅ `README.md` — Phase 4 section added with days 46–60 table
+- ✅ `PROGRESS.md` — Phase 4 marked complete; session log updated
+
+**Grand Total:** 60 days × 3 hours/day = 180 hours of learning content, fully architected and authored
 
 ---
 
-## Next Session: Tasks 3-5 Execution
+## Learner Next Steps
 
-**Paste this prompt to continue:**
+1. **Start Day 1** and progress sequentially through all 60 days
+2. **Complete each day's 3 exercises** using the Hint + Solution sketch
+3. **Run the Docker Compose smoke test** at the end of Phase 3 (Day 43–45)
+4. **For Phase 4 Days 46–60:** Focus on understanding observability (activity ID correlation), extension points, and production deployment
+5. **Day 60 (Capstone):** Verify all 7 success criteria and run the full smoke test
 
-```
-Continue WSO2 mastery Phase 3 content authoring. Tasks 0-2 complete (all approved).
+**Estimated Total Time:** ~180 hours (60 days × 3 hours/day), flexible based on learner pace
 
-Next: Execute Tasks 3-5 (Event Hub + Terraform + Docker Compose) via subagent-driven-development.
-
-Plan: docs/superpowers/plans/2026-09-16-wso2-phase3-plan.md
-Ledger: .superpowers/sdd/2026-09-16-wso2-phase3-plan/progress.md (contains all prior work)
-Briefs: Task 3/4/5 briefs already extracted in workspace.
-
-Use Haiku 4.5 for content authoring (cost efficiency).
-Expected tokens: ~500-650k for Tasks 3-5.
-Estimated time: 3-4 hours wall-clock.
-```
-
-**Workspace state for next session:**
-- All task briefs extracted and ready
-- Ledger tracking all prior approvals
-- No changes to master branch (per user constraint)
-- All files in wso2_mastery/content/phase3/ and wso2_mastery/labs/phase3/
+**Support Resources:**
+- Each day file includes detailed learning notes, core concepts, and structured exercises
+- Day 59 runbook: Production-grade incident response guide (use immediately if operating WSO2 in production)
+- Day 60 reflection: Self-assessment checklist and next-steps roadmap
