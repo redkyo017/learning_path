@@ -4,6 +4,18 @@
 **Budget:** 3 h — 1 h read the file + derive the tool; 1 h core concepts and
 the AWS tie-in; 1 h lab, strip the toolbox, and exercises
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts" (includes the AWS tie-in).
+2. Do the Lab: `labs/day04/` — `break.sh` → write `journal.md` → `verify.sh`
+   → then "Strip the toolbox" below.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident; the budget above bundles them into the same hour as
+   the lab, but nothing later depends on doing them first (see
+   `STRATEGY.md`, "Where Exercises fit").
+4. Read "Anti-patterns / Common mistakes" → "Where this shows up in AWS".
+5. Teardown: `labs/day04/teardown.md`.
+
 ## Why this matters
 
 A container dies with no application stack trace, or a request pipeline gets

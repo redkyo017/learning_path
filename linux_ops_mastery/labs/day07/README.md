@@ -1,5 +1,17 @@
 # Day 7 lab — the gauntlet
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day07/gauntlet.sh <1-5|all>`,
+  `bash labs/day07/verify.sh <N|all>`.
+- **Environment:** Docker fleet must be up (`labs/fleet/`:
+  `docker compose -p linuxops up -d --build`); no `sysd` overlay needed.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop deviates entirely:** no `break.sh`/`SOLUTION.md` —
+  `gauntlet.sh` replaces `break.sh`, `ANSWERS.md` replaces `SOLUTION.md`
+  and stays closed until all five chains are written, 15 minutes per
+  incident, fix each fully before moving to the next.
+
 No spoilers below. If you want the mechanism behind an incident before you
 have written its chain, you are reading the wrong file — that file is
 `ANSWERS.md`, and it stays closed until all five chains exist.

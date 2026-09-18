@@ -4,6 +4,21 @@
 boundary) — today recombines them, it does not add a fifth.
 **Budget:** 3 h — 1.5 h neovim + 1.5 h gauntlet
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts" (the neovim block).
+2. Do the Lab: `labs/day07/` — this is the gauntlet, not a single
+   `break.sh` incident; run `gauntlet.sh {1..5|all}`, write a `journal.md`
+   chain and get a `verify.sh` pass for each of the five before reading
+   `ANSWERS.md`.
+3. "Strip the toolbox" below is not a separate re-run today — three of the
+   five gauntlet incidents already live in `app`/`slim`, busybox-only.
+4. Optional, standalone: "Exercises" here are neovim operator drills
+   (`:g`, macros, quickfix, `:argdo`), not Linux-diagnosis questions —
+   unrelated to the gauntlet, do them whenever (see `STRATEGY.md`, "Where
+   Exercises fit").
+5. Teardown: `labs/day07/teardown.md`.
+
 ## Why this matters
 
 Two things separate someone who *studied* Linux from someone who *operates*

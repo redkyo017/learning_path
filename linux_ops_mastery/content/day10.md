@@ -1,5 +1,17 @@
 # Day 10 — The Argument Contract + Capstone
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
+   "The pattern".
+2. Do the Lab: `labs/day10/` — `break.sh` → write `journal.md` → `verify.sh`.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns".
+5. "Strip step" — syntax-check `diagnose.sh` under `sh -n` and convert
+   bash-only constructs to POSIX `sh`.
+6. Teardown: `labs/day10/teardown.md`.
+
 ## Why this matters
 
 An ops script takes a PID as its first argument and kills the process. On a

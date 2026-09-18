@@ -1,5 +1,13 @@
 # Day 10 Lab — Fragile Argument Parser
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day10/break.sh`, `bash labs/day10/verify.sh`.
+- **Environment:** host only — no Docker, no fleet. Everything happens
+  directly on your machine under `/tmp/lab10/`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop:** standard break → journal → fix → verify → teardown.
+
 ## Scenario
 
 An ops script accepts a PID as its first argument and runs a diagnostic on

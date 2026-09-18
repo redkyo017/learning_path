@@ -1,5 +1,14 @@
 # Day 08 Lab — Silent Pipeline Failure
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day08/break.sh`, `bash labs/day08/verify.sh`.
+- **Environment:** host only — no Docker, no fleet. Everything happens
+  directly on your machine under `/tmp/lab08/`. (Days 1-7 needed the
+  Docker fleet; Days 8-10 don't.)
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop:** standard break → journal → fix → verify → teardown.
+
 ## Scenario
 
 A backup script wraps `find` and `tar` in a pipeline. `find` hits a

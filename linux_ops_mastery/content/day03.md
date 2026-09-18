@@ -3,6 +3,17 @@
 **Truth of the day:** fd table
 **Budget:** 3 h — 1.5 h fd table, redirection, and where a write lands, 1.5 h shell triage toolkit
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts".
+2. Do the Lab: `labs/day03/` — `break.sh` → write `journal.md` → `verify.sh`
+   → then "Strip the toolbox" below.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns / Common mistakes" → "Where this shows up in AWS".
+5. Teardown: `labs/day03/teardown.md`.
+
 ## Why this matters
 
 A process's file descriptor table is the kernel's answer to "what does this

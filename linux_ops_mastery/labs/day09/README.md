@@ -1,5 +1,13 @@
 # Day 09 Lab — Trap Scope and Stale Temp Directory
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day09/break.sh`, `bash labs/day09/verify.sh`.
+- **Environment:** host only — no Docker, no fleet. Everything happens
+  directly on your machine under `/tmp/lab09/`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop:** standard break → journal → fix → verify → teardown.
+
 ## Scenario
 
 A deployment script creates a temp directory, registers a cleanup trap, then

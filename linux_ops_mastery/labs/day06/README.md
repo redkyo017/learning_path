@@ -1,5 +1,17 @@
 # Day 6 lab — the connectivity ladder
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day06/break.sh <1-5|random>`,
+  `bash labs/day06/verify.sh`.
+- **Environment:** Docker fleet must be up (`labs/fleet/`:
+  `docker compose -p linuxops up -d --build`); diagnose across `proxy`,
+  `app`, and `db`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop deviates:** iterate — run `break.sh 1` through
+  `break.sh 5` in order (name the rung, journal, fix, verify, each time),
+  then `break.sh random` to re-practice blind.
+
 ## Goal
 
 "The service is unreachable" resolves to exactly one of five rungs: DNS,

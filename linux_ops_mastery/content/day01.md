@@ -3,6 +3,19 @@
 **Truth of the day:** mount tree
 **Budget:** 3 h — 2 h Linux + 1 h neovim
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts".
+2. Do the Lab: `labs/day01/` — `break.sh` → write `journal.md` → `verify.sh`
+   → then "Strip the toolbox" below.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns / Common mistakes" → "Where this shows up in AWS".
+5. The Neovim survival hour (inside the Lab section) — separate skill
+   block, not part of the disk incident.
+6. Teardown: `labs/day01/teardown.md`.
+
 ## Why this matters
 
 A full disk that `du` cannot account for is the single most common "the

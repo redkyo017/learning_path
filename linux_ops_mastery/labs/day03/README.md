@@ -1,5 +1,15 @@
 # Day 3 lab — the file descriptor table
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day03/break.sh`, `bash labs/day03/verify.sh`.
+- **Environment:** Docker fleet must be up (`labs/fleet/`:
+  `docker compose -p linuxops up -d --build`); diagnose inside `app`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop:** two required deliverables (the `req_id` and the
+  released file) — standard break → journal → fix → verify → teardown
+  otherwise.
+
 ## Goal
 
 `app`'s `/var/log` rotated, but usage did not drop, and one request in

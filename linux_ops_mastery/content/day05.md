@@ -5,6 +5,17 @@ not of a file, and a service manager's job is to keep the right process
 alive with the right identity.
 **Budget:** 3 h — 1 h identity and permission model, 1 h systemd, 1 h lab.
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts".
+2. Do the Lab: `labs/day05/` — `break.sh` → write `journal.md` → `verify.sh`
+   → then "Strip the toolbox" below.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns / Common mistakes" → "Where this shows up in AWS".
+5. Teardown: `labs/day05/teardown.md`.
+
 ## Why this matters
 
 "Permission denied" on a file that is already `0777` is the single most

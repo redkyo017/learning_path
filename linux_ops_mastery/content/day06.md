@@ -5,6 +5,17 @@ namespace
 **Budget:** 3 h — 1 h read the file, derive the tool, and core concepts;
 1 h the connectivity-ladder lab; 30 m strip the toolbox; 30 m exercises
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts".
+2. Do the Lab: `labs/day06/` — `break.sh` → write `journal.md` → `verify.sh`
+   → then "Strip the toolbox" below.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns / Common mistakes" → "Where this shows up in AWS".
+5. Teardown: `labs/day06/teardown.md`.
+
 ## Why this matters
 
 "The service is unreachable" is not a diagnosis, it is a symptom, and it

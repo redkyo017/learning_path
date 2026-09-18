@@ -109,6 +109,15 @@ tractable, not just the seven in this curriculum.
    than the tool's flags, and it is the one that transfers directly to a
    minimal ECS task or a distroless image with no shell fat to fall back on.
 
+**Where Exercises fit:** they don't — the seven steps above are the whole
+loop, and every day's `## Exercises` section sits outside it entirely. They
+are a standalone, optional set of predict-and-check questions (hint +
+solution sketch included inline) that test the same concepts without
+touching the fleet or the day's incident. Do them whenever suits you —
+before the lab, after it, or skip them — nothing later in the day depends
+on having done them. Each `content/dayNN.md` has an "At a glance" list near
+the top spelling out that day's specific order for its own sections.
+
 ## The seven mistakes
 
 Reproduced here because every per-day *Anti-patterns* section cites these

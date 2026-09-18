@@ -1,5 +1,15 @@
 # Day 2 lab — the process table and the syscall boundary
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day02/break.sh`, `bash labs/day02/verify.sh`.
+- **Environment:** Docker fleet must be up (`labs/fleet/`:
+  `docker compose -p linuxops up -d --build`); diagnose inside `ws` and `app`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop:** three independent causes, each needs its own chain
+  entry before you fix any of them — then break → journal → fix → verify →
+  teardown.
+
 ## Goal
 
 `app` has three processes that will not go away. Name the cause of each

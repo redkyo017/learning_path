@@ -1,5 +1,14 @@
 # Day 1 lab — the full `/var/log`
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day01/break.sh`, `bash labs/day01/verify.sh`.
+- **Environment:** Docker fleet must be up (`labs/fleet/`:
+  `docker compose -p linuxops up -d --build`); diagnose inside `app`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop:** standard break → journal → fix in place (no
+  restarting `app`) → verify → teardown.
+
 **Goal:** return `/var/log` on `app` to under 20% used, without restarting
 the container.
 

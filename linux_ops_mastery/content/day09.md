@@ -1,5 +1,16 @@
 # Day 09 — Subshells and Traps
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
+   "The pattern".
+2. Do the Lab: `labs/day09/` — `break.sh` → write `journal.md` → `verify.sh`.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns".
+5. "Strip step" — repeat the Lab's diagnosis in `sh`, not bash.
+6. Teardown: `labs/day09/teardown.md`.
+
 ## Why this matters
 
 A deployment script creates a working directory with `mktemp -d`, registers a

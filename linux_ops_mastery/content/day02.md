@@ -4,6 +4,17 @@
 **Budget:** 3 h — 45m read the file, 30m derive the tool, 1h core concepts,
 45m lab, 20m strip the toolbox
 
+**At a glance — how to work through this day:**
+1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
+   "Core concepts".
+2. Do the Lab: `labs/day02/` — `break.sh` → write `journal.md` → `verify.sh`
+   → then "Strip the toolbox" below.
+3. Optional, standalone: "Exercises" — conceptual, don't depend on the
+   Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
+   fit").
+4. Read "Anti-patterns / Common mistakes" → "Where this shows up in AWS".
+5. Teardown: `labs/day02/teardown.md`.
+
 ## Why this matters
 
 Every process on the box is a row the kernel keeps in `/proc`, and every

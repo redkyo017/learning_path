@@ -1,5 +1,16 @@
 # Day 4 lab — resources and the cgroup boundary
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day04/break.sh`, `bash labs/day04/verify.sh`.
+- **Environment:** Docker fleet must be up (`labs/fleet/`:
+  `docker compose -p linuxops up -d --build`); diagnose inside `app`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop deviates:** DIAGNOSIS ONLY — there is nothing to fix
+  and no restart. Read two cgroup files, write `/tmp/findings` on `app`
+  in the exact format shown below, then verify. See "This lab's
+  deliverable is a diagnosis, not a repair" below before running anything.
+
 ## Goal
 
 Diagnose two boundary failures on `app` — a memory kill and a CPU throttle

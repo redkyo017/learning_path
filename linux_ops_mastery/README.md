@@ -67,6 +67,10 @@ on; Day 7's nvim block adds the operator payload (`:g//`, macros, quickfix,
 
 ## How a lab works
 
+All commands below run from the repo root (`linux_ops_mastery/`), and
+`journal.md` is always this one shared file at the repo root — never a
+file inside `labs/dayNN/`.
+
 ```
 bash labs/dayNN/break.sh        # injects the incident, no explanation
 # write the chain of evidence in journal.md — before touching the fix
@@ -77,6 +81,12 @@ bash labs/dayNN/verify.sh       # objective pass/fail on the repair
 `SOLUTION.md` in each lab directory holds the full chain of evidence, not
 merely the fix — read it only after your own attempt, or after `verify.sh`
 tells you the repair didn't take.
+
+**Environment switches at Day 8.** Days 1-7 need the Docker fleet up
+(`labs/fleet/`) and diagnose inside its containers. Days 8-10 need no
+Docker at all — `break.sh` sets up `/tmp/labNN/` directly on your host and
+everything happens there. Each `labs/dayNN/README.md` states which one
+applies under "At a glance."
 
 ## Teardown
 

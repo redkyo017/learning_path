@@ -1,5 +1,16 @@
 # Day 5 lab — identity, permission, and service management
 
+**At a glance:**
+- **Run from:** repo root — `bash labs/day05/break.sh`, `bash labs/day05/verify.sh`.
+- **Environment:** Docker fleet must be up **and** the `sysd` overlay
+  brought up on top of it (see "Bring-up (Day 5 only)" below) — diagnose
+  inside `sysd`.
+- **Journal:** write your chain into the repo-root `journal.md`
+  (`linux_ops_mastery/journal.md`), not a file inside this directory.
+- **This day's loop deviates:** two independent incidents on `sysd`, each
+  needs its own chain entry — otherwise standard break → journal → fix →
+  verify → teardown.
+
 ## Goal
 
 Two independent incidents on `sysd`, the one container in this fleet that
