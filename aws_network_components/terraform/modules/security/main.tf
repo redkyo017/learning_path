@@ -1,6 +1,6 @@
 resource "aws_security_group" "web" {
   name        = "${var.name}-web-sg"
-  description = "Web tier — inbound 443 from internet"
+  description = "Web tier - inbound 443 from internet"
   vpc_id      = var.vpc_id
   tags        = { Name = "${var.name}-web-sg", Tier = "web" }
 }
@@ -21,7 +21,7 @@ resource "aws_vpc_security_group_egress_rule" "web_all" {
 
 resource "aws_security_group" "app" {
   name        = "${var.name}-app-sg"
-  description = "App tier — inbound 8080 from web SG only"
+  description = "App tier - inbound 8080 from web SG only"
   vpc_id      = var.vpc_id
   tags        = { Name = "${var.name}-app-sg", Tier = "app" }
 }
@@ -42,7 +42,7 @@ resource "aws_vpc_security_group_egress_rule" "app_all" {
 
 resource "aws_security_group" "data" {
   name        = "${var.name}-data-sg"
-  description = "Data tier — inbound 5432 from app SG only"
+  description = "Data tier - inbound 5432 from app SG only"
   vpc_id      = var.vpc_id
   tags        = { Name = "${var.name}-data-sg", Tier = "data" }
 }
@@ -206,7 +206,7 @@ resource "aws_vpc_security_group_egress_rule" "resolver_all" {
 
 resource "aws_security_group" "endpoints" {
   name        = "${var.name}-endpoints-sg"
-  description = "VPC interface endpoints — allow 443 from VPC"
+  description = "VPC interface endpoints - allow 443 from VPC"
   vpc_id      = var.vpc_id
   tags        = { Name = "${var.name}-endpoints-sg" }
 }

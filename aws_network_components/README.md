@@ -156,6 +156,7 @@ Elastic IPs. Run `./scripts/sweep.sh` to catch them.
 
 ```hcl
 module "shared_services_security" {
+  count  = var.enable_security ? 1 : 0
   source = "../../modules/security"
 
   name               = "shared-services"
@@ -198,12 +199,13 @@ aws ssm start-session --profile sandbox \
 
 ```hcl
 module "shared_services_dns" {
+  count  = var.enable_dns ? 1 : 0
   source = "../../modules/dns"
 
   name               = "shared-services"
   vpc_id             = module.shared_services_vpc.vpc_id
   private_subnet_ids = module.shared_services_vpc.private_subnet_ids
-  resolver_sg_id     = module.shared_services_security.resolver_sg_id
+  resolver_sg_id     = one(module.shared_services_security[*].resolver_sg_id)
 }
 ```
 
@@ -233,7 +235,15 @@ the `resolver endpoints` row specifically.
 **Add to `main.tf`** (after Day 3 block):
 
 ```hcl
+locals {
+  # TGW attaches app-vpc, and the VPN attaches to the TGW, so each implies
+  # the one below it. Deriving this here keeps the dayNN.tfvars files honest.
+  tgw_enabled     = var.enable_tgw || var.enable_vpn
+  app_vpc_enabled = var.enable_app_vpc || local.tgw_enabled
+}
+
 module "app_vpc" {
+  count  = local.app_vpc_enabled ? 1 : 0
   source = "../../modules/vpc"
 
   name                  = "app"
@@ -245,6 +255,7 @@ module "app_vpc" {
 }
 
 module "tgw" {
+  count  = local.tgw_enabled ? 1 : 0
   source = "../../modules/tgw"
 
   name = "platform"
@@ -253,9 +264,9 @@ module "tgw" {
   shared_services_private_subnet_ids      = module.shared_services_vpc.private_subnet_ids
   shared_services_private_route_table_ids = module.shared_services_vpc.private_route_table_ids
 
-  app_vpc_id                  = module.app_vpc.vpc_id
-  app_private_subnet_ids      = module.app_vpc.private_subnet_ids
-  app_private_route_table_ids = module.app_vpc.private_route_table_ids
+  app_vpc_id                  = one(module.app_vpc[*].vpc_id)
+  app_private_subnet_ids      = one(module.app_vpc[*].private_subnet_ids)
+  app_private_route_table_ids = one(module.app_vpc[*].private_route_table_ids)
 }
 ```
 
@@ -296,6 +307,7 @@ lets Day 5 run without an NLB.
 
 ```hcl
 module "shared_services_endpoints" {
+  count  = var.enable_endpoints ? 1 : 0
   source = "../../modules/endpoints"
 
   name                    = "shared-services"
@@ -304,7 +316,7 @@ module "shared_services_endpoints" {
   private_subnet_ids      = module.shared_services_vpc.private_subnet_ids
   private_route_table_ids = module.shared_services_vpc.private_route_table_ids
   isolated_route_table_id = module.shared_services_vpc.isolated_route_table_id
-  endpoint_sg_id          = module.shared_services_security.endpoint_sg_id
+  endpoint_sg_id          = one(module.shared_services_security[*].endpoint_sg_id)
   nlb_arn                 = var.privatelink_nlb_arn
   allowed_principal_arns  = var.allowed_principal_arns
 }
@@ -344,11 +356,12 @@ terraform apply -var-file=day05.tfvars   # ~3 min
 
 ```hcl
 module "vpn" {
+  count  = var.enable_vpn ? 1 : 0
   source = "../../modules/vpn"
 
   name                                    = "onprem-sim"
-  tgw_id                                  = module.tgw.tgw_id
-  tgw_shared_services_route_table_id      = module.tgw.shared_services_route_table_id
+  tgw_id                                  = one(module.tgw[*].tgw_id)
+  tgw_shared_services_route_table_id      = one(module.tgw[*].shared_services_route_table_id)
   customer_gateway_ip                     = var.customer_gateway_ip
   shared_services_private_route_table_ids = module.shared_services_vpc.private_route_table_ids
 }
@@ -396,11 +409,12 @@ account_b_id = "YOUR_SECOND_ACCOUNT_ID"
 data "aws_caller_identity" "current" {}
 
 module "ram" {
+  count  = var.enable_ram ? 1 : 0
   source = "../../modules/ram"
 
   name         = "platform"
   account_b_id = var.account_b_id
-  tgw_arn      = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${module.tgw.tgw_id}"
+  tgw_arn      = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${one(module.tgw[*].tgw_id)}"
   subnet_arns  = [
     for id in module.shared_services_vpc.private_subnet_ids :
     "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:subnet/${id}"
