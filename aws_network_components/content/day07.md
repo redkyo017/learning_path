@@ -14,6 +14,9 @@ By the end of today you should be able to:
   accept → route table update)
 - Explain why PrivateLink is the preferred pattern for cross-account service
   consumption vs cross-account TGW
+- Describe the flow for associating a Route 53 private hosted zone with a VPC
+  in another account (authorize → associate), and why this is a separate
+  mechanism from RAM sharing
 - State the integration platform team's ownership model: who owns TGW, who
   owns shared subnets, who owns consuming VPCs
 
@@ -129,6 +132,82 @@ For a scenario where Account B needs full network access to Account A's VPC
 
 ---
 
+## Cross-account Route 53 private hosted zone association
+
+The private hosted zones (PHZ) built on Day 3 are associated with a VPC.
+When that VPC lives in a *different* account than the one that owns the
+zone, you cannot associate it directly — the owning account must first
+authorize the association, then the VPC's account confirms it.
+
+**This is not a RAM share.** RAM shares a *resource* (a subnet, a TGW, a
+Resolver rule) into another account so that account can use it. PHZ
+cross-account association is a distinct two-party handshake API
+(`route53:CreateVPCAssociationAuthorization` /
+`route53:AssociateVPCWithHostedZone`) that exists only for this one
+purpose. A PHZ is never RAM-shareable — don't go looking for it in the
+RAM console.
+
+**Flow:**
+1. Account A (owns the hosted zone, e.g. `internal.platform`) runs
+   `create-vpc-association-authorization`, naming Account B's VPC ID and
+   region. This grants Account B's account permission to associate that one
+   VPC — nothing else changes yet, and Account B's VPC still cannot resolve
+   the zone.
+2. Account B runs `associate-vpc-with-hosted-zone`, naming Account A's
+   hosted zone ID and its own VPC ID. This must be run from Account B (or a
+   role in Account B) — Account A cannot complete this half.
+3. The VPC is now associated. Resources in Account B's VPC resolve records
+   in Account A's zone, same as a same-account association.
+4. (Optional cleanup) Account A can run
+   `delete-vpc-association-authorization` after the association completes —
+   this only removes the *authorization* record, not the association
+   itself. To remove the association, Account B must disassociate the VPC
+   (or Account A can force-disassociate if it still owns the zone).
+
+Both `enableDnsHostnames` and `enableDnsSupport` must be `true` on Account
+B's VPC, exactly as for a same-account PHZ association (Day 3) — this is
+easy to miss because the failure looks identical to a missing
+authorization.
+
+**Ownership after association:** Account A still owns the zone and all its
+records. Account B's VPC is only a resolution target — Account B cannot
+create, edit, or delete records in Account A's zone, and cannot see the
+zone's record set unless also given `route53:ListResourceRecordSets` via
+IAM.
+
+---
+
+## Cross-account Route 53 Resolver rule sharing
+
+Unlike PHZ association, Resolver rules (the outbound rules built on Day 3
+that forward queries for on-prem domains to Route 53 Resolver endpoints)
+*are* shared via RAM — they were listed as shareable back in the RAM
+section, but the flow is worth walking through since it differs from
+subnet sharing in one important way.
+
+**Flow:**
+1. Account A shares the Resolver rule via RAM to Account B (or the org)
+2. Account B sees the rule under Route 53 → Resolver → Rules → Shared with
+   me
+3. Account B associates the shared rule with one or more of *its own* VPCs
+   — this is the step RAM sharing alone does not do. Sharing makes the rule
+   visible; Account B must still explicitly associate it per-VPC.
+4. Once associated, DNS queries from that VPC matching the rule's domain
+   are forwarded through Account A's outbound Resolver endpoint
+
+Account B cannot see or modify the rule's forwarding targets (the IPs it
+forwards to) — only Account A controls that. Account B only controls
+*which of its VPCs* use the rule.
+
+**Choosing PHZ association vs Resolver rule sharing:** if the domain is
+one you own end-to-end in Route 53 (e.g., internal services with records
+you manage), use PHZ association. If the domain is external/on-prem (e.g.,
+`corp.internal` resolved by an on-prem DNS server) and you're forwarding
+queries out of AWS, use Resolver rule sharing — that's what the rule
+exists for.
+
+---
+
 ## Terraform cross-account pattern
 
 To manage resources in two accounts from a single Terraform root module,
@@ -179,7 +258,8 @@ Spoke Account A (product team)
 
 Spoke Account B (another team)
   ├── tenant-vpc (attaches to TGW)
-  └── May also use RAM-shared subnets for shared tooling
+  ├── May also use RAM-shared subnets for shared tooling
+  └── VPC associated with Account A's internal.platform PHZ (authorized by A)
 ```
 
 As the integration platform team, you are the TGW owner. Other teams
@@ -213,6 +293,9 @@ entire organisation's network.
 - Keep the TerraformDeployRole in spoke accounts narrow: only the permissions
   needed to create VPC attachments and route table entries, not broad
   AdministratorAccess.
+- Centralize internal DNS in the network account: own the PHZ there, and
+  authorize spoke VPCs to associate rather than letting each spoke team run
+  its own copy of `internal.platform`. One zone, one source of truth.
 
 ---
 
@@ -235,6 +318,15 @@ entire organisation's network.
   must have a trust policy allowing Account A's caller identity (or the IAM
   role) to assume it. A missing or incorrect trust policy causes `Access Denied`
   on the STS AssumeRole call.
+- **Associating a VPC to a hosted zone in another account without
+  authorizing it first.** `associate-vpc-with-hosted-zone` from Account B
+  fails until Account A has run `create-vpc-association-authorization` for
+  that exact VPC ID and region. The error names the missing authorization,
+  but it's easy to skip Account A's half and only remember Account B's.
+- **Deleting the authorization and assuming the association is gone.**
+  `delete-vpc-association-authorization` only revokes future re-association
+  rights — an already-associated VPC stays associated until it is
+  explicitly disassociated.
 
 ---
 
@@ -253,6 +345,11 @@ Answer before starting the lab:
    two most likely causes on the Account A side?
 4. When would you choose to share a subnet via RAM vs connecting Account B
    via a cross-account TGW attachment?
+5. Account B needs to resolve `internal.platform` records that live in
+   Account A's hosted zone. Walk through both required API calls, and say
+   which account runs each one. Then: Account B also needs to forward
+   queries for `corp.internal` to an on-prem DNS server — is that the same
+   mechanism, or something different?
 
 ## Lab reference
 
@@ -264,6 +361,6 @@ Follow Day 7 in the implementation plan:
 ```
 ### Day 7 — Multi-Account Networking
 Key concept in my own words: ...
-What confused me (RAM sharing scope, TGW acceptance flow, PrivateLink cross-account): ...
+What confused me (RAM sharing scope, TGW acceptance flow, PrivateLink cross-account, PHZ authorize-vs-associate): ...
 Break-it exercise — rejected PrivateLink endpoint: what I observed: ...
 ```

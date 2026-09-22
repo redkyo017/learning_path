@@ -95,6 +95,12 @@ variable "allow_external_principals" {
   description = "True when account B is outside this AWS Organization. Set false ONLY for an in-Organization account -- left false for an external account the RAM share silently never appears."
 }
 
+variable "account_b_vpc_id" {
+  type        = string
+  description = "VPC ID of account B's tenant-vpc, used to authorize cross-account PHZ association (Day 7). Unknown until account B creates tenant-vpc in the Step 4 console lab -- pass via -var on the Step 6 re-apply, not in day07.tfvars."
+  default     = ""
+}
+
 # Note: ec2_a_id / ec2_b_id are gone. The Day 8 Reachability Analyzer path now
 # reads instance IDs straight from the ec2_test module outputs, so the
 # instances and the analysis are created and destroyed together.

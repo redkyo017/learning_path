@@ -34,4 +34,20 @@ resource "aws_ram_principal_association" "account_b_tgw" {
   resource_share_arn = aws_ram_resource_share.tgw.arn
 }
 
+resource "aws_ram_resource_share" "resolver_rule" {
+  name                      = "${var.name}-resolver-rule-share"
+  allow_external_principals = var.allow_external_principals
+  tags                      = { Name = "${var.name}-resolver-rule-share" }
+}
+
+resource "aws_ram_resource_association" "resolver_rule" {
+  resource_arn       = var.resolver_rule_arn
+  resource_share_arn = aws_ram_resource_share.resolver_rule.arn
+}
+
+resource "aws_ram_principal_association" "account_b_resolver_rule" {
+  principal          = var.account_b_id
+  resource_share_arn = aws_ram_resource_share.resolver_rule.arn
+}
+
 data "aws_caller_identity" "current" {}

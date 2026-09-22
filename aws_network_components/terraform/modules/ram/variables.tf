@@ -12,6 +12,11 @@ variable "tgw_arn" {
   description = "ARN of the Transit Gateway to share"
 }
 
+variable "resolver_rule_arn" {
+  type        = string
+  description = "ARN of the Route 53 Resolver rule to share (Day 7 DNS flow)"
+}
+
 variable "account_b_id" {
   type        = string
   description = "AWS account ID for account B"

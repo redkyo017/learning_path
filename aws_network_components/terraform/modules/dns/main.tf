@@ -61,3 +61,13 @@ resource "aws_route53_resolver_rule_association" "corp_internal" {
   vpc_id           = var.vpc_id
   resolver_rule_id = aws_route53_resolver_rule.corp_internal.id
 }
+
+# Day 7: authorizes account B's VPC to associate with this account's PHZ.
+# Empty account_b_vpc_id (the Day 3 standalone case) skips this entirely --
+# the authorization alone does nothing until account B runs the matching
+# associate-vpc-with-hosted-zone call on their side.
+resource "aws_route53_vpc_association_authorization" "account_b" {
+  count   = var.account_b_vpc_id != "" ? 1 : 0
+  zone_id = aws_route53_zone.private.zone_id
+  vpc_id  = var.account_b_vpc_id
+}

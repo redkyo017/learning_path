@@ -5,3 +5,7 @@ output "subnet_share_arn" {
 output "tgw_share_arn" {
   value = aws_ram_resource_share.tgw.arn
 }
+
+output "resolver_rule_share_arn" {
+  value = aws_ram_resource_share.resolver_rule.arn
+}

@@ -42,6 +42,13 @@
 ##   }
 ## }
 ##
+## check "ram_requires_dns" {
+##   assert {
+##     condition     = !var.enable_ram || var.enable_dns
+##     error_message = "enable_ram requires enable_dns -- RAM now also shares the Day 3 Resolver rule, and the PHZ cross-account authorization needs the Day 3 hosted zone."
+##   }
+## }
+##
 ## # Day 1 - VPC Anatomy. Unconditional: every day needs it.
 ## module "shared_services_vpc" {
 ##   source = "../../modules/vpc"
@@ -74,6 +81,8 @@
 ##   vpc_id             = module.shared_services_vpc.vpc_id
 ##   private_subnet_ids = module.shared_services_vpc.private_subnet_ids
 ##   resolver_sg_id     = one(module.shared_services_security[*].resolver_sg_id)
+##   # Day 7 only -- empty string here is a no-op (see modules/dns/main.tf).
+##   account_b_vpc_id   = var.account_b_vpc_id
 ## }
 ##
 ## # Day 4 - Transit Gateway
@@ -132,7 +141,7 @@
 ##   shared_services_private_route_table_ids = module.shared_services_vpc.private_route_table_ids
 ## }
 ##
-## # Day 7 - Multi-Account (RAM)
+## # Day 7 - Multi-Account (RAM: subnets, TGW, and the Day 3 Resolver rule)
 ## module "ram" {
 ##   count  = var.enable_ram ? 1 : 0
 ##   source = "../../modules/ram"
@@ -141,6 +150,7 @@
 ##   account_b_id              = var.account_b_id
 ##   allow_external_principals = var.allow_external_principals
 ##   tgw_arn                   = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${one(module.tgw[*].tgw_id)}"
+##   resolver_rule_arn         = one(module.shared_services_dns[*].resolver_rule_arn)
 ##   subnet_arns = [
 ##     for id in module.shared_services_vpc.private_subnet_ids :
 ##     "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:subnet/${id}"

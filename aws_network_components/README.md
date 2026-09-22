@@ -392,15 +392,32 @@ release the strongSwan EIP — terminating the instance does not release it.
 
 ### Day 7 — Multi-Account Networking
 
-**Theory:** `content/day07.md` — AWS RAM, cross-account TGW attachments, subnet sharing, cross-account PrivateLink.
+**Theory:** `content/day07.md` — AWS RAM, cross-account TGW attachments, subnet sharing, cross-account PrivateLink, cross-account Route 53 PHZ association, cross-account Resolver rule sharing.
 
-**Goal:** Share the TGW and private subnets to a second AWS account using RAM.
+**Goal:** Share the TGW, private subnets, and Resolver rule to a second AWS account using RAM, and authorize that account's VPC to associate with the `internal.platform` private hosted zone.
 
 **Pre-step:** You need a second sandbox account ID. If you don't have one, you can still apply — Terraform will create the RAM shares, but the principal association will need a valid account ID. Use a placeholder like `"123456789012"` to see the RAM resource structure, then set it to a real account when available.
+
+**Pre-step 2: DNS layer required.** `enable_dns` must be `true` (`day07.tfvars` sets it) — RAM can't share a Resolver rule that doesn't exist, and the PHZ authorization needs the Day 3 hosted zone. A `check` block in `main.tf` enforces this. If you haven't done Day 3 yet, its ~$0.50/hr Resolver endpoint cost now applies to Day 7 too.
 
 Add to `terraform.tfvars`:
 ```
 account_b_id = "YOUR_SECOND_ACCOUNT_ID"
+```
+
+**Update your Day 3 `shared_services_dns` block** to pass through account B's VPC ID (empty by default — a no-op until you set it in the second apply below):
+
+```hcl
+module "shared_services_dns" {
+  count  = var.enable_dns ? 1 : 0
+  source = "../../modules/dns"
+
+  name               = "shared-services"
+  vpc_id             = module.shared_services_vpc.vpc_id
+  private_subnet_ids = module.shared_services_vpc.private_subnet_ids
+  resolver_sg_id     = one(module.shared_services_security[*].resolver_sg_id)
+  account_b_vpc_id   = var.account_b_vpc_id
+}
 ```
 
 **Add to `main.tf`** (after Day 6 block):
@@ -412,9 +429,11 @@ module "ram" {
   count  = var.enable_ram ? 1 : 0
   source = "../../modules/ram"
 
-  name         = "platform"
-  account_b_id = var.account_b_id
-  tgw_arn      = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${one(module.tgw[*].tgw_id)}"
+  name                      = "platform"
+  account_b_id              = var.account_b_id
+  allow_external_principals = var.allow_external_principals
+  tgw_arn                   = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${one(module.tgw[*].tgw_id)}"
+  resolver_rule_arn         = one(module.shared_services_dns[*].resolver_rule_arn)
   subnet_arns  = [
     for id in module.shared_services_vpc.private_subnet_ids :
     "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:subnet/${id}"
@@ -439,7 +458,29 @@ allow_external_principals = true
 Left `false` for an external account the share is created, the principal
 association succeeds, and account B **never sees it** — with no error anywhere.
 
-**Verify:** Console → Resource Access Manager → Shared by me → two shares: `platform-subnets` and `platform-tgw`. If you have Account B: log in, go to RAM → Shared with me → accept the TGW share. Then create a TGW attachment from Account B.
+**Verify (RAM + TGW):** Console → Resource Access Manager → Shared by me → three shares: `platform-subnets`, `platform-tgw`, `platform-resolver-rule-share`. If you have Account B: log in, go to RAM → Shared with me → accept the TGW share. Then create a TGW attachment from Account B.
+
+**Cross-account Route 53 (do this after Account B's `tenant-vpc` exists — see `content/day07.md` for the full flow):**
+
+1. Re-apply with account B's VPC ID now known, to create the PHZ association authorization:
+   ```bash
+   terraform apply -var-file=day07.tfvars -var="account_b_vpc_id=<tenant-vpc-id>" -auto-approve
+   ```
+2. From Account B, complete the PHZ association:
+   ```bash
+   aws route53 associate-vpc-with-hosted-zone \
+     --hosted-zone-id <internal.platform zone id> \
+     --vpc VPCRegion=ap-southeast-1,VPCId=<tenant-vpc-id> \
+     --profile sandbox-b
+   ```
+3. From Account B, accept the shared Resolver rule and associate it with `tenant-vpc`:
+   ```bash
+   aws route53resolver list-resolver-rules --profile sandbox-b   # find the shared rule
+   aws route53resolver associate-resolver-rule \
+     --resolver-rule-id <rule-id> --vpc-id <tenant-vpc-id> --profile sandbox-b
+   ```
+
+**Verify (DNS):** From an EC2 in `tenant-vpc` (Account B): `dig api.internal.platform` resolves to `10.0.2.10`, and `dig <a corp.internal name>` forwards through Account A's outbound Resolver endpoint.
 
 ---
 

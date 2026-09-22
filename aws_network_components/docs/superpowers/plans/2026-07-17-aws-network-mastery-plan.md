@@ -2934,9 +2934,14 @@ The `VPN connections`, `Elastic IPs` and `NAT gateways` rows all matter today.
 ## Day 7 — Multi-Account Networking
 
 **Theory file:** `content/day07.md` — read before starting.
-**Concepts build on:** Day 4's TGW and Day 5's PrivateLink service.
-**Infra needed:** VPC + security + app-vpc + TGW + endpoints + RAM —
-`day07.tfvars`. No VPN. Runnable standalone.
+**Concepts build on:** Day 4's TGW, Day 5's PrivateLink service, and Day 3's
+  private hosted zone + Resolver rule.
+**Infra needed:** VPC + security + DNS + app-vpc + TGW + endpoints + RAM —
+`day07.tfvars`. No VPN. **DNS is now required** (not standalone from Day 3
+  anymore): RAM shares the Day 3 Resolver rule, and the PHZ cross-account
+  authorization needs the Day 3 hosted zone. `enable_dns = true` is set in
+  `day07.tfvars`, enforced by a `check` block. This pulls in the Day 3
+  Resolver endpoint cost, ~$0.50/hr, for the duration of today's lab.
 **Requires:** A second AWS account. Use a sub-account in your Organization
   or a separate personal sandbox account. If it is **outside** your
   Organization, `allow_external_principals` must be `true` (see Step 5).
@@ -2947,6 +2952,10 @@ The `VPN connections`, `Elastic IPs` and `NAT gateways` rows all matter today.
   - RAM subnet sharing vs full VPC sharing (what the consumer account can/cannot do)
   - Why TGW cross-account attachments require explicit acceptance
   - PrivateLink for cross-account service consumption (no peering or TGW needed)
+  - PHZ cross-account association (authorize → associate) vs RAM sharing —
+    why the PHZ handshake is a different API entirely
+  - Resolver rule sharing via RAM — why sharing alone isn't enough; account B
+    still associates the rule per-VPC
 
 - [ ] **Step 2: Set up second account CLI profile.**
 
@@ -2966,9 +2975,13 @@ terraform apply -var-file=day01.tfvars \
   -var enable_app_vpc=true -var enable_tgw=true -auto-approve
 ```
 
-The TGW is required (you share it via RAM); the VPN and DNS layers are not.
+The TGW is required (you share it via RAM). The VPN layer is not needed.
 Leave `enable_ec2_test` off in account A — today's test instances get launched
 from **account B**, into account A's shared subnets, which is the whole point.
+
+The DNS layer is *not* part of this baseline apply — it comes with the full
+`day07.tfvars` apply in Step 6, once the `ram` module code (Step 5) exists
+to share the Resolver rule it creates.
 
 - [ ] **Step 4 (60 min): Console lab — RAM, cross-account TGW, cross-account PrivateLink.**
 
@@ -3019,6 +3032,9 @@ from **account B**, into account A's shared subnets, which is the whole point.
   principals. The existing endpoint in Account B moves to `rejected` state
   within a few minutes. Re-allow and verify it returns to `available`.
 
+  **Write down `tenant-vpc`'s VPC ID** — Step 6 needs it for the Route 53
+  cross-account work below; that work can't happen until this VPC exists.
+
 - [ ] **Step 5: Terraform lab — RAM module.**
 
   Create `terraform/modules/ram/variables.tf`:
@@ -3036,6 +3052,11 @@ variable "subnet_arns" {
 variable "tgw_arn" {
   type        = string
   description = "ARN of the Transit Gateway to share"
+}
+
+variable "resolver_rule_arn" {
+  type        = string
+  description = "ARN of the Route 53 Resolver rule to share (Day 7 DNS flow)"
 }
 
 variable "account_b_id" {
@@ -3091,6 +3112,22 @@ resource "aws_ram_principal_association" "account_b_tgw" {
   resource_share_arn = aws_ram_resource_share.tgw.arn
 }
 
+resource "aws_ram_resource_share" "resolver_rule" {
+  name                      = "${var.name}-resolver-rule-share"
+  allow_external_principals = var.allow_external_principals
+  tags                      = { Name = "${var.name}-resolver-rule-share" }
+}
+
+resource "aws_ram_resource_association" "resolver_rule" {
+  resource_arn       = var.resolver_rule_arn
+  resource_share_arn = aws_ram_resource_share.resolver_rule.arn
+}
+
+resource "aws_ram_principal_association" "account_b_resolver_rule" {
+  principal          = var.account_b_id
+  resource_share_arn = aws_ram_resource_share.resolver_rule.arn
+}
+
 data "aws_caller_identity" "current" {}
 ```
 
@@ -3104,18 +3141,72 @@ output "subnet_share_arn" {
 output "tgw_share_arn" {
   value = aws_ram_resource_share.tgw.arn
 }
+
+output "resolver_rule_share_arn" {
+  value = aws_ram_resource_share.resolver_rule.arn
+}
 ```
 
-  Add to `terraform/envs/sandbox/main.tf`:
+  **DNS module — cross-account PHZ authorization.** Add to
+  `terraform/modules/dns/main.tf`:
+
+```hcl
+# Empty account_b_vpc_id (the Day 3 standalone case) skips this entirely --
+# the authorization alone does nothing until account B runs the matching
+# associate-vpc-with-hosted-zone call on their side.
+resource "aws_route53_vpc_association_authorization" "account_b" {
+  count   = var.account_b_vpc_id != "" ? 1 : 0
+  zone_id = aws_route53_zone.private.zone_id
+  vpc_id  = var.account_b_vpc_id
+}
+```
+
+  Add to `terraform/modules/dns/variables.tf`:
+
+```hcl
+variable "account_b_vpc_id" {
+  type        = string
+  description = "VPC ID in account B to authorize for cross-account PHZ association (Day 7). Leave empty outside Day 7."
+  default     = ""
+}
+```
+
+  Add to `terraform/modules/dns/outputs.tf`:
+
+```hcl
+output "resolver_rule_arn" {
+  value = aws_route53_resolver_rule.corp_internal.arn
+}
+```
+
+  Update your Day 3 `shared_services_dns` module block in
+  `terraform/envs/sandbox/main.tf` to pass the new variable through:
+
+```hcl
+module "shared_services_dns" {
+  count  = var.enable_dns ? 1 : 0
+  source = "../../modules/dns"
+
+  name               = "shared-services"
+  vpc_id             = module.shared_services_vpc.vpc_id
+  private_subnet_ids = module.shared_services_vpc.private_subnet_ids
+  resolver_sg_id     = one(module.shared_services_security[*].resolver_sg_id)
+  account_b_vpc_id   = var.account_b_vpc_id
+}
+```
+
+  Add the `ram` module block to `terraform/envs/sandbox/main.tf`:
 
 ```hcl
 module "ram" {
   count  = var.enable_ram ? 1 : 0
   source = "../../modules/ram"
 
-  name         = "platform"
-  account_b_id = var.account_b_id
-  tgw_arn      = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${one(module.tgw[*].tgw_id)}"
+  name                      = "platform"
+  account_b_id              = var.account_b_id
+  allow_external_principals = var.allow_external_principals
+  tgw_arn                   = "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:transit-gateway/${one(module.tgw[*].tgw_id)}"
+  resolver_rule_arn         = one(module.shared_services_dns[*].resolver_rule_arn)
   subnet_arns = [
     for id in module.shared_services_vpc.private_subnet_ids :
     "arn:aws:ec2:${var.region}:${data.aws_caller_identity.current.account_id}:subnet/${id}"
@@ -3133,6 +3224,25 @@ variable "account_b_id" {
   description = "AWS account ID for account B"
   default     = ""
 }
+
+variable "account_b_vpc_id" {
+  type        = string
+  description = "VPC ID of account B's tenant-vpc, used to authorize cross-account PHZ association. Unknown until account B creates tenant-vpc in Step 4 -- pass via -var on the Step 6 re-apply, not in day07.tfvars."
+  default     = ""
+}
+```
+
+  Add the `ram_requires_dns` check to `terraform/envs/sandbox/main.tf` (RAM
+  now also shares the Day 3 Resolver rule — applying `enable_ram` without
+  `enable_dns` would pass a null ARN into the resolver-rule share):
+
+```hcl
+check "ram_requires_dns" {
+  assert {
+    condition     = !var.enable_ram || var.enable_dns
+    error_message = "enable_ram requires enable_dns."
+  }
+}
 ```
 
 - [ ] **Step 6: Apply and verify.**
@@ -3141,6 +3251,10 @@ variable "account_b_id" {
 terraform apply -var-file=day07.tfvars -auto-approve
 ```
 
+This creates the DNS module (PHZ + Resolver rule, if not already up from
+Day 3) and all three RAM shares — subnets, TGW, Resolver rule. The PHZ
+authorization is skipped for now (`account_b_vpc_id` defaults to `""`).
+
 ```bash
 aws ram list-resources \
   --resource-owner SELF \
@@ -3148,16 +3262,58 @@ aws ram list-resources \
   --query "resources[*].{Arn:arn,Type:type,Status:status}"
 ```
 
-Expected: shared subnets and TGW listed with `AVAILABLE` status.
+Expected: shared subnets, TGW, and Resolver rule listed with `AVAILABLE`
+status.
+
+**Cross-account Route 53 — now that `tenant-vpc` exists (Step 4):**
+
+1. Re-apply with account B's VPC ID to create the PHZ association authorization:
+
+```bash
+terraform apply -var-file=day07.tfvars \
+  -var="account_b_vpc_id=<tenant-vpc-id>" -auto-approve
+```
+
+2. From Account B, accept the shared Resolver rule and associate it with
+   `tenant-vpc` (RAM sharing alone doesn't do this step — see `content/day07.md`):
+
+```bash
+aws route53resolver list-resolver-rules --profile sandbox-b \
+  --query "ResolverRules[?ShareStatus=='SHARED_WITH_ME'].{Id:Id,Name:Name}"
+
+aws route53resolver associate-resolver-rule \
+  --resolver-rule-id <rule-id> --vpc-id <tenant-vpc-id> --profile sandbox-b
+```
+
+3. From Account B, complete the PHZ association (this is the half Account A
+   cannot do — it must run from Account B):
+
+```bash
+aws route53 associate-vpc-with-hosted-zone \
+  --hosted-zone-id <internal.platform zone id> \
+  --vpc VPCRegion=ap-southeast-1,VPCId=<tenant-vpc-id> \
+  --profile sandbox-b
+```
+
+4. Verify from an EC2 in `tenant-vpc` (Account B):
+
+```bash
+dig api.internal.platform    # resolves to 10.0.2.10 via the PHZ association
+dig <a corp.internal name>   # forwards through Account A's outbound Resolver endpoint
+```
 
 - [ ] **Step 7: Journal entry.** Answer:
   - What is the difference between sharing a subnet (RAM) and sharing a full VPC?
   - When would you choose cross-account PrivateLink over cross-account TGW attachment?
+  - Walk through both API calls needed for cross-account PHZ association —
+    which account runs each one?
+  - Why is Resolver rule sharing via RAM not enough on its own — what does
+    account B still have to do?
 
 - [ ] **Step 8: Teardown.**
 
 **Account B first** — you cannot clean up account A while B still holds
-attachments and endpoints into it.
+attachments, endpoints, and DNS associations into it.
 
 1. **Terminate account B's EC2s**, including the one launched into account A's
    shared subnet. That instance is billed to **account B** but occupies account
@@ -3165,15 +3321,34 @@ attachments and endpoints into it.
 2. **Delete account B's PrivateLink endpoint** into account A's service.
 3. **Delete account B's TGW attachment** (from account B's console). Wait for
    `deleted`.
-4. **Delete `tenant-vpc`** in account B, then release its Elastic IPs
+4. **Disassociate account B's VPC from the `internal.platform` PHZ:**
+
+```bash
+aws route53 disassociate-vpc-from-hosted-zone \
+  --hosted-zone-id <internal.platform zone id> \
+  --vpc VPCRegion=ap-southeast-1,VPCId=<tenant-vpc-id> \
+  --profile sandbox-b
+```
+
+   Deleting the authorization (next section) does **not** do this — an
+   already-associated VPC stays associated until explicitly disassociated.
+   Skip this and Account A's `terraform destroy` fails trying to delete a
+   PHZ that still has account B's VPC attached.
+5. **Disassociate the shared Resolver rule** from `tenant-vpc`:
+
+```bash
+aws route53resolver disassociate-resolver-rule \
+  --resolver-rule-id <rule-id> --vpc-id <tenant-vpc-id> --profile sandbox-b
+```
+6. **Delete `tenant-vpc`** in account B, then release its Elastic IPs
    (`aws ec2 describe-addresses --profile sandbox-b` → `release-address`).
 
 **Then account A:**
 
-5. **RAM shares** → Resource shares → delete both the subnet share and the TGW
-   share.
-6. **Endpoint service allowed principals** → remove account B's ARN.
-7. Then the full **Day 4 TGW teardown** (associations → attachments → route
+7. **RAM shares** → Resource shares → delete the subnet, TGW, and Resolver
+   rule shares.
+8. **Endpoint service allowed principals** → remove account B's ARN.
+9. Then the full **Day 4 TGW teardown** (associations → attachments → route
    tables → TGW) and the **Day 5 endpoint teardown**.
 
 ```bash
@@ -3188,7 +3363,9 @@ for p in sandbox sandbox-b; do
 done
 ```
 
-**Then Terraform:**
+**Then Terraform** — deliberately *without* `-var="account_b_vpc_id=..."`,
+so the PHZ authorization resource's count drops back to 0 and gets destroyed
+along with everything else:
 
 ```bash
 terraform destroy -var-file=day07.tfvars -auto-approve
