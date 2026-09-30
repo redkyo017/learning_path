@@ -34,8 +34,9 @@ it:
 ```
 docker compose run --rm toolbox openssl verify -CAfile /work/drills/drill-13/reference-ca.cert.pem \
     /work/drills/drill-13/client01-wrongca.cert.pem
+# C = US, ST = CA, O = TLS Mastery Lab, OU = Clients, CN = client01
 # error 20 at 0 depth lookup: unable to get local issuer certificate
-# client01-wrongca.cert.pem: verification failed: 20 (unable to get local issuer certificate)
+# error /work/drills/drill-13/client01-wrongca.cert.pem: verification failed
 ```
 
 This is exactly **check 4: trust anchor**, failing on the *client* side of
@@ -46,18 +47,23 @@ signature from `rogue-ca.cert.pem` verifies perfectly against that CA's key
 `ssl_client_certificate ca-chain.cert.pem` directive is nginx's equivalent of
 a `--cacert`/`-CAfile`, scoped specifically to verifying *client* certs, and
 it names a completely different set of trusted issuers than whatever public
-root store a browser might carry. Over the wire, this surfaces as a TLS
-handshake failure (curl error `35`, an "unknown ca" or "bad certificate"
-alert from nginx) rather than an HTTP-level response, because — unlike a
-*missing* client cert (which some nginx builds let slip past the TLS layer
-under TLS 1.3, only to reject at the HTTP layer — see today's guided lab) —
-here nginx *does* receive a certificate and rejects it during the handshake
-itself, before any HTTP request is ever processed.
+root store a browser might carry. It is also not an EKU problem: this
+cert carries `clientAuth`, so the only thing wrong with it is who signed
+it.
+
+Over the wire, nginx does **not** fail the TLS handshake here. It lets the
+handshake finish, then answers HTTP `400 The SSL certificate error` (curl
+exit `0`), exactly as it answered `400 No required SSL certificate was
+sent` for a *missing* cert in today's guided lab. The body never says
+*why*; the reason is only in nginx's error log, as OpenSSL's verify code:
+`(21:unable to verify the first certificate)`. Same missing-issuer
+failure as `openssl verify`'s error `20` above; OpenSSL records both, and
+nginx logs the last one.
 
 **Fix:** issue `client01` from the CA nginx actually trusts:
 
 ```
-docker compose run --rm toolbox bash ca/issue-server-cert.sh client01 client01
+docker compose run --rm toolbox bash ca/issue-client-cert.sh client01 client01
 ```
 
 and use `ca/intermediate/certs/client01.cert.pem` /

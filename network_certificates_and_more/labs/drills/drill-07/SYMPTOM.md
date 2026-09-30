@@ -30,8 +30,8 @@ Observed output:
 
 ```
 C = US, ST = CA, O = Drill Fixture Lab, OU = Root CA, CN = Drill Mini Root CA
-error 19 at 2 depth lookup:self signed certificate in certificate chain
-example.local.cert.pem: verification failed: 19 (self signed certificate in certificate chain)
+error 19 at 2 depth lookup: self-signed certificate in certificate chain
+error /work/drills/drill-07/example.local.cert.pem: verification failed
 ```
 
 Exit code: `2`

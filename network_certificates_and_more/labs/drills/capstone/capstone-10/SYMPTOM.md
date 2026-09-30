@@ -24,7 +24,7 @@ curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
 Observed output:
 
 ```
-curl: (90) SSL: public key does not match pinned public key!
+curl: (90) SSL: public key does not match pinned public key
 ```
 
 `curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem --connect-to

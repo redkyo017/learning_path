@@ -23,7 +23,7 @@
 ```
 docker compose run --rm toolbox openssl verify -CAfile /work/drills/drill-06/chain.cert.pem \
     /work/drills/drill-06/other.local.cert.pem
-# other.local.cert.pem: OK
+# /work/drills/drill-06/other.local.cert.pem: OK
 ```
 
 The chain is completely sound: correctly signed by the intermediate,

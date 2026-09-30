@@ -27,8 +27,8 @@
 docker compose run --rm toolbox openssl verify -CAfile /etc/ssl/certs/ca-certificates.crt \
     -untrusted /work/drills/drill-07/chain.cert.pem \
     /work/drills/drill-07/example.local.cert.pem
-# error 19 at 2 depth lookup:self signed certificate in certificate chain
-# example.local.cert.pem: verification failed: 19 (self signed certificate in certificate chain)
+# error 19 at 2 depth lookup: self-signed certificate in certificate chain
+# error /work/drills/drill-07/example.local.cert.pem: verification failed
 ```
 
 Error `19` (`X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN`) means something
@@ -58,7 +58,7 @@ root):
 ```
 docker compose run --rm toolbox openssl verify -CAfile /work/drills/drill-07/chain.cert.pem \
     /work/drills/drill-07/example.local.cert.pem
-# example.local.cert.pem: OK
+# /work/drills/drill-07/example.local.cert.pem: OK
 ```
 
 Confirmed real output: `OK`, exit `0`, once the actual root (bundled

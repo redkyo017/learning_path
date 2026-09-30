@@ -30,6 +30,7 @@ will have expired within the given number of seconds from now; `0` means
 
 ```
 docker compose run --rm toolbox openssl x509 -in /work/drills/drill-04/expired.cert.pem -noout -checkend 0
+# Certificate will expire
 echo $?
 # 1  (already expired)
 ```

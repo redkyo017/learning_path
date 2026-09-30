@@ -22,10 +22,10 @@ Two independent facts, either one enough on its own to break this:
 
 ```
 docker compose run --rm toolbox openssl x509 -in /work/ca/root/certs/ca.cert.pem -noout -subject
-# subject=CN = TLS Mastery Root CA
+# subject=C = US, ST = CA, O = TLS Mastery Lab, OU = Root CA, CN = TLS Mastery Root CA
 
 docker compose run --rm toolbox openssl x509 -in /work/ca/intermediate/certs/reports.local.cert.pem -noout -issuer
-# issuer=CN = TLS Mastery Intermediate CA
+# issuer=C = US, ST = CA, O = TLS Mastery Lab, OU = Intermediate CA, CN = TLS Mastery Intermediate CA
 ```
 
 `reports.local` was signed by the **intermediate**, not the root directly —
@@ -49,12 +49,23 @@ but "I can't even find a certificate matching the issuer this leaf
 claims."
 
 Confirm this is exactly a missing-link problem, not a trust problem, by
-handing curl the piece that's missing instead of the root alone:
+handing curl the piece that's missing instead of the root alone. The
+throwaway `s_server` only lived inside `repro.sh`'s container, so start it
+again in the same invocation as the curl:
 
 ```
-docker compose run --rm toolbox curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
-    --connect-to reports.local:8600:127.0.0.1:8600 \
-    https://reports.local:8600/
+docker compose run --rm toolbox bash -c '
+  openssl s_server -accept 8600 \
+      -cert /work/ca/intermediate/certs/reports.local.cert.pem \
+      -key  /work/ca/intermediate/private/reports.local.key.pem \
+      -naccept 1 -quiet -www &
+  sleep 1
+  curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+      --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
+      --connect-to reports.local:8600:127.0.0.1:8600 \
+      https://reports.local:8600/
+  wait'
+# HTTP 200
 ```
 
 `ca-chain.cert.pem` is intermediate + root concatenated — handing curl that

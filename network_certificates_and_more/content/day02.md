@@ -1,5 +1,7 @@
 # Day 2 — Become a CA: Building the Chain of Trust
 
+> Unfamiliar term? Look it up in [GLOSSARY.md](GLOSSARY.md).
+
 Read this before starting the lab. Budget: ~3 hours (60–75 min
 theory/reading, ~90 min guided lab, ~30 min exercises + drills).
 
@@ -138,7 +140,7 @@ a TLS client." A cert issued with `extendedKeyUsage = serverAuth` and
 presented as a *client* certificate in Day 4's mutual-TLS lab should be —
 and, on a strict verifier, will be — rejected on EKU policy grounds, even
 though its signature, dates, and SAN might all be flawless. Hold onto that;
-it's Exercise 4 below.
+it's Exercise 3 below.
 
 ### Summary table
 
@@ -314,6 +316,9 @@ docker compose run --rm toolbox openssl ca -config ca/intermediate/csr/example.l
     -batch
 ```
 
+(375 days is fine for a private CA — it sets its own policy. Public CAs
+are capped at 200 days since 2026-03-15, falling to 47 days by 2029.)
+
 Confirm the SAN actually landed:
 
 ```
@@ -346,6 +351,10 @@ docker compose run --rm toolbox bash -c '
 '
 ```
 
+Sending the root in the fullchain is harmless but unnecessary: clients must
+already have the root to trust it, and RFC 8446 lets servers omit it. This
+lab includes it so curl can show the check-4 failure clearly.
+
 `labs/services/nginx-day02.conf` points `ssl_certificate` at that fullchain
 and `ssl_certificate_key` at the key — but nginx itself only ever reads
 `services/active.conf` (see `docker-compose.yml`'s bind mount), so activate
@@ -376,10 +385,8 @@ docker compose run --rm toolbox curl --connect-to example.local:8443:nginx:443 \
 # above), so curl CAN walk the signatures all the way up to the root
 # (check 1 passes, link by link) — but that root, though present in the
 # chain it received, isn't in curl's trusted store. This is check 4
-# failing on an otherwise internally-consistent chain: expect wording close
-# to "self signed certificate in certificate chain" or "unable to get
-# local issuer certificate" depending on exactly what curl's bundle
-# contains.
+# failing on an otherwise internally-consistent chain. curl reports:
+#   curl: (60) SSL certificate problem: self-signed certificate in certificate chain
 
 docker compose run --rm toolbox curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
     --connect-to example.local:8443:nginx:443 \

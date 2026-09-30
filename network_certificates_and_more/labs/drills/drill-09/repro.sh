@@ -6,6 +6,15 @@
 # openssl's own -tls1_2 flag, which would pin it to *exactly* 1.2).
 # Then immediately drives a client at it that is capped at TLS 1.1 max.
 #
+# Why `--ciphers 'DEFAULT:@SECLEVEL=0'`: OpenSSL 3 at its default security
+# level won't offer TLS 1.0/1.1 at all. Without it, curl refuses locally
+# ("no protocols available") and never reaches the server. Dropping the
+# client to SECLEVEL 0 makes it actually send a TLS 1.1 ClientHello, so the
+# *server's* floor is what rejects it.
+#
+# The script ends with `|| true`, so it always exits 0 — read curl's
+# printed "curl: (NN)" code, not the script's exit status.
+#
 # Both processes run inside the SAME toolbox container, talking over its
 # own loopback — this does not touch nginx, docker-compose.yml, or any
 # other day's service config.
@@ -24,7 +33,7 @@ sleep 1
 
 curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
      --resolve example.local:8444:127.0.0.1 \
-     --tlsv1.0 --tls-max 1.1 \
+     --tlsv1.0 --tls-max 1.1 --ciphers 'DEFAULT:@SECLEVEL=0' \
      https://example.local:8444/ || true
 
 wait "${SERVER_PID}" || true

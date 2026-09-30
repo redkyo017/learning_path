@@ -1,5 +1,7 @@
 # Day 1 — How Trust Actually Works: The Verification Mental Model
 
+> Unfamiliar term? Look it up in [GLOSSARY.md](GLOSSARY.md).
+
 Read this before starting the lab. Budget: ~3 hours (60–75 min theory/reading,
 ~90 min guided lab, ~30 min exercises + drills).
 
@@ -75,6 +77,13 @@ build a perfectly self-consistent chain underneath it. Internal consistency
 is not the same as trustworthiness. That gap is exactly what Day 6's
 rogue-CA attack exploits, and exactly what today's theory is building you
 toward being able to explain.
+
+One caveat: the order is a teaching model. Real verifiers (OpenSSL
+included) first build a path up to a trusted root, then check each cert
+along it. So the *first* error you see may not follow this order. For
+example, `unable to get local issuer certificate` is really check 4 (path
+building), and it's reported before anything else. The four checks are
+still the complete list of what must pass.
 
 Write the four-check order down somewhere you'll see it again. You will use
 this exact phrasing for the rest of the course.
@@ -188,7 +197,15 @@ This is the sign/verify mechanic from the theory section above, done by
 hand, with no certificates involved yet — just a raw keypair, a message, and
 a signature.
 
+First create the scratch directory. Run this on the host, from `labs/` —
+the container writes through the bind mount, so files land in `labs/tmp/`.
+Without it, the first command fails with `Can't open "/work/tmp/priv.pem"
+for writing, No such file or directory`.
+
 ```bash
+# On the host, from labs/: create the scratch dir the container writes into
+mkdir -p tmp
+
 # Generate a private key and derive its public key
 docker compose run --rm toolbox openssl genrsa -out /work/tmp/priv.pem 2048
 docker compose run --rm toolbox openssl rsa -in /work/tmp/priv.pem -pubout -out /work/tmp/pub.pem
@@ -203,9 +220,6 @@ docker compose run --rm toolbox openssl dgst -sha256 -verify /work/tmp/pub.pem \
     -signature /work/tmp/msg.sig /work/tmp/msg.txt
 # Expected: Verified OK
 ```
-
-Note `mkdir -p tmp` first if `/work/tmp` doesn't exist yet on your host —
-the container writes through the bind mount, so files land in `labs/tmp/`.
 
 Stop and confirm you can narrate what just happened without looking back at
 the theory section: which key produced `msg.sig`? Which key checked it? What
@@ -270,7 +284,7 @@ output, and say which of the four checks this maps to.**
 <details>
 <summary>Solution</summary>
 
-Output: `Verification Failure`, exit code `1`.
+Output: `Verification failure`, exit code `1`.
 
 The signature was produced over the SHA-256 digest of the *original*
 `msg.txt` content. Because of the avalanche effect, changing even one byte

@@ -22,7 +22,7 @@ curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
 Observed output:
 
 ```
-curl: (35) OpenSSL/3.x: error:0A000102:SSL routines::unsupported protocol
+curl: (35) OpenSSL/3.0.13: error:0A00042E:SSL routines::tlsv1 alert protocol version
 ```
 
 No certificate was ever printed, and the server process exited immediately

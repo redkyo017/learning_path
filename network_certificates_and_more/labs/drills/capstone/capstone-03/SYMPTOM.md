@@ -21,10 +21,10 @@ Observed output:
 ```
 C = US, ST = CA, O = TLS Mastery Lab, OU = Servers, CN = old-report.local
 error 10 at 0 depth lookup: certificate has expired
-old-report.local.cert.pem: verification failed: 10 (certificate has expired)
+error /work/ca/intermediate/certs/old-report.local.cert.pem: verification failed
 ```
 
 Exit code: `2`
 
 `openssl x509 -in /work/ca/intermediate/certs/old-report.local.cert.pem -noout -dates`
-prints a `notAfter` date nearly two years before today.
+prints a `notAfter` date more than three years before today.

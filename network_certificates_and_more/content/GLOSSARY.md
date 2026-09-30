@@ -9,16 +9,20 @@
 | Acronym | Stands for | One-line meaning |
 |---|---|---|
 | CA | Certificate Authority | entity that signs certificates, vouching for a name-to-key binding |
+| CA/B Forum | CA/Browser Forum | CAs + browser vendors; sets the Baseline Requirements every public CA must follow |
 | CSR | Certificate Signing Request | "here's my key and identity, please sign this" |
 | SAN | Subject Alternative Name | the actual list of names a verifier checks the connection target against |
 | CN | Common Name | old, now-ignored hostname field in the Subject line |
 | EKU | Extended Key Usage | narrows a key's allowed *purpose* (serverAuth, clientAuth, ...) |
 | SNI | Server Name Indication | the hostname sent in the clear so a server picks the right cert |
+| ECH | Encrypted Client Hello | encrypts the real SNI inside an outer ClientHello (RFC 9849) |
 | ALPN | Application-Layer Protocol Negotiation | negotiates `h2`/`http/1.1` inside the TLS handshake |
 | mTLS | mutual TLS | both sides present and verify a certificate |
 | ACME | Automatic Certificate Management Environment | protocol that automates proving domain control before issuance |
+| ARI | ACME Renewal Information | the CA tells the ACME client *when* to renew (RFC 9773) |
 | CRL | Certificate Revocation List | CA's signed list of revoked serial numbers |
-| OCSP | Online Certificate Status Protocol | live "is this cert still good?" query to the CA |
+| OCSP | Online Certificate Status Protocol | live "is this cert still good?" query to the CA — now optional for public CAs |
+| ML-KEM | Module-Lattice Key Encapsulation Mechanism | post-quantum key exchange; paired with X25519 as `X25519MLKEM768` |
 | CT | Certificate Transparency | public log every trusted cert must appear in |
 | HSTS | HTTP Strict Transport Security | header that forces a browser to always use HTTPS for a host |
 | MITM | Man-in-the-Middle | an attacker positioned on the network path, impersonating one side to the other |
@@ -31,7 +35,7 @@
 
 ## A
 
-**ACM (AWS Certificate Manager)** — AWS's own ACME-issuing CA, wired directly into ALB/NLB and other AWS services. Requesting a public cert through it runs the same domain-control validation as this course's Pebble lab — DNS validation is the ACME-equivalent of DNS-01; the older email validation predates ACME and should generally be avoided. (see Day 5)
+**ACM (AWS Certificate Manager)** — AWS's managed CA and cert store, wired into ALB/NLB, CloudFront and other AWS services. Standard ACM is **not** an ACME CA: it validates domains by DNS (a persistent CNAME record — same idea as DNS-01, different mechanism), email, or HTTP (CloudFront only, no wildcards), and renews automatically; since 2026-02-18 its public certs last 198 days. Separately, AWS added an ACME endpoint for ACM in June 2026 (External Account Binding, domains pre-validated by an admin). (see Day 5)
 
 **ACME (Automatic Certificate Management Environment)** — The protocol that automates *proving you control a name* before a public CA will issue a certificate for it, plus requesting the signature, receiving the cert, and renewing it before expiry. It doesn't change what a certificate is or how it's verified — it automates everything upstream of issuance. (see Day 5)
 
@@ -42,6 +46,8 @@
 **ALB (Application Load Balancer)** — An AWS load balancer that terminates TLS using a certificate you attach from ACM (or import), directly analogous to nginx's `ssl_certificate`/`ssl_certificate_key` in this course's labs — ACM is just where the cert/key material lives and stays current. (see Day 5)
 
 **ALPN (Application-Layer Protocol Negotiation)** — A TLS extension letting client and server agree on the next-layer protocol (`h2`, `http/1.1`) inside the handshake itself. The client's offer always rides in the clear inside `ClientHello`; the server's chosen answer is in the clear in TLS 1.2 but moves into the encrypted `EncryptedExtensions` in TLS 1.3. (see Day 3)
+
+**ARI (ACME Renewal Information)** — An ACME extension (RFC 9773) where the CA tells the client *when* to renew a certificate, replacing the fixed "renew 30 days before expiry" rule — useful when a CA needs mass early renewals after a revocation event. Certbot supports it from 4.1.0; the lab toolbox's certbot 2.9.0 does not. (see Day 5)
 
 **Asymmetric cryptography (public key / private key)** — A scheme generating two mathematically linked keys where an operation done with one key can only be checked or undone with the *other*, and deriving the private key from the public one is computationally infeasible. The private key is kept secret by its owner; the public key is shared freely — signing requires the private key, verifying requires only the public key, and that direction can never be reversed. (see Day 1)
 
@@ -55,11 +61,15 @@
 
 **CA (Certificate Authority)** — The entity whose private key signs certificates, vouching for a name-to-public-key binding. Real-world CAs are built as a stack (root → intermediate → leaf) rather than one flat entity, specifically to contain the blast radius if a signing key is ever compromised. (see Day 2)
 
+**CA/Browser Forum (CA/B Forum)** — The industry body of public CAs and browser/OS vendors that writes the Baseline Requirements every publicly trusted CA must follow — validity caps, validation methods, revocation rules. Its ballots (e.g. SC-063, SC-081) are why public-cert rules change on fixed dates. (see Day 5)
+
 **Certbot** — The most widely used ACME client. It handles talking to the ACME server, satisfying whichever challenge type is configured, and (with `certbot renew`, ideally on a cron/timer) renewing certificates before they expire. (see Day 5)
 
 **Certificate** — A signed statement binding a name to a public key: a structured (X.509) document containing, among other fields, a subject name and that subject's public key, with the whole document signed by the issuer's private key. This one sentence is the foundation the entire course is built on. (see Day 1)
 
 **Certificate chain (chain of trust)** — The sequence of certificates from a leaf up through zero or more intermediates to a root: leaf signed by intermediate, intermediate signed by root. Verifying a chain is check 1 (signature chain) applied recursively, one link at a time, until it terminates at check 4 (is that root actually in my trust store). (see Days 1–2)
+
+**Certificate lifetime cap** — The maximum validity a publicly trusted TLS certificate may have, set by CA/B Forum ballot SC-081 (passed 2025-04-11): 200 days from 2026-03-15, 100 days from 2027-03-15, 47 days from 2029-03-15, with domain-validation reuse falling to 10 days. Private CAs (like this course's) set their own policy. (see Days 2, 5)
 
 **Certificate message (TLS handshake)** — The handshake message carrying the server's (or, in mTLS, the client's) certificate chain. It's sent in the clear in TLS 1.2 but encrypted in TLS 1.3, which is exactly why a passive network observer can see the certificate on 1.2 but not on 1.3. (see Day 3)
 
@@ -69,9 +79,13 @@
 
 **CertificateVerify** — The TLS 1.3 handshake message where the server signs the transcript so far with its certificate's private key, proving live possession of that key on this specific connection — not just replay of captured certificate bytes. TLS 1.2's equivalent proof is folded into `ServerKeyExchange`. This signature is separate from, and not one of, the four verification checks. (see Day 3)
 
+**challtestsrv (pebble-challtestsrv)** — Pebble's companion test server; in this lab it's used only as Pebble's DNS backend (you register names via its `:8055` management API). With its default answers disabled, an unregistered name gets no DNS answer at all. (see Day 5)
+
 **ChangeCipherSpec** — A TLS 1.2 message signaling that everything from this point on will be encrypted with the just-negotiated keys. TLS 1.3 keeps the message on the wire for middlebox compatibility but no longer gives it real protocol meaning.
 
 **Cipher suite** — The bundle of algorithms a TLS connection will use. A TLS 1.3 name like `TLS_AES_128_GCM_SHA256` names only the bulk cipher (AES-128-GCM, an AEAD mode) and the handshake hash (SHA-256) — key exchange is always (EC)DHE and the certificate's key type is negotiated separately. A TLS 1.2 name like `ECDHE-RSA-AES128-GCM-SHA256` additionally names the key-exchange algorithm (ECDHE) and the required certificate key type (RSA), because 1.2 still had choices on those axes that 1.3 removed. (see Day 3)
+
+**clientAuth / serverAuth** — The two EKU purposes that matter for TLS: `serverAuth` lets a cert identify a TLS server, `clientAuth` a TLS client (mTLS). Public CAs have stopped issuing `clientAuth` (Chrome requires serverAuth-only hierarchies from 2026-06-15; Let's Encrypt dropped it in 2026), so mTLS client identities now come from a private CA — in this lab, `ca/issue-client-cert.sh`. (see Days 2, 4)
 
 **ClientHello** — The first handshake message, sent by the client, always unencrypted in every TLS version: client random, supported versions and cipher suites, an ephemeral key-exchange guess, and — critically — the SNI and ALPN offer. Everything in it is visible to a passive network observer, on TLS 1.2 and 1.3 alike. (see Day 3)
 
@@ -79,7 +93,11 @@
 
 **CN (Common Name)** — A field in a certificate's Subject line, once used for hostname matching before SAN existed. Modern browsers (Chrome dropped it around 2017) and modern curl/OpenSSL ignore it entirely for check 3 — it's display-only now and carries zero verification weight. (see Day 2)
 
-**CRL (Certificate Revocation List)** — A CA-signed list of every serial number it has revoked, meant to be downloaded and checked by verifiers. In practice it scales badly — the list can be huge and re-fetching it per connection is impractically slow — so almost nothing checks it reliably for ordinary TLS connections. (see Day 5)
+**CRL (Certificate Revocation List)** — A CA-signed list of every serial number it has revoked. Fetching it per connection scales badly, so clients rarely do — but since CA/B Forum ballot SC-063 (2024) CRLs are *mandatory* for public CAs (OCSP became optional), and browsers now collect them centrally and push compact versions to clients (CRLite, CRLSets). (see Day 5)
+
+**CRLite** — Firefox's revocation mechanism (on for all desktop users since Firefox 137, 2025): Mozilla aggregates every public CA's CRLs into a compressed filter pushed to the browser, so revocation checks are local, private and hard-fail. Online OCSP is kept only for EV certs. (see Day 5)
+
+**CRLSet** — Chrome's revocation mechanism: Google pushes a curated subset of revoked certificates (high-value revocations, not every one) to the browser. Chrome hasn't done online OCSP for ordinary DV/OV certs for years. (see Day 5)
 
 **Cross-signing** — Having a new root or intermediate additionally signed by an *older*, already-widely-trusted CA, so clients whose trust stores haven't yet picked up the new root can still validate through the old one. Let's Encrypt's ISRG Root X1 was cross-signed by the older DST Root CA X3 for exactly this reason during its own trust-store rollout. (see Day 4)
 
@@ -105,11 +123,14 @@
 
 **ECDSA** — An asymmetric signature algorithm based on elliptic curves, an alternative to RSA for a certificate's key type. A cipher suite naming `ECDSA` as its authentication field (e.g. `ECDHE-ECDSA-AES128-GCM-SHA256`) can only be negotiated against a server whose certificate actually holds an ECDSA key. (see Day 3)
 
-**ECH (Encrypted Client Hello)** — A newer, still-maturing TLS extension designed to close SNI's remaining gap by encrypting the hostname itself. Unlike ordinary TLS 1.3 (which still sends SNI in the clear), ECH is built specifically to hide even that from a passive network observer. (see Day 3)
+**ECH (Encrypted Client Hello)** — A TLS extension, published as RFC 9849 (March 2026) and shipped in major browsers, that closes SNI's remaining gap: the real ClientHello (with the real hostname) is encrypted inside an outer one, hiding it from a passive network observer. OpenSSL added support in 2026; the lab toolbox's OpenSSL 3.0 doesn't have it. (see Day 3)
 
-**EKU (Extended Key Usage / extendedKeyUsage)** — A certificate extension narrowing a key's allowed *purpose*: `serverAuth` scopes a cert to authenticating a TLS server, `clientAuth` to authenticating a TLS client. It's policy layered on top of the four checks, not one of them, but strict verifiers enforce it — a `serverAuth`-only cert presented as a client identity in mTLS should be rejected on EKU grounds alone. (see Days 2, 4)
+**EKU (Extended Key Usage / extendedKeyUsage)** — A certificate extension narrowing a key's allowed *purpose*: `serverAuth` scopes a cert to authenticating a TLS server, `clientAuth` to authenticating a TLS client. It's policy layered on top of the four checks, not one of them, but strict verifiers enforce it — a `serverAuth`-only cert presented as a client identity in mTLS should be rejected on EKU grounds alone. See also **clientAuth / serverAuth**. (see Days 2, 4)
 
 **EncryptedExtensions** — The first encrypted message a TLS 1.3 server sends, immediately after `ServerHello`. This is where the ALPN *answer* (as opposed to the offer) lives in 1.3, hidden from passive observers. (see Day 3)
+
+**Entrust distrust (2024)** — Chrome stopped trusting Entrust-issued certificates with SCTs dated after 2024-11-11 (Apple from 2024-11-15, Mozilla from 2024-11-30), over a long pattern of compliance failures rather than a breach. Like Symantec, it shows a CA can lose trust through process failures alone. (see Day 6)
+
 
 ## F
 
@@ -117,7 +138,7 @@
 
 **Forward secrecy** — The property that even if a server's long-term private key is later compromised, past recorded traffic can't be decrypted, because the actual encryption keys were derived from ephemeral (one-per-connection) ECDHE values that never appeared on the wire in recoverable form. (see Day 3)
 
-**Four checks (verification order)** — The complete verification model this course is built around, always run in this order: **1. signature chain** (was this document really produced by its claimed issuer, unaltered, all the way up the chain), **2. validity dates** (is the vouching currently in effect for every cert in the chain), **3. name match** (does the connection target match a name the certificate actually claims, via SAN — never CN), **4. trust anchor** (does the chain terminate at a root you've already decided, out of band, to trust). A chain can pass checks 1–3 perfectly and still fail check 4, because anyone can self-sign a root and build an internally consistent chain underneath it — internal consistency (check 1) is not the same as trustworthiness (check 4). (see Day 1, and every later day)
+**Four checks (verification order)** — The complete verification model this course is built around, taught in this order (real verifiers build a path to a trusted root first, so the first error reported may not follow it): **1. signature chain** (was this document really produced by its claimed issuer, unaltered, all the way up the chain), **2. validity dates** (is the vouching currently in effect for every cert in the chain), **3. name match** (does the connection target match a name the certificate actually claims, via SAN — never CN), **4. trust anchor** (does the chain terminate at a root you've already decided, out of band, to trust). A chain can pass checks 1–3 perfectly and still fail check 4, because anyone can self-sign a root and build an internally consistent chain underneath it — internal consistency (check 1) is not the same as trustworthiness (check 4). (see Day 1, and every later day)
 
 **Fullchain** — Shorthand (and a common filename, `fullchain.pem`) for a leaf certificate concatenated with its intermediate(s) — everything a client needs, short of the root itself, to walk the signature chain upward. A server presents this so clients don't need the intermediate cert separately. (see Days 2, 4)
 
@@ -137,7 +158,7 @@
 
 **HSTS preload list** — A hardcoded list, shipped inside Chromium and Firefox, of domains that get the HSTS upgrade rule applied even on a genuinely first-ever visit. It exists specifically to close HSTS's own trust-on-first-use gap for domains that opt in ahead of time. (see Day 6)
 
-**HTTP-01 challenge** — An ACME challenge proving domain control by having the CA fetch `http://<domain>/.well-known/acme-challenge/<token>` and checking the response body. It's the simplest to automate if you already run a web server on port 80, but it fails outright if port 80 is firewalled, and the ACME spec forbids it for wildcard certificates. (see Day 5)
+**HTTP-01 challenge** — An ACME challenge proving domain control by having the CA fetch `http://<domain>/.well-known/acme-challenge/<token>` and checking the response body. It's the simplest to automate if you already run a web server on port 80, but it fails outright if port 80 is firewalled, and ACME CAs (per the Baseline Requirements) don't allow it for wildcard certificates. (see Day 5)
 
 ## I
 
@@ -157,11 +178,16 @@
 
 **MITM (Man-in-the-Middle)** — An attacker positioned on the network path (DNS poisoning, a rogue Wi-Fi AP, a compromised router, ARP spoofing) who needs, in addition to that position, something to present as a certificate that the victim's client will accept. A rogue CA installed into the victim's trust store is one way to satisfy that second requirement; SSL stripping sidesteps the requirement entirely by making sure TLS never starts. (see Day 6)
 
+**ML-KEM / X25519MLKEM768** — ML-KEM is a post-quantum key-encapsulation mechanism; `X25519MLKEM768` is the *hybrid* TLS key-exchange group combining it with classic X25519, so the session stays safe if either one holds. It's the default `key_share` in Chrome 131+, Firefox 132+ and OpenSSL 3.5+; the lab toolbox (OpenSSL 3.0) still shows plain X25519. (see Day 3)
+
 **mTLS (mutual TLS)** — TLS where verification runs twice, in mirror image: the client verifies the server's certificate (as in ordinary TLS), and *independently* the server verifies the client's certificate, each against its own trust anchor — which need not be the same CA. Configured in nginx with `ssl_verify_client` and `ssl_client_certificate`. (see Day 4)
+
+**Must-Staple** — A certificate extension (TLS Feature, `status_request`) telling clients to hard-fail if the server doesn't staple an OCSP response. Rarely enforced by browsers; Let's Encrypt blocked it for new accounts in January 2025 and shut down OCSP entirely that August. (see Day 5)
+
 
 ## N
 
-**Name match (check 3)** — The third of the four verification checks: does the connection target (a hostname, an email address, a client identity) match one of the names the certificate actually claims, via its SAN — never the deprecated CN. Hostname verification is not part of the TLS protocol itself; it's an application-layer decision made by the TLS library's *caller* after the handshake already succeeded. (see Days 1, 3)
+**Name match (check 3)** — The third of the four verification checks: does the connection target (a hostname, an email address, a client identity) match one of the names the certificate actually claims, via its SAN — never the deprecated CN. TLS itself defines no name matching, so *when* it happens depends on the client: curl checks the name after the handshake finishes, while browsers and OpenSSL's `SSL_set1_host` (used by Python and others) check it during certificate verification and abort the handshake with an alert. (see Days 1, 3)
 
 **NewSessionTicket** — A post-handshake TLS 1.3 message carrying an opaque ticket a later connection can present to resume a session (skip the full asymmetric handshake) via the `pre_shared_key` extension. TLS 1.2's equivalent mechanisms are Session IDs and Session Tickets (RFC 5077). (see Day 3)
 
@@ -171,13 +197,15 @@
 
 ## O
 
-**OCSP (Online Certificate Status Protocol)** — A live, per-connection query to the CA asking "is this one serial number still good?" — avoiding a full CRL download, but adding a round trip (and a real privacy leak, since the CA learns what you're connecting to). Browsers have historically soft-failed (proceeded anyway) when an OCSP responder is slow or unreachable. (see Day 5)
+**OCSP (Online Certificate Status Protocol)** — A live, per-connection query to the CA asking "is this one serial number still good?" — avoiding a full CRL download, but adding a round trip and a privacy leak (the CA learns what you're connecting to). Browsers soft-failed it and have largely dropped it; since 2024 it's optional for public CAs, and Let's Encrypt shut its OCSP responders down on 2025-08-06 (CRL-only now). (see Day 5)
 
-**OCSP stapling** — The fix for OCSP's latency and reliability problems: the *server*, not the client, periodically fetches its own signed OCSP response ahead of time and attaches ("staples") it to the handshake it sends every client. The client checks that locally-attached, CA-signed statement instead of making its own live call. (see Day 5)
+**OCSP stapling** — The server, not the client, periodically fetches its own CA-signed OCSP response and attaches ("staples") it to the handshake, so the client needn't make a live call. It still works for CAs that run OCSP, but it's largely historical now: a cert with no OCSP URL (e.g. any current Let's Encrypt cert) has nothing to staple, so `ssl_stapling on` does nothing. (see Day 5)
 
 ## P
 
-**Pebble** — Let's Encrypt's own lightweight, test-only ACME server, used throughout Day 5's lab so the real ACME issuance workflow can be exercised entirely offline, without touching a real domain or a real CA. (see Day 5)
+**Partial chain (`-partial_chain`, `-untrusted` vs `-CAfile`)** — By default `openssl verify` only succeeds if the chain ends at a self-signed root in `-CAfile`. `-untrusted` supplies intermediates to build the path *without* trusting them; `-partial_chain` lets a non-root cert in `-CAfile` (e.g. an intermediate) act as the trust anchor. (see Days 2, 5)
+
+**Pebble** — Let's Encrypt's own lightweight, test-only ACME server, used throughout Day 5's lab so the real ACME issuance workflow can be exercised entirely offline, without touching a real domain or a real CA. The lab runs `ghcr.io/letsencrypt/pebble:2.10.1` (the Docker Hub images are gone); its management API on `:15000` serves the issuing root and intermediate. (see Day 5)
 
 **PEM** — A text encoding (base64, wrapped in `-----BEGIN <TYPE>-----`/`-----END <TYPE>-----` lines) used throughout this course for certificates, keys, and CSRs. It's a container format, not a statement about what's inside — the same `.pem` extension holds public certs, private keys, or full chains depending on content. (see Day 1)
 
@@ -189,7 +217,7 @@
 
 **Reload vs. restart** — The distinction behind zero-downtime certificate rotation. `nginx -s reload` tells the running master process to re-read config and re-open cert files, spawning new workers while old workers finish in-flight connections undisturbed — nothing ever stops listening. A full restart kills every worker immediately and leaves nothing listening until the new process boots, a real (if brief) outage. (see Day 4)
 
-**Revocation** — The decision, made *after* issuance, that a certificate should no longer be trusted even though it's otherwise valid by every one of the four checks — typically because its private key leaked or the underlying domain changed hands. It's a genuinely separate concept layered on top of the four checks, and in practice it's poorly enforced, since CRLs don't scale and OCSP is often soft-failed. (see Day 5)
+**Revocation** — The decision, made *after* issuance, that a certificate should no longer be trusted even though it's otherwise valid by every one of the four checks — typically because its private key leaked or the underlying domain changed hands. It's a separate concept layered on top of the four checks. Per-connection checking never worked well (CRLs don't scale, OCSP soft-failed), so the modern answer is short certificate lifetimes plus CRLs that browsers aggregate and push (CRLite, CRLSets). (see Day 5)
 
 **Rogue CA** — An attacker-controlled CA (self-signed root, or a real CA whose signing infrastructure was compromised) whose root has somehow gotten into a victim's trust store. Once there, it can sign a certificate for *any* name, and that certificate passes checks 1–3 perfectly and legitimately — only check 4 (trust anchor) stands between the attacker and full acceptance, which is exactly why check 4 is described as the sole barrier against this attack. (see Day 6)
 
@@ -215,7 +243,7 @@
 
 **SNI (Server Name Indication)** — A `ClientHello` extension carrying the hostname the client intends to reach, needed because a server has to pick which certificate to present before any encryption exists. It travels unencrypted in every mainstream TLS version, including 1.3, which is why a network observer can always see which hostname you're connecting to over HTTPS even when it can't see anything else. (see Day 3)
 
-**Soft-fail** — The historical browser behavior of proceeding with a connection anyway when an OCSP/CRL revocation check is slow, unreachable, or simply skipped, rather than blocking the connection on a CA's uptime. It's the specific gap that lets a revoked-but-not-expired, unstapled certificate still get accepted. (see Day 5)
+**Soft-fail** — The behavior of proceeding with a connection anyway when an online OCSP/CRL revocation check is slow, unreachable, or skipped, rather than blocking on a CA's uptime. It's the gap that let revoked-but-not-expired certificates be accepted — and why browsers moved to pushed revocation data (CRLite, CRLSets), which is checked locally and so can hard-fail. (see Day 5)
 
 **ssl_verify_client** — The nginx directive that turns on mutual TLS: it tells nginx to require and verify a client certificate against whatever CA file `ssl_client_certificate` names, running checks 1, 2, and 4 against the client's cert (by default it does not check EKU on the client cert). (see Day 4)
 
@@ -250,3 +278,5 @@
 ## X
 
 **X.509** — The standardized document format certificates use: a structured container for a subject name, a public key, an issuer, validity dates, extensions (SAN, basicConstraints, keyUsage, EKU), and the issuer's signature over the whole thing. Every certificate in this course, from a hand-built lab root to an ACME-issued leaf, is an X.509 document. (see Day 1)
+
+**X25519MLKEM768** — The hybrid post-quantum key-exchange group now default in browsers and OpenSSL 3.5+. See **ML-KEM / X25519MLKEM768**. (see Day 3)

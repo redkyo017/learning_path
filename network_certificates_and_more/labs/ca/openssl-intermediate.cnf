@@ -84,7 +84,21 @@ keyUsage                = critical, digitalSignature, keyEncipherment
 extendedKeyUsage       = serverAuth
 subjectAltName         = @alt_names
 
-# Placeholder — issue-server-cert.sh rewrites this section (in a scratch
+# --- End-entity (leaf) CLIENT certs, for mutual TLS (Day 4) ---------------
+# Same shape as server_cert, but the purpose is clientAuth. This is not
+# cosmetic: a TLS server built on OpenSSL (nginx included) verifies an
+# incoming client certificate with the "ssl_client" purpose, and a cert whose
+# extendedKeyUsage lacks clientAuth fails that check ("unsuitable certificate
+# purpose") even when its signature, dates and chain are all perfect.
+[ client_cert ]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer:always
+basicConstraints       = CA:FALSE
+keyUsage                = critical, digitalSignature
+extendedKeyUsage       = clientAuth
+subjectAltName         = @alt_names
+
+# Placeholder — issue-server-cert.sh / issue-client-cert.sh rewrites this section (in a scratch
 # copy of this file, see header note above) from its <cn> and SAN args.
 # This section MUST remain the last section in this file: the rewrite logic
 # cuts the file at the "[ alt_names ]" line and appends a new version.

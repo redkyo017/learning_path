@@ -2,7 +2,7 @@
 
 ## Hint ladder
 
-1. **Nudge:** `Verification Failure` doesn't automatically mean the message
+1. **Nudge:** `Verification failure` doesn't automatically mean the message
    was tampered with. The verify operation has two inputs besides the
    signature — the message *and* the public key. Which one are you less
    sure about?
@@ -25,7 +25,7 @@ Fingerprint the key you were handed:
 ```
 docker compose run --rm toolbox bash -c \
   "openssl rsa -pubin -in /work/drills/drill-01/pubkey.pem -noout -modulus | openssl sha256"
-# edc36092760860e591e8bdf17bd690780e9b296c1f8d71ba9869aaa6158733d3
+# SHA2-256(stdin)= edc36092760860e591e8bdf17bd690780e9b296c1f8d71ba9869aaa6158733d3
 ```
 
 You contact the signer out of band and they confirm their real public key's

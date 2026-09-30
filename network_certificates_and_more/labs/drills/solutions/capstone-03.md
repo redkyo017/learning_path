@@ -9,7 +9,7 @@
    ```
    docker compose run --rm toolbox openssl x509 -in /work/ca/intermediate/certs/old-report.local.cert.pem -noout -dates
    ```
-3. **Partial diagnosis:** `notAfter` is nearly two years before today. This
+3. **Partial diagnosis:** `notAfter` is more than three years before today. This
    is entirely independent of who signed it or what name it's for.
 
 ## Full walkthrough
@@ -21,7 +21,7 @@ docker compose run --rm toolbox openssl x509 -in /work/ca/intermediate/certs/old
 ```
 
 Both dates are in the past — this certificate's entire three-month
-validity window opened and closed nearly two years ago. `openssl verify`
+validity window opened and closed more than three years ago. `openssl verify`
 reports **error 10, certificate has expired**, which is **check 2:
 validity dates**, and only that check. Nothing here says anything about
 the signature (it's a completely legitimate certificate, correctly signed

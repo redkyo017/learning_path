@@ -23,7 +23,7 @@
 
 ```
 docker compose run --rm toolbox bash -c "openssl x509 -in /work/drills/drill-05/example.local.cert.pem -noout -issuer"
-# issuer=/C=US/ST=CA/O=Drill Fixture Lab/OU=Intermediate CA/CN=Drill Mini Intermediate CA
+# issuer=C = US, ST = CA, O = Drill Fixture Lab, OU = Intermediate CA, CN = Drill Mini Intermediate CA
 ```
 
 The leaf claims to be signed by "Drill Mini Intermediate CA." You were only
@@ -57,7 +57,7 @@ never sent it, so the original check never had it either. In your own
 `ca/intermediate/certs/intermediate.cert.pem`, or just use
 `ca-chain.cert.pem` as `-CAfile` directly, which is what Part D's
 guided-lab curl does.) Confirmed real output once the intermediate is
-supplied: `example.local.cert.pem: OK`, exit `0`.
+supplied: `/work/drills/drill-05/example.local.cert.pem: OK`, exit `0`.
 
 Most real browsers only ship **root** certificates in their trust store —
 they rely on the server to send every intermediate. This is precisely why

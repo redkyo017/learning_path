@@ -2,7 +2,7 @@
 
 ## Hint ladder
 
-1. **Nudge:** `unsupported protocol` names nothing about certificates,
+1. **Nudge:** `alert protocol version` names nothing about certificates,
    ciphers, or hostnames — this is Day 3's territory, before any
    `Certificate` message is ever sent.
 2. **Tool to run:** find each side's actual range.
@@ -26,16 +26,17 @@ client:  [-- 1.0 -- 1.1 -- 1.2 --]
 overlap: (none)
 ```
 
-This is drill-09's exact mechanism, just with the roles reversed: there,
-an old server had a *floor* the new client's *ceiling* couldn't clear; here,
-a hardened server's *floor* is *above* an old client's *ceiling*. Either
-direction produces the identical failure class — the `ClientHello`/
+This is drill-09's exact mechanism, one version higher: there, a TLS 1.2
+floor sat above a TLS 1.1 client's ceiling; here, a hardened TLS 1.3
+floor sits above a TLS 1.2 client's ceiling. Same failure class — the `ClientHello`/
 `ServerHello` exchange itself fails to find any mutually acceptable
 version, so **no `Certificate` message is ever sent**, and none of Day 1's
 four checks get a chance to run at all. The alert is conceptually
-`protocol_version` (70); curl surfaces it as exit `35` with the
-`unsupported protocol` OpenSSL error text, exactly as Day 3's theory
-table predicted.
+`protocol_version` (70). The server logs its side as `0A000102 ...
+unsupported protocol` and sends the alert; the client receives it, so curl
+reports exit `35` with `0A00042E:SSL routines::tlsv1 alert protocol
+version`. Rule of thumb: an `alert ...` in the client's error means the
+*peer* sent that alert.
 
 This scenario is deliberately realistic: "we hardened the server, an old
 integration broke" is one of the single most common real-world outcomes
@@ -53,7 +54,7 @@ policy for everyone.
 
 ## Lesson
 
-"Unsupported protocol" is a version-negotiation failure, full stop — it
+"Alert protocol version" is a version-negotiation failure, full stop — it
 happens before certificates enter the picture at all, in either
 direction (old client vs. new server, or new client vs. old server).
 Tightening a security floor is a real, deliberate tradeoff against

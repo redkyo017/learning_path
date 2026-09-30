@@ -24,8 +24,8 @@
 docker compose run --rm toolbox openssl x509 \
     -in /work/ca/intermediate/certs/example.local.cert.pem -noout -text \
     | grep -A1 'Public Key Algorithm'
-# expected — not captured:
-# Public Key Algorithm: rsaEncryption
+#             Public Key Algorithm: rsaEncryption
+#                 Public-Key: (2048 bit)
 ```
 
 The server's only certificate holds an **RSA** key (Day 2's
@@ -65,14 +65,13 @@ docker compose run --rm toolbox curl --cacert /work/ca/intermediate/certs/ca-cha
     --tlsv1.2 --tls-max 1.2 \
     --ciphers ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256 \
     https://example.local:8443/
-# expected — not captured: a successful TLS 1.2 handshake and nginx's
-# default response body.
+# example.local is up — TLS Mastery Day 2
+# (with -v: "SSL connection using TLSv1.2 / ECDHE-RSA-AES256-GCM-SHA384 / X25519 / RSASSA-PSS")
 ```
 
-**Note on the exact OpenSSL error text above:** as with drill 09, the hex
-reason code is representative of OpenSSL 3.x's rendering of a
-`handshake_failure` alert, not a byte-for-byte guarantee across every
-patch version. The reliable signal is the alert name/number and curl's
+**Note on the exact OpenSSL error text above:** it was captured with the
+toolbox's OpenSSL 3.0.13. The hex reason code can change between OpenSSL
+versions. The reliable signal is the alert name/number and curl's
 exit code `35`.
 
 ## Lesson

@@ -40,15 +40,23 @@ host at `labs/` and vice versa.
   by copying `services/nginx-dayNN.conf` over `services/active.conf` and
   restarting nginx) and `./certs` to `/etc/nginx/certs` (generated
   certificates/keys). Exposes `8443:443` on the host.
-- **pebble** — `letsencrypt/pebble`, Let's Encrypt's own test ACME server
-  (Day 5). Serves its ACME directory at `https://pebble:14000/dir` and a
+- **pebble** — `ghcr.io/letsencrypt/pebble:2.10.1`, Let's Encrypt's own
+  test ACME server (Day 5). The old Docker Hub images are gone; the ghcr.io
+  image is built `FROM scratch` with `ENTRYPOINT ["/app"]`, so `command:`
+  holds only the flags, and there's no shell — use `docker compose cp` (not
+  `exec`) to copy files such as `/test/certs/pebble.minica.pem` out. Serves its ACME directory at `https://pebble:14000/dir` and a
   management API at `:15000`, both over HTTPS signed by Pebble's own test
   CA. Configured via `./acme/pebble-config.json` (bind-mounted) and
   `-dnsserver`, pointed at `challtestsrv`, so it can resolve the lab's
-  test domain without touching real DNS.
-- **challtestsrv** — `letsencrypt/pebble-challtestsrv` (Day 5), Pebble's
-  companion DNS backend for challenge validation. Its own HTTP-01/HTTPS-01/
-  TLS-ALPN-01 responders are disabled in this lab; certbot's own
+  test domain without touching real DNS. `PEBBLE_VA_NOSLEEP=1` and
+  `PEBBLE_WFE_NONCEREJECT=0` turn off Pebble's artificial validation delay
+  and random nonce rejections so lab runs are fast and repeatable.
+- **challtestsrv** — `ghcr.io/letsencrypt/pebble-challtestsrv:2.10.1`
+  (Day 5), Pebble's companion DNS backend for challenge validation. Its own
+  HTTP-01/HTTPS-01/TLS-ALPN-01/DoH responders are disabled in this lab, and
+  so are its default answers (`-defaultIPv4 "" -defaultIPv6 ""`): a name
+  you haven't registered gets **no** DNS answer, rather than a fake
+  `127.0.0.1`/`::1` that Pebble would dial by mistake; certbot's own
   `--standalone` plugin answers the actual challenge itself, on `toolbox`.
   Management API on `:8055` (e.g. `POST /add-a` to register a test domain).
 
@@ -85,7 +93,7 @@ docker compose run --rm toolbox bash ca/make-intermediate.sh
 docker compose run --rm toolbox bash ca/issue-server-cert.sh example.local example.local
 docker compose run --rm toolbox openssl verify -CAfile ca/intermediate/certs/ca-chain.cert.pem \
     ca/intermediate/certs/example.local.cert.pem
-# Expected final line: example.local.cert.pem: OK
+# Expected final line: ca/intermediate/certs/example.local.cert.pem: OK
 ```
 
 You can also confirm the issued cert's SAN was set correctly:
@@ -110,12 +118,14 @@ it (which would invalidate every cert already issued). `ca/issue-server-cert.sh
 ```
 labs/
 ├── docker-compose.yml   # toolbox + nginx + pebble + challtestsrv on the certlab network
+├── .gitignore           # keeps generated keys/state (ca/root/, ca/intermediate/, certs/*, tmp/, acme/certbot/) out of git
 ├── ca/                  # persistent root + intermediate CA (built Day 2, reused every later day)
 │   ├── openssl-root.cnf
 │   ├── openssl-intermediate.cnf
 │   ├── make-root.sh
 │   ├── make-intermediate.sh
-│   ├── issue-server-cert.sh
+│   ├── issue-server-cert.sh   # leaf with serverAuth EKU (server_cert block)
+│   ├── issue-client-cert.sh   # leaf with clientAuth EKU (client_cert block, OU=Clients) — Day 4 mTLS
 │   ├── root/            # generated: root CA db (certs/private/newcerts/csr/index.txt/serial)
 │   └── intermediate/    # generated: intermediate CA db + issued leaf certs
 ├── toolbox/
@@ -126,6 +136,10 @@ labs/
 │   └── certbot/         # generated: certbot's --config-dir/--work-dir/--logs-dir state
 ├── services/            # active.conf (mounted into nginx) + per-day nginx-dayNN.conf
 │                        # templates copied onto active.conf to activate
-├── certs/               # generated certs/keys (mounted into nginx and toolbox)
+├── certs/               # ships empty (.gitkeep); Day 2 copies certs/keys here (mounted into nginx)
+├── samples/             # offline sample cert for Day 1, before you've built your own CA
+├── attack/              # Day 6 — rogue-CA MITM demo script (see attack/README.md)
+├── drills/              # drill-01 … drill-20, capstone/capstone-01 … 10, solutions/
+├── tmp/                 # generated scratch space (create with `mkdir -p tmp`; git-ignored)
 └── README.md            # this file
 ```

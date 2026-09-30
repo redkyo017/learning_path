@@ -31,7 +31,7 @@ sed '/^\[ alt_names \]/,$d' /work/ca/openssl-intermediate.cnf > "${EXT}"
 printf '[ alt_names ]\nDNS.1 = old-report.local\n' >> "${EXT}"
 
 # -startdate/-enddate override -days entirely: this cert is born already
-# expired, three months of validity that both ended nearly two years ago.
+# expired, three months of validity that both ended more than three years ago.
 openssl ca -config "${EXT}" -extensions server_cert -notext -md sha256 \
     -startdate 20230101000000Z -enddate 20230401000000Z \
     -in "${CSR}" -out "${CERT}" -batch

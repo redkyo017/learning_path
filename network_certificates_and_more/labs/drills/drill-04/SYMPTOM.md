@@ -12,10 +12,8 @@ Observed output:
 
 ```
 C = US, ST = CA, O = TLS Mastery Lab, CN = expired.local
-error 10 at 1 depth lookup: certificate has expired
-C = US, ST = CA, O = TLS Mastery Lab, CN = expired.local
 error 10 at 0 depth lookup: certificate has expired
-/work/drills/drill-04/expired.cert.pem: verification failed: 10 (certificate has expired)
+error /work/drills/drill-04/expired.cert.pem: verification failed
 ```
 
 Exit code: `2`

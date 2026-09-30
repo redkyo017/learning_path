@@ -24,8 +24,8 @@ Observed output:
 
 ```
 C = US, ST = CA, O = Drill Fixture Lab, OU = Servers, CN = example.local
-error 20 at 0 depth lookup:unable to get local issuer certificate
-example.local.cert.pem: verification failed: 20 (unable to get local issuer certificate)
+error 20 at 0 depth lookup: unable to get local issuer certificate
+error /work/drills/drill-05/example.local.cert.pem: verification failed
 ```
 
 Exit code: `2`

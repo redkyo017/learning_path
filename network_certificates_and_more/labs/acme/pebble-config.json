@@ -12,10 +12,6 @@
       "default": {
         "description": "90-day certs, matching real Let's Encrypt's default lifetime",
         "validityPeriod": 7776000
-      },
-      "shortlived": {
-        "description": "6-day certs, for exercising renewal-adjacent edge cases",
-        "validityPeriod": 518400
       }
     }
   }

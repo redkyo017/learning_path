@@ -23,7 +23,7 @@ docker compose run --rm toolbox openssl verify -CAfile /work/drills/drill-06/cha
 Observed output:
 
 ```
-other.local.cert.pem: OK
+/work/drills/drill-06/other.local.cert.pem: OK
 ```
 
 Exit code: `0`

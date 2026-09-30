@@ -17,13 +17,19 @@ docker compose run --rm --entrypoint certbot \
 Observed output:
 
 ```
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Processing /work/acme/certbot/config/renewal/test.local.conf
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Saving debug log to /work/acme/certbot/logs/letsencrypt.log
 
-The following certs are not due for renewal yet:
-  /work/acme/certbot/config/live/test.local/fullchain.pem expires on 2026-11-08 (skipped)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Processing /work/acme/certbot/config/renewal/test.local.conf
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Certificate not yet due for renewal
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+The following certificates are not due for renewal yet:
+  /work/acme/certbot/config/live/test.local/fullchain.pem expires on 2026-12-29 (skipped)
 No renewals were attempted.
+No hooks were run.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ```
 
 Exit code: `0`.

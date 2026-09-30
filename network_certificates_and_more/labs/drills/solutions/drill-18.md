@@ -2,8 +2,8 @@
 
 ## Hint ladder
 
-1. **Nudge:** `--preferred-challenges` only *ranks* which challenge type
-   to prefer among the ones offered — it doesn't grant your certbot
+1. **Nudge:** `--preferred-challenges` narrows and ranks which challenge
+   types certbot will consider — it doesn't grant your certbot
    *plugin* a new ability it doesn't have. Which plugin is actually
    answering challenges here, and what can it actually do?
 2. **Tool to run:** nothing to run against a live Pebble needed for this
@@ -13,7 +13,7 @@
    the `standalone` plugin implements).
 3. **Partial diagnosis:** Pebble is offering three challenge types for
    this authorization. The plugin you told certbot to use can only ever
-   answer two of them itself.
+   answer one of them.
 
 ## Full walkthrough
 
@@ -23,29 +23,31 @@ today's theory table described (Pebble, like a real ACME server, always
 offers what it supports; it's the **client** that has to pick one it can
 actually satisfy).
 
-certbot's `--standalone` plugin, however, only implements **two** of
-those three: it can run a temporary web server to answer `http-01`, and
-it can run a temporary TLS listener with the right ALPN extension to
-answer `tls-alpn-01`. It has **no** DNS-01 implementation at all — DNS-01
+certbot's `--standalone` plugin, however, implements only **one** of
+those three: it runs a temporary web server to answer `http-01`. It has
+no `tls-alpn-01` support and **no** DNS-01 implementation at all — DNS-01
 requires actually writing a DNS record somewhere, which is exactly what
 certbot's `--manual` mode (with an auth hook) or a DNS-provider-specific
-plugin is for, never `--standalone`.
+plugin is for, never `--standalone`. You can confirm it: swap in
+`--preferred-challenges tls-alpn-01` and you get the exact same error.
 
-`--preferred-challenges dns` tells certbot "if the CA offers a DNS
-challenge, prefer it" — but preference only matters among challenges the
-currently active plugin can actually solve. Since `--standalone` can't
-solve DNS-01 at all, certbot has no valid combination of
-(offered challenge) × (plugin capability) left to attempt, and gives up
-before ever contacting Pebble's challenge-response step:
+`--preferred-challenges` is a filter as well as a ranking: certbot only
+considers the types you listed, and only among those the active plugin
+can solve. You listed only `dns`, and `--standalone` can't solve DNS-01,
+so nothing is left.
+certbot created the order, read the authorization, and gave up before
+answering any challenge:
 
 ```
-Client with the currently selected authenticator does not support any
-combination of challenges that will satisfy the CA.
+None of the preferred challenges are supported by the selected plugin
 ```
 
-**Fix:** either drop `--preferred-challenges dns` and let certbot pick
-`http-01` (which `--standalone` *can* solve, and which the guided lab's
-Part B already wires up via `challtestsrv`'s DNS-only role), or, if you
+That's why Pebble never reported a failure: it was never asked to
+validate anything.
+
+**Fix:** either change it back to `--preferred-challenges http` (which
+`--standalone` *can* solve, on the `--http-01-port 5002` already in the
+command, exactly as the guided lab's Part B does), or, if you
 genuinely want to exercise DNS-01, switch plugins entirely to
 `--manual` with an auth/cleanup hook that calls `challtestsrv`'s
 `/set-txt` and `/clear-txt` endpoints — sketched in `day05.md`'s

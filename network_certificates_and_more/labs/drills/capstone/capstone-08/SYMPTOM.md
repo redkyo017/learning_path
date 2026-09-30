@@ -14,16 +14,17 @@ That script's final command is a plain `curl -v` against
 Observed output:
 
 ```
-* subject: O=SecureVault Trust Services; CN=vault.internal.local
-* issuer: O=SecureVault Trust Services; CN=SecureVault Trust Root G2
-* SSL certificate verify ok.
+*  subject: O=SecureVault Trust Services; CN=vault.internal.local
+*  issuer: O=SecureVault Trust Services; CN=SecureVault Trust Root G2
+*  SSL certificate verify ok.
+* using HTTP/1.x
 > GET / HTTP/1.1
-< HTTP/1.1 200 ok
+< HTTP/1.0 200 ok
 ```
 
 The connection succeeded, with no certificate warning of any kind.
 
-`grep -c "TLS Mastery" /etc/ssl/certs/ca-certificates.crt` inside the same
-container returns `0` — this container was never told to trust anything
+Listing the subjects in `/etc/ssl/certs/ca-certificates.crt` shows no
+`TLS Mastery` root — this container was never told to trust anything
 from your real `ca/`. `openssl x509 -in /work/ca/root/certs/ca.cert.pem
 -noout -subject` (your real root) prints `CN = TLS Mastery Root CA`.

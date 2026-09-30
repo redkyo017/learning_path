@@ -19,7 +19,7 @@
 ```
 docker compose run --rm toolbox openssl x509 -in /work/ca/intermediate/certs/example.local.cert.pem \
     -noout -text | grep "Public Key Algorithm"
-# Public Key Algorithm: rsaEncryption
+#             Public Key Algorithm: rsaEncryption
 ```
 
 Reading `ECDHE-ECDSA-AES128-GCM-SHA256` field by field, exactly as Day 3's

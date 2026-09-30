@@ -2,9 +2,9 @@
 
 ## Hint ladder
 
-1. **Nudge:** the error says `Connection refused` on a very specific port
-   number. certbot's `--standalone` plugin has a default port of its own —
-   is that the same port the error mentions?
+1. **Nudge:** the output names **two** ports. The `Detail:` line (Pebble
+   talking) says `5002`. The `Hint:` line (certbot talking) says
+   `port 80`. Which one is each tool actually using?
 2. **Tool to run:** compare the port in the error against this lab's own
    Pebble config:
    ```
@@ -38,6 +38,10 @@ reported as a **domain-control validation failure**, not a certbot config
 error, even though the actual root cause is entirely a local port
 mismatch between two tools that were never told to agree.
 
+certbot even tells you so: its `Hint:` line says the standalone webserver
+was started "on port 80", while Pebble's `Detail:` line dialed
+`10.77.30.10:5002`. Same host, different port.
+
 **Fix:** add the flag back, matching what Pebble is actually configured
 to expect:
 
@@ -45,7 +49,9 @@ to expect:
 --http-01-port 5002
 ```
 
-as the guided lab's Part B step 3 command does.
+as the guided lab's Part B step 3 command does. Re-run the drill's command
+with it (same `tmp/drill-17/` dirs) and certbot prints `Successfully
+received certificate.`
 
 ## Lesson
 

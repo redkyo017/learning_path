@@ -12,37 +12,33 @@ docker compose run --rm --entrypoint certbot \
     --preferred-challenges http -n \
     --server https://pebble:14000/dir \
     -d billing.local --agree-tos -m a@b.c --no-eff-email \
-    --config-dir /work/acme/certbot/config \
-    --work-dir /work/acme/certbot/work \
-    --logs-dir /work/acme/certbot/logs
+    --config-dir /work/tmp/capstone-07/config \
+    --work-dir /work/tmp/capstone-07/work \
+    --logs-dir /work/tmp/capstone-07/logs
 ```
 
-Observed output:
+Observed output (token shortened):
 
 ```
-Simulating a certificate request for billing.local
+Saving debug log to /work/tmp/capstone-07/logs/letsencrypt.log
+Account registered.
 Requesting a certificate for billing.local
 
 Certbot failed to authenticate some domains (authenticator: standalone). The Certificate Authority reported these problems:
   Domain: billing.local
-  Type:   dns
-  Detail: DNS problem: NXDOMAIN looking up A for billing.local - check that a DNS record exists for this domain
+  Type:   connection
+  Detail: Get "http://billing.local:5002/.well-known/acme-challenge/3_8VtPci...": could not resolve URL "http://billing.local:5002/.well-known/acme-challenge/3_8VtPci..."
 
-Hint: The Certificate Authority failed to download the challenge files from
-the temporary standalone webserver started by Certbot on port 80. Ensure
-that the listed domains point to this machine and that it can accept
-inbound connections from the internet.
+Hint: The Certificate Authority failed to download the challenge files from the temporary standalone webserver started by Certbot on port 5002. Ensure that the listed domains point to this machine and that it can accept inbound connections from the internet.
 
 Some challenges have failed.
-Ask for help or search for solutions at https://community.letsencrypt.org.
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /work/tmp/capstone-07/logs/letsencrypt.log or re-run Certbot with -v for more details.
 ```
 
-Certbot's own standalone server started and bound port `5002` without any
-complaint — the failure happened before Pebble ever tried to reach it.
-`test.local` (Day 5's domain) still issues successfully against this exact
-same Pebble/challtestsrv setup, using this exact same command shape with
-only the `-d` value changed.
+Exit code: `1`.
 
-*(This capstone's output is reasoned from Pebble's and certbot's own
-documented DNS-problem error format, not from a live run — see the task
-report. Confirm the exact wording live before trusting it verbatim.)*
+Certbot's own standalone server started and bound port `5002` without any
+complaint, and its `Hint:` blames that server. `test.local` (Day 5's
+domain) still issues successfully against this exact same
+Pebble/challtestsrv setup, using this exact same command shape with only
+the `-d` value changed. `Type: connection` is also what drill-17 showed.

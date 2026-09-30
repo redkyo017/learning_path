@@ -1,17 +1,9 @@
 # Day 5 — Automation with ACME (Pebble)
 
+> Unfamiliar term? Look it up in [GLOSSARY.md](GLOSSARY.md).
+
 Read this before starting the lab. Budget: ~3.5 hours (75–90 min
 theory/reading, ~105 min guided lab, ~30–45 min exercises + drills).
-
-A note before you start: this day's guided lab was authored without a live
-Docker environment to test against — every command below is
-correct-by-construction against Pebble's and certbot's own documented
-config schema and flags, but the first time you actually run it, treat
-yourself as doing the final verification pass the author couldn't. Where
-something is genuinely uncertain rather than just "unverified," it's called
-out explicitly as **DEFERRED**. Full detail on what's reasoned vs. what
-still needs a live run lives in
-`labs/acme/README.md` and the task report it points to.
 
 ---
 
@@ -25,9 +17,10 @@ By the end of today you should be able to:
 - Name the three ACME challenge types (HTTP-01, DNS-01, TLS-ALPN-01), what
   each one proves, and pick the right one for a given network constraint
   (e.g., port 80 blocked, or no way to touch DNS).
-- Explain why certificate **revocation** is effectively broken in practice
-  (CRLs don't scale, OCSP leaks and stalls) and what **OCSP stapling**
-  does about it.
+- Explain why classic certificate **revocation** broke down in practice
+  (CRLs don't scale, OCSP leaks and stalls), what **OCSP stapling** tried
+  to do about it, and what the industry actually relies on in 2026
+  (browser-pushed revocation data plus short certificate lifetimes).
 - Explain what a **Certificate Transparency log** is and what problem it
   solves that revocation and the four checks don't.
 - Run the real certbot → ACME issuance workflow end to end against a local
@@ -102,8 +95,9 @@ trivia:
 - **HTTP-01** is the default almost everyone reaches for first: simplest to
   automate if you already run a web server on port 80, no DNS API
   integration needed. Fails immediately if port 80 is firewalled, or if
-  you're issuing for a **wildcard** name (`*.example.com`) — the ACME spec
-  doesn't permit HTTP-01 for wildcards at all, only DNS-01.
+  you're issuing for a **wildcard** name (`*.example.com`) — ACME CAs (per
+  the CA/Browser Forum Baseline Requirements) don't allow HTTP-01 or
+  TLS-ALPN-01 for wildcards, only DNS-01.
 - **DNS-01** is the only option when port 80/443 genuinely can't be reached
   from the internet (internal services, strict egress-only firewalls) —
   because it never needs an inbound connection to your infrastructure at
@@ -122,7 +116,7 @@ Today's guided lab uses HTTP-01 (it's what the toolbox/nginx setup naturally
 supports); Exercise 4 below and the lab's optional DNS-01 note walk you
 through when you'd reach for DNS-01 instead.
 
-### Revocation: why it's effectively broken, and what OCSP stapling does
+### Revocation: why it broke, and what replaced it
 
 The four-check model has a hole none of the four checks fill: what if a
 certificate is completely valid by every check — good signature, unexpired
@@ -134,7 +128,8 @@ those four ask "was this ever validly issued and is it still within its
 stated window," revocation asks "has someone since decided to take that
 back early."
 
-Two mechanisms exist, and both have serious practical problems:
+Two classic mechanisms exist, and both have serious practical problems.
+That history is why the rules changed, so it's worth knowing:
 
 - **CRLs (Certificate Revocation Lists)** — the CA publishes a signed list
   of every serial number it has revoked. A verifier is supposed to
@@ -155,21 +150,39 @@ Two mechanisms exist, and both have serious practical problems:
   in real time, exactly which sites you're visiting, since your browser is
   asking it directly, live, per-connection.
 
-**OCSP stapling** is the fix for the latency/reliability half of that
-problem (not the privacy half, though it happens to help there too): the
-**server** — not the client — periodically fetches its own OCSP response
-from the CA ahead of time, caches it, and "staples" that pre-fetched,
-CA-signed response onto the TLS handshake it sends to every client. The
-client then checks a locally-attached, cryptographically signed "still
-good" statement instead of making its own live network call to the CA at
-all. This moves the OCSP round trip from "every client, every connection,
-live" to "the server, in the background, periodically" — which is both
-faster and doesn't leak per-visitor browsing history to the CA. It doesn't
-fix everything (a stapled response can itself be a few hours or days
-stale, and a server that's *compromised* has no incentive to staple an
-honest "revoked" answer about its own cert), but it's the mechanism that
-made OCSP actually workable at internet scale, and it's why you'll see
-`ssl_stapling on;` in real nginx configs.
+**OCSP stapling** was the attempted fix. The **server**, not the client,
+fetches its own OCSP response from the CA ahead of time, caches it, and
+"staples" that CA-signed response onto every handshake. The client checks
+the attached statement instead of calling the CA itself: no extra round
+trip, no browsing history leaked. But stapling never closed the hole. A
+client can't tell "this server doesn't staple" from "an attacker stripped
+the staple," so a missing staple was still soft-fail. The only hard-fail
+option, the **OCSP Must-Staple** certificate extension, saw almost no
+adoption.
+
+**What the industry actually does now (2026):**
+
+- **CRLs are back, and OCSP is on its way out.** The CA/Browser Forum made
+  OCSP optional and CRLs mandatory in 2024. Let's Encrypt removed OCSP URLs
+  from its certificates in May 2025 and shut its OCSP responders down in
+  August 2025. It is CRL-only now.
+- **Browsers push revocation data to themselves.** Instead of asking the
+  CA per connection, the browser vendor collects every CA's CRLs and ships
+  a compact summary with regular updates: **CRLite** in Firefox (on for
+  all desktop users since Firefox 137, 2025) and **CRLSets** in Chrome
+  (Chrome hasn't done live OCSP for ordinary certificates in years). No
+  per-site lookup and no privacy leak. The catch: CRLite aims to cover
+  every revocation, while CRLSets are a curated selection.
+- **Short lifetimes are the real answer.** If a certificate can only live
+  a few weeks, a missed revocation can only hurt for a few weeks. The
+  CA/Browser Forum's ballot SC-081 (2025) caps publicly trusted TLS
+  certificates at 200 days from March 2026, 100 days from March 2027, and
+  47 days from March 2029. That only works because ACME makes renewal
+  automatic. That's today's topic.
+
+Stapling still exists. nginx still has `ssl_stapling on;`, and it still
+does something for CAs that run OCSP. With a Let's Encrypt certificate
+today it does nothing: the certificate has no OCSP URL to fetch from.
 
 ### Certificate Transparency: a different problem than revocation
 
@@ -248,8 +261,12 @@ domain you're about to request a cert for:
 ```bash
 docker compose run --rm toolbox curl -s -X POST http://challtestsrv:8055/add-a \
     -d '{"host":"test.local","addresses":["10.77.30.10"]}'
-# Expected: {}
+# Expected: no output at all (challtestsrv replies 200 with an empty body)
 ```
+
+Only registered names resolve. `docker-compose.yml` starts challtestsrv
+with `-defaultIPv4 ""` and `-defaultIPv6 ""`, so any name you haven't
+added gets no answer, just like a real unregistered domain.
 
 **2. Extract Pebble's own test root**, so certbot can trust Pebble's HTTPS
 endpoint without disabling verification entirely (see the "certbot
@@ -260,11 +277,8 @@ a *different* CA from the one that will sign your issued certificate):
 docker compose cp pebble:/test/certs/pebble.minica.pem acme/pebble.minica.pem
 ```
 
-**DEFERRED — needs live confirmation.** This path comes straight from
-Pebble's own documentation; it was not possible to confirm by actually
-running the container while authoring this lab. If it 404s, run
-`docker compose exec pebble find / -maxdepth 4 -iname 'pebble.minica.pem'`
-to locate the real path and use that instead.
+`docker compose cp`, not `exec`: the Pebble image has no shell or
+utilities inside, only the Pebble binary.
 
 **3. Issue the certificate.** This is the brief's acceptance command, with
 the two additions Part B's setup above makes necessary — `-e
@@ -303,7 +317,7 @@ mechanic from Day 1, just triggered automatically instead of by you typing
 a script command. **This chain will be signed by an intermediate Pebble
 generated fresh when its container last started** — restart the `pebble`
 container and re-run this command, and you'll get a certificate chaining
-to a *different* intermediate. That's deliberate on Pebble's part (see
+to a *different* intermediate (and root). That's deliberate on Pebble's part (see
 `labs/acme/README.md`), not a lab bug.
 
 Confirm the issued cert directly:
@@ -313,28 +327,114 @@ docker compose run --rm toolbox openssl x509 \
     -in /work/acme/certbot/config/live/test.local/cert.pem -noout -issuer -subject -dates
 ```
 
-**Expected:** `subject=CN = test.local`, an `issuer=` naming a Pebble
-intermediate (something like `CN = Pebble Intermediate CA ...`), and a
-**90-day validity window** — `labs/acme/pebble-config.json` pins Pebble's
-`default` profile to `validityPeriod: 7776000` (seconds; 90 days)
+**Expected:**
+
+```
+issuer=CN = Pebble Intermediate CA 2c49c5
+subject=
+notBefore=Sep 30 16:22:22 2026 GMT
+notAfter=Dec 29 16:22:21 2026 GMT
+```
+
+(the hex suffix and dates will differ). Yes, `subject=` is **empty**.
+That's not a bug. Pebble leaves the Subject empty and puts the name only
+in the Subject Alternative Name. Print it:
+
+```bash
+docker compose run --rm toolbox openssl x509 \
+    -in /work/acme/certbot/config/live/test.local/cert.pem -noout -ext subjectAltName
+# Expected:
+# X509v3 Subject Alternative Name: critical
+#     DNS:test.local
+```
+
+This is Day 2's rule made visible: check 3 matches the name against the
+SAN and ignores the CN. A certificate with no CN at all is completely
+valid. (The SAN is marked `critical` because the Subject is empty; a client that
+can't read the SAN must reject the cert rather than find no name.)
+
+Note the **90-day validity window** — `labs/acme/pebble-config.json` pins
+Pebble's `default` profile to `validityPeriod: 7776000` (seconds; 90 days)
 explicitly, matching real-world Let's Encrypt's own default certificate
 lifetime, specifically so `certbot renew`'s real ~30-day-before-`notAfter`
-threshold behaves the same way here as it would in production. (Pebble
-also ships a `shortlived` profile, ~6 days, for testing renewal-adjacent
-edge cases — this lab doesn't select it, precisely so drill-19's "run
-`renew` right after issuing" scenario is a genuine, not-yet-due skip
-rather than an artifact of an unrealistically short-lived test cert.)
+threshold behaves the same way here as it would in production. `default`
+is the *only* profile the lab defines, on purpose: when an order doesn't
+name a profile (and certbot 2.9.0 can't), Pebble picks one of its
+configured profiles at random — so a second, 6-day `shortlived` profile
+would make this 90-day window, and drill-19's "run `renew` right after
+issuing" not-yet-due skip, a coin toss. See `labs/acme/README.md`.
 
-Confirm check 4 directly, the same way Day 1 taught you to reason about
-trust anchors: verify the issued leaf against Pebble's ACME intermediate
-that certbot also downloaded alongside it:
+**90 days won't last.** It's Let's Encrypt's default today, but it's
+shrinking: an opt-in 45-day profile exists since May 2026, the default
+drops to 64 days in February 2027 and 45 days in February 2028, and a
+6-day `shortlived` profile is already generally available. A fixed "renew
+30 days before expiry" rule doesn't fit every lifetime. So certbot 4.1+
+supports **ARI** (ACME Renewal Information, RFC 9773): the CA tells the
+client when to renew. This lab's toolbox ships certbot 2.9.0, which has no
+ARI and still uses the fixed 30-day rule. Drill-19 runs straight into it.
+
+Confirm check 4 directly. The obvious attempt is to verify the leaf
+against `chain.pem`, the file certbot downloaded next to it:
 
 ```bash
 docker compose run --rm toolbox openssl verify \
     -CAfile /work/acme/certbot/config/live/test.local/chain.pem \
     /work/acme/certbot/config/live/test.local/cert.pem
-# Expected final line: cert.pem: OK
 ```
+
+**Expected: it fails.**
+
+```
+CN = Pebble Intermediate CA 2c49c5
+error 2 at 1 depth lookup: unable to get issuer certificate
+error /work/acme/certbot/config/live/test.local/cert.pem: verification failed
+```
+
+Read the depth: `1` is the intermediate. OpenSSL built leaf →
+intermediate, then looked for whoever signed the intermediate and found
+nothing. `chain.pem` holds only the intermediate, never the root. A root
+is a trust anchor: the client must already have it, so the server never
+sends it (Day 2).
+
+So fetch Pebble's issuing root. Pebble serves it on its management API
+(`:15000`), which uses the same minica-signed HTTPS certificate as the
+directory, so `pebble.minica.pem` from step 2 verifies it:
+
+```bash
+docker compose run --rm toolbox curl -s \
+    --cacert /work/acme/pebble.minica.pem \
+    https://pebble:15000/roots/0 -o /work/acme/pebble-root.pem
+```
+
+Now verify properly, giving OpenSSL the root as the anchor and the
+intermediate as a helper:
+
+```bash
+docker compose run --rm toolbox openssl verify \
+    -CAfile /work/acme/pebble-root.pem \
+    -untrusted /work/acme/certbot/config/live/test.local/chain.pem \
+    /work/acme/certbot/config/live/test.local/cert.pem
+# Expected: /work/acme/certbot/config/live/test.local/cert.pem: OK
+```
+
+The two flags are two different roles:
+- `-CAfile` holds **trust anchors**. Anything here is trusted outright.
+- `-untrusted` holds **intermediates** that OpenSSL may use to build the
+  chain. They're used for path building, but trusted only if the chain
+  they form ends at an anchor in `-CAfile`.
+
+That's exactly what a browser does with the chain a server sends.
+OpenSSL also has `-partial_chain`, which lets the first run succeed: it
+accepts any certificate in `-CAfile` as an anchor, even an intermediate.
+That is the "trust an intermediate as the anchor" shortcut. Know it
+exists; don't use it to paper over a missing root.
+
+Like the Pebble intermediate, this root is generated fresh on every
+Pebble start. Restart `pebble` and the two drift apart: your saved
+`pebble-root.pem` still verifies certificates issued *before* the restart,
+but anything issued *after* chains to a new root — re-fetch `/roots/0`
+(and re-issue anything you want to verify against it). Pebble keeps no
+state across restarts, so the old root is gone from `/roots/0` for good.
 
 ### Part C — Serve the ACME-issued cert with nginx, and confirm the trust anchor changed
 
@@ -382,15 +482,21 @@ It has never signed anything Pebble issued, and never will — these are
 two entirely unrelated CAs that happen to have both been used in this lab
 on different days.
 
-Now verify with the chain that actually signed this certificate — the one
-certbot downloaded alongside it in Part B:
+Now verify with the trust anchor that actually issued this chain —
+Pebble's root, fetched from `/roots/0` in Part B. nginx serves
+`fullchain.pem`, so the intermediate arrives in the handshake; curl only
+needs the anchor:
 
 ```bash
-docker compose run --rm toolbox curl --cacert /work/acme/certbot/config/live/test.local/chain.pem \
+docker compose run --rm toolbox curl --cacert /work/acme/pebble-root.pem \
     --connect-to test.local:8443:nginx:443 \
     https://test.local:8443/
 # Expected: test.local is up -- issued by ACME (Pebble), Day 5
 ```
+
+(Passing `chain.pem` here would also work, unlike `openssl verify` in
+Part B: curl turns on OpenSSL's partial-chain mode by default, so it
+accepts an intermediate as an anchor. Same shortcut, different default.)
 
 Narrate the contrast: nothing about checks 1–3 changed between the two
 attempts — same signature, same dates, same SAN (`test.local`, matching
@@ -410,21 +516,27 @@ test CA instead of the real Let's Encrypt. This section is a conceptual
 map from what you just ran onto AWS's managed equivalent — you are not
 expected to touch an AWS account for this, and nothing here requires one.
 
-**AWS Certificate Manager (ACM) *is* an ACME-issuing CA, operated by
-Amazon, wired directly into AWS's own services.** When you request a
-public certificate through ACM, AWS runs the exact same domain-control
-validation your Pebble lab just ran manually:
+**AWS Certificate Manager (ACM) is a public CA wired into AWS's own
+services, but standard ACM does not speak ACME.** You request a
+certificate through the console/API, and AWS does domain-control
+validation its own way:
 
-- **DNS validation** (ACM's default and recommended option) is, at the
-  protocol level, the same idea as this lab's DNS-01: ACM gives you a
-  specific CNAME record to create, and once it can resolve that record, it
-  issues the cert — control proven via DNS, no inbound port needed,
-  exactly the DNS-01 tradeoff table above.
-- **Email validation** (ACM's older option) is *not* one of the three
-  ACME challenge types above at all — it's the pre-ACME manual mechanism
-  ACME was built to replace, kept in ACM mostly for legacy compatibility.
-  If you ever see it offered, prefer DNS validation; it's the one that
-  actually automates renewal cleanly.
+- **DNS validation** (the default and recommended option) is the *same
+  idea* as DNS-01 but not DNS-01. ACM gives you one CNAME record to create
+  and leave in place **permanently**. DNS-01 uses a fresh
+  `_acme-challenge` TXT value per order. Because ACM's record persists, ACM
+  can re-validate on every renewal without you doing anything.
+- **Email validation** is the pre-ACME manual mechanism: someone clicks a
+  link in an email. Renewal needs a human again. Prefer DNS.
+- **HTTP validation** exists only for certificates used with CloudFront,
+  and can't issue wildcards.
+
+Since February 2026, public ACM certificates are valid for 198 days and
+renew about 45 days before expiry. Separately, in June 2026 AWS launched
+an **ACME endpoint for ACM**: real ACME clients like certbot can get ACM
+certificates, authenticated with External Account Binding (EAB) for
+domains an admin has pre-validated. That's the one place today's certbot
+workflow maps onto AWS almost unchanged.
 
 **The renewal automation you just watched certbot need to be told to do
 (re-running `certonly`/`renew` before `notAfter`) is exactly what ACM does
@@ -539,8 +651,10 @@ certs?**
 <details>
 <summary>Solution</summary>
 
-**Only DNS-01 can issue a wildcard certificate.** HTTP-01 and TLS-ALPN-01
-are both explicitly disallowed by the ACME spec for wildcard names.
+**Only DNS-01 can issue a wildcard certificate.** ACME CAs don't allow
+HTTP-01 or TLS-ALPN-01 for wildcard names. That rule comes from CA policy
+(the CA/Browser Forum Baseline Requirements), not from the ACME protocol
+itself.
 
 The reason ties directly back to what each challenge actually proves.
 HTTP-01 and TLS-ALPN-01 prove control by reaching a **specific host** —
@@ -551,21 +665,20 @@ server to challenge. DNS-01, by contrast, proves control of the **zone**
 itself (you can write a TXT record at `_acme-challenge.example.com`), and
 control of the zone is exactly the thing that legitimately implies control
 over every subdomain under it — which is precisely what a wildcard
-certificate claims to vouch for. The restriction isn't arbitrary
-CA policy; it's a direct consequence of what each challenge mechanically
-proves versus what a wildcard certificate actually claims.
+certificate claims to vouch for. So the policy isn't arbitrary: it follows
+directly from what each challenge mechanically proves versus what a
+wildcard certificate claims.
 
 </details>
 
 ### Exercise 3
 
-**A browser visits a site whose certificate was revoked yesterday due to a
-key compromise, but the certificate's own `notAfter` date is still eight
-months away, and the server has **not** configured OCSP stapling. Using
-only the four-check model from Day 1, explain why the browser might still
-accept this connection — and then explain what OCSP stapling being
-enabled would have had to do differently for the browser to actually
-reject it.**
+**A certificate was revoked yesterday after a key compromise. Its
+`notAfter` is still months away, and the attacker holding the stolen key
+is impersonating the site. Using the four-check model from Day 1, explain
+why the four checks alone can't stop this. Then explain what, in 2026,
+actually protects a visitor — and why "turn on OCSP stapling" was never a
+complete answer.**
 
 <details>
 <summary>Hints</summary>
@@ -574,43 +687,35 @@ reject it.**
   section above and reread the sentence that says this explicitly.
 - Tool to run: nothing to run — this is about where revocation sits
   relative to the four-check model, not about running a command.
-- Partial diagnosis: checks 1–4 could all pass perfectly here. The
-  question is what *fifth* thing has to happen, and where that fifth thing
-  actually gets its information from.
+- Partial diagnosis: checks 1–4 all pass. So the answer has to be
+  something outside them. Ask where the browser gets revocation data
+  today, and who controls the server that would staple.
 
 </details>
 
 <details>
 <summary>Solution</summary>
 
-All four of Day 1's checks can pass cleanly on this certificate: the
-signature chain is fine (revocation doesn't change any bytes of the
-cert or invalidate the math), the dates are fine (`notAfter` is eight
-months out, well within the validity window), the name matches, and the
-root is trusted. **None of the four checks was ever designed to catch
-"the CA changed its mind about this cert after issuing it"** — that's
-exactly the gap the theory section called out: revocation is a genuinely
-separate concept layered on top of the four checks, not one of them.
+All four checks pass: the signature is fine (revocation changes no bytes
+of the cert), the dates are fine, the name matches, the root is trusted.
+**None of the four checks asks "has the CA taken this back?"** Revocation
+is a separate layer on top of them.
 
-Without OCSP stapling, the browser's *only* way to learn about the
-revocation is either a CRL fetch or a live OCSP query to the CA — and as
-the theory section covered, browsers have historically **soft-failed**
-(proceeded anyway) if that CRL/OCSP check is slow, unavailable, or simply
-skipped for performance reasons. If nothing forces that live check to
-happen and succeed, the browser has no way to find out the key was
-compromised, and connects anyway.
+What actually protects the visitor in 2026:
+- **Browser-pushed revocation data.** The CA publishes the serial in its
+  CRL. Firefox's CRLite picks it up in its next update and rejects the
+  cert. Chrome rejects it only if the revocation makes it into a CRLSet,
+  which covers a selection, not everything.
+- **Short lifetime.** Whatever the browser misses, the certificate itself
+  still dies at `notAfter`. That's why lifetimes are shrinking (SC-081):
+  a 47-day cert bounds this exposure far tighter than a one-year cert.
 
-With OCSP stapling **enabled**, the *server itself* would have needed to
-fetch a fresh signed "this cert's status" statement from the CA
-periodically. Once the CA's own OCSP responder reflects yesterday's
-revocation, the server's next staple attempt would come back `revoked`
-(or the server would simply stop being able to present a valid staple at
-all) — and a correctly implemented client checks that stapled response as
-part of the handshake and would reject the connection outright,
-**without needing to make its own live network call to the CA**. The
-missing piece in this scenario isn't a broken check — it's that nothing
-in this specific setup was actually feeding revocation information to
-the browser at all.
+Why stapling wasn't the answer: the attacker runs the impersonating
+server, so they simply don't staple. A client can't tell that apart from
+an honest server that never enabled stapling, so it soft-fails and
+connects. Only a certificate carrying **OCSP Must-Staple** made a missing
+staple fatal, and almost nobody used it. Let's Encrypt has since dropped
+OCSP entirely.
 
 </details>
 
@@ -649,8 +754,9 @@ requires zero inbound connectivity to the service being issued a
 certificate for, which is exactly this constraint.
 
 In terms of this lab's own wiring: today's guided lab used certbot's
-`--standalone` plugin, which only knows how to *serve* HTTP-01/TLS-ALPN-01
-responses — it has no DNS-01 support on its own. A DNS-01 flow instead
+`--standalone` plugin, which only knows how to *serve* HTTP-01
+responses — it has no DNS-01 support on its own (drill-18 shows the
+error). A DNS-01 flow instead
 uses certbot's `--manual` mode (or a DNS-provider-specific certbot
 plugin) with an **auth hook** — a script certbot runs at exactly the
 moment it needs a challenge published, and again to clean it up. Against

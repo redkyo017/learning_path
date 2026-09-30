@@ -15,6 +15,10 @@ ALB/NLB; and build, then defend against, a rogue-CA MITM attack — diagnosing
 any of the ~30 deliberately broken TLS setups (20 drills + a 10-setup
 capstone gauntlet) from the symptom alone, in minutes, with no hints.
 
+> **New to a term?** `content/GLOSSARY.md` defines every term and acronym
+> used in this course in plain English — see [Terminology](#terminology).
+> Each day file links to it at the top.
+
 ---
 
 ## File Map
@@ -29,18 +33,20 @@ network_certificates_and_more/
 ├── labs/
 │   ├── README.md                      ← Lab infrastructure reference (services, ports, why toolbox exists)
 │   ├── docker-compose.yml             ← toolbox + nginx + pebble + challtestsrv, all on the certlab network
+│   ├── .gitignore                     ← keeps generated keys/CA state/certbot state/tmp out of git
 │   ├── toolbox/
 │   │   └── Dockerfile                 ← Ubuntu 24.04 + real OpenSSL 3.x, curl, tshark, certbot
 │   ├── ca/                            ← persistent root + intermediate CA (built Day 2, reused every day after)
 │   │   ├── openssl-root.cnf, openssl-intermediate.cnf   ← extension policy (basicConstraints, keyUsage, SAN)
 │   │   ├── make-root.sh, make-intermediate.sh, issue-server-cert.sh
+│   │   ├── issue-client-cert.sh       ← like issue-server-cert.sh, but clientAuth EKU — Day 4 mTLS client identities
 │   │   ├── root/                      ← generated: root CA db (certs/private/newcerts/index.txt/serial)
 │   │   └── intermediate/              ← generated: intermediate CA db + every issued leaf cert
 │   ├── services/                      ← per-day nginx conf.d fragments + active.conf (the file nginx actually loads)
 │   ├── acme/                          ← Day 5 — Pebble config + certbot/ACME wiring (see acme/README.md)
 │   ├── attack/                        ← Day 6 — rogue-CA MITM demo script (see attack/README.md)
 │   ├── samples/                       ← offline sample cert for Day 1, before you've built your own CA
-│   ├── certs/                         ← generated certs/keys staged for nginx
+│   ├── certs/                         ← ships empty; Day 2 stages nginx's cert + key here
 │   └── drills/
 │       ├── drill-01 … drill-20        ← one per Day 1–5 failure class, symptom-only, no diagnosis given
 │       ├── capstone/capstone-01 … 10  ← Day 6 gauntlet: 7 revisit Days 1–5, 3 are new (rogue CA, OCSP, pinning)
@@ -219,8 +225,8 @@ verifier's clock is wrong, client cert presented without its private key.
 **Theory:** `content/day05.md` — what ACME actually automates (domain
 control validation, not issuance itself); the three challenge types
 (HTTP-01, DNS-01, TLS-ALPN-01) and when to use each; why revocation is
-effectively broken (CRLs don't scale, OCSP soft-fails) and what OCSP
-stapling does about it; Certificate Transparency as detection, not
+effectively broken (CRLs don't scale, OCSP soft-fails) and what the
+ecosystem did about it (short lifetimes, browser-pushed revocation lists); Certificate Transparency as detection, not
 prevention; an AWS bridge mapping this local flow onto ACM + ALB/NLB
 (read-only, no AWS account touched).
 
@@ -251,8 +257,10 @@ rejects the same "trusted" rogue cert outright. Then the capstone gauntlet.
 seven revisit failure classes from Days 1–5 (missing intermediate, wrong
 SAN, expired leaf, protocol mismatch, no shared cipher, mTLS wrong CA, an
 ACME DNS failure), and the last three are new: rogue CA / trust anchor,
-OCSP soft-fail, and pinning brittleness. No hint ladder on the capstones —
-diagnose from the symptom alone, then check the solution. The day closes
+OCSP soft-fail, and pinning brittleness. Capstone `SYMPTOM.md` files give
+no hints at all — diagnose from the symptom alone. Each capstone solution
+does have a hint ladder; resist opening it until you've formed your own
+diagnosis. The day closes
 with an unaided teach-back writeup (no partial credit for "close enough").
 
 ---
@@ -277,9 +285,10 @@ teach-back writeup — see below.
 
 ## Terminology
 
-`content/GLOSSARY.md` has a plain-English definition for every term used
-across this course (SAN, EKU, OCSP stapling, ALPN, pinning, etc.) — check
-there first if a term in a day file or a drill's `SYMPTOM.md` is unfamiliar.
+[`content/GLOSSARY.md`](content/GLOSSARY.md) has a plain-English
+definition for every term used across this course (SAN, EKU, OCSP, CRLite,
+ALPN, ACME, pinning, etc.) — check there first if a term in a day file or a
+drill's `SYMPTOM.md` is unfamiliar.
 
 ---
 

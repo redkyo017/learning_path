@@ -21,7 +21,7 @@ Hash the message you have:
 
 ```
 docker compose run --rm toolbox openssl dgst -sha256 /work/drills/drill-02/message.txt
-# SHA256(/work/drills/drill-02/message.txt)= 873b4158cbf20b981756e7800341bc7bbdd2d98ad14312a4aa2281d204f340bd
+# SHA2-256(/work/drills/drill-02/message.txt)= 873b4158cbf20b981756e7800341bc7bbdd2d98ad14312a4aa2281d204f340bd
 ```
 
 The sender confirms, out of band, that the digest of what they actually

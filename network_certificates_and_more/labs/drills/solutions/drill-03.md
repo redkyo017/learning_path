@@ -38,4 +38,5 @@ trying other algorithms.
 The digest algorithm used to verify must exactly match the one used to
 sign — `openssl dgst` never auto-detects it from the signature bytes, so a
 flag typo or an undocumented signing convention is enough to produce the
-same generic `Verification Failure` as a tampered file or a wrong key.
+same generic `Verification failure` as a tampered file (drill-02 even shows the
+identical `bad signature` error line) or a wrong key.

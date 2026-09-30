@@ -20,11 +20,13 @@ docker compose run --rm --entrypoint certbot \
 Observed output:
 
 ```
+Saving debug log to /work/acme/certbot/logs/letsencrypt.log
 An unexpected error occurred:
-requests.exceptions.SSLError: HTTPSConnectionPool(host='pebble', port=14000): Max retries exceeded with url: /dir (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1007)')))
-Ask for help or search for solutions at https://community.letsencrypt.org. Please include the logs from
-/work/acme/certbot/logs.
+requests.exceptions.SSLError: HTTPSConnectionPool(host='pebble', port=14000): Max retries exceeded with url: /dir (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1000)')))
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /work/acme/certbot/logs/letsencrypt.log or re-run Certbot with -v for more details.
 ```
+
+Exit code: `1`.
 
 `env-snapshot.txt` in this directory shows the environment the command
 above actually ran with.

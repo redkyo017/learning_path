@@ -24,7 +24,7 @@ curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
 Observed output:
 
 ```
-curl: (35) OpenSSL/3.x: error:0A000410:SSL routines::sslv3 alert handshake failure
+curl: (35) OpenSSL/3.0.13: error:0A000410:SSL routines::sslv3 alert handshake failure
 ```
 
 `openssl x509 -in /work/ca/intermediate/certs/example.local.cert.pem -noout -text

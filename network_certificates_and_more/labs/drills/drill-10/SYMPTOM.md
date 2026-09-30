@@ -14,7 +14,7 @@ suites: `ECDHE-ECDSA-AES256-GCM-SHA384` and `ECDHE-ECDSA-AES128-GCM-SHA256`.
 Observed output:
 
 ```
-curl: (35) OpenSSL/3.x: error:0A000410:SSL routines::sslv3 alert handshake failure
+curl: (35) OpenSSL/3.0.13: error:0A000410:SSL routines::sslv3 alert handshake failure
 ```
 
 Exit code: `35`

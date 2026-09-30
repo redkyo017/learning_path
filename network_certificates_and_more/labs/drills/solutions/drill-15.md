@@ -9,7 +9,7 @@
    the timestamp you fed `-attime`:
    ```
    docker compose run --rm toolbox openssl x509 -in /work/drills/drill-15/client01-skew.cert.pem -noout -dates
-   docker compose run --rm toolbox date -u -d @1829562708   # or: python3 -c "..." if `date -d` isn't available
+   docker compose run --rm toolbox date -u -d @1863172800   # or: python3 -c "..." if `date -d` isn't available
    ```
 3. **Partial diagnosis:** check 2 (validity dates) isn't comparing the
    cert against some absolute, externally-fetched notion of "now" — it's
@@ -21,12 +21,13 @@
 
 ```
 docker compose run --rm toolbox openssl x509 -in /work/drills/drill-15/client01-skew.cert.pem -noout -dates
-# notBefore=Jul 31 11:51:48 2026 GMT
-# notAfter=Jul 31 11:51:48 2027 GMT
+# notBefore=Sep 30 00:00:00 2026 GMT
+# notAfter=Sep 30 00:00:00 2028 GMT
 ```
 
-The epoch `1829562708` passed to `-attime` in the second run corresponds to
-`Thu Dec 23 11:51:48 UTC 2027` — roughly five months **past** `notAfter`.
+The epoch `1863172800` passed to `-attime` in the second run corresponds to
+`Mon Jan 15 12:00:00 UTC 2029` — roughly three and a half months **past**
+`notAfter`.
 `-attime` tells `openssl verify` "pretend the current time is this epoch
 instead of asking the system clock," which is exactly what a container whose
 clock has drifted forward would effectively be doing to every verification

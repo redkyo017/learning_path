@@ -1,7 +1,7 @@
 networks:
   certlab:
     driver: bridge
-    # Day 5 (Task 7): pebble needs to tell challtestsrv a FIXED IP for
+    # Day 5: pebble needs to tell challtestsrv a FIXED IP for
     # test.local (see labs/acme/README.md), so toolbox/pebble/challtestsrv
     # get static addresses in this subnet. Days 1-4 never depended on any
     # particular IP (everything is reached by service name), so this is
@@ -31,15 +31,29 @@ services:
     ports:
       - "8443:443"
 
-  # Day 5 (Task 7) — ACME test server. Serves its ACME directory/management
+  # Day 5 — ACME test server. Serves its ACME directory/management
   # API over HTTPS signed by ITS OWN test CA (pebble.minica.pem) — see
   # labs/acme/README.md for how certbot is told to trust that. -dnsserver
   # points pebble at challtestsrv's static IP so pebble resolves the lab's
   # test domain (and any DNS-01 TXT lookups) through challtestsrv instead of
   # real DNS.
+  #
+  # Images: Pebble moved off Docker Hub; the maintained images live on ghcr.io.
+  # They are built FROM scratch with ENTRYPOINT ["/app"], so `command:` holds
+  # only the flags (no leading program name) and there is no shell inside —
+  # `docker compose exec pebble <anything>` won't work; use `docker compose cp`.
+  # Pinned to 2.10.1 (verified against this lab on 2026-09-30).
+  #
+  # PEBBLE_WFE_NONCEREJECT=0 turns off Pebble's default habit of rejecting 5% of
+  # perfectly valid nonces (a robustness test for real ACME clients) — in a
+  # learning lab that just makes certbot fail at random. PEBBLE_VA_NOSLEEP=1
+  # skips Pebble's artificial validation delay.
   pebble:
-    image: letsencrypt/pebble
-    command: ["pebble", "-config", "/acme/pebble-config.json", "-dnsserver", "10.77.30.30:8053"]
+    image: ghcr.io/letsencrypt/pebble:2.10.1
+    command: ["-config", "/acme/pebble-config.json", "-dnsserver", "10.77.30.30:8053"]
+    environment:
+      - PEBBLE_WFE_NONCEREJECT=0
+      - PEBBLE_VA_NOSLEEP=1
     networks:
       certlab:
         ipv4_address: 10.77.30.20
@@ -49,15 +63,21 @@ services:
       - "14000:14000"
       - "15000:15000"
 
-  # Day 5 (Task 7) — companion challenge-validation server. In this lab it is
+  # Day 5 — companion challenge-validation server. In this lab it is
   # used ONLY as pebble's DNS backend (so "test.local" resolves to toolbox's
   # static IP, and DNS-01 TXT lookups have somewhere to land); its own
   # built-in HTTP-01/HTTPS-01/TLS-ALPN-01 responders are disabled because
   # certbot's --standalone plugin answers the HTTP-01 challenge itself, on
   # toolbox, directly. See labs/acme/README.md.
+  #
+  # -defaultIPv4 "" / -defaultIPv6 "": by default challtestsrv answers EVERY
+  # name it hasn't been told about with 127.0.0.1 / ::1, so pebble would dial
+  # itself instead of failing cleanly. Blanking both means only names you
+  # register via the add-a API resolve; everything else gets no answer — which
+  # is what a real unregistered domain looks like.
   challtestsrv:
-    image: letsencrypt/pebble-challtestsrv
-    command: ["pebble-challtestsrv", "-http01", "", "-https01", "", "-tlsalpn01", "", "-doh", ""]
+    image: ghcr.io/letsencrypt/pebble-challtestsrv:2.10.1
+    command: ["-http01", "", "-https01", "", "-tlsalpn01", "", "-doh", "", "-defaultIPv4", "", "-defaultIPv6", ""]
     networks:
       certlab:
         ipv4_address: 10.77.30.30

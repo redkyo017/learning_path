@@ -15,22 +15,29 @@ docker compose run --rm toolbox curl --cacert /work/ca/intermediate/certs/ca-cha
     https://example.local:8443/
 ```
 
-Observed output:
+Observed output (curl exit code `0` — the TLS handshake completed; the
+rejection is an HTTP `400`):
 
 ```
-curl: (35) OpenSSL SSL_connect: SSL_ERROR_SSL in connection to example.local:8443
+<html>
+<head><title>400 The SSL certificate error</title></head>
+<body>
+<center><h1>400 Bad Request</h1></center>
+<center>The SSL certificate error</center>
+<hr><center>nginx/1.30.5</center>
+</body>
+</html>
 ```
 
 nginx's own error log (`docker compose logs nginx`) shows a line resembling:
 
 ```
-[info] ... SSL_do_handshake() failed (SSL: error:...:SSL alert number 48) while SSL handshaking, client: ...
+[info] ... client SSL certificate verify error: (21:unable to verify the first certificate) while reading client request headers, client: ...
 ```
 
-The curl command against the server's *own* certificate (no `--cert`/`--key`
-at all) still works fine with the same `--cacert`, so the server side of the
-handshake is not in question here. This drill is entirely about the client
-side.
+curl verified nginx's certificate fine with the same `--cacert` (you got an
+HTTP answer at all), so the server side of the handshake is not in question
+here. This drill is entirely about the client side.
 
 Also present in this directory: `rogue-ca.cert.pem` and
 `reference-ca.cert.pem`. You have not been told what either of those is for.

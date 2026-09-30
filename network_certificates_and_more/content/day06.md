@@ -1,5 +1,7 @@
 # Day 6 — Attack, Defend & Capstone
 
+> Unfamiliar term? Look it up in [GLOSSARY.md](GLOSSARY.md).
+
 Read this before starting the lab. Budget: ~4 hours (60–75 min
 theory/reading, ~45 min guided attack lab, ~90–120 min capstone gauntlet,
 ~30 min teach-back writeup). This is the last day of the course — every
@@ -320,17 +322,21 @@ order, the script:
    `example.local` — exactly what a real DNS-hijack MITM would look
    like from the client's side.
 4. **Connects BEFORE trusting the rogue root** — expect failure, same as
-   any unknown-CA rejection from every earlier day.
+   any unknown-CA rejection from every earlier day:
+   `curl: (60) SSL certificate problem: unable to get local issuer certificate`.
 5. **Installs the rogue root** into this one container's trust store
    (`update-ca-certificates`), then reconnects with the *identical*
    command. **This is the aha:** curl now trusts the attacker's
-   `example.local` certificate. Nothing about the certificate changed
+   `example.local` certificate — the response body is `s_server`'s
+   status page. (A `rehash: warning: skipping ca-certificates.crt` line
+   during the install is harmless.) Nothing about the certificate changed
    between steps 4 and 5 — only what the *trust store* was told to
    accept changed, and that alone was the entire difference.
 6. **Defends with pinning** — extracts the REAL `example.local` leaf's
    public-key hash and retries the same connection with
-   `--pinnedpubkey sha256//<hash>`. Expect **failure**, even though check
-   4 still says this connection is "trusted" — pinning bypassed that
+   `--pinnedpubkey sha256//<hash>`. Expect **failure**:
+   `curl: (90) SSL: public key does not match pinned public key`. Check 4
+   still says this connection is "trusted" — pinning bypassed that
    question entirely and checked the actual key instead.
 
 The pubkey-hash extraction pipeline, worth understanding line by line
@@ -354,17 +360,10 @@ openssl x509 -in <cert> -pubkey -noout \
 - `base64` encodes that raw digest into the text form
   `curl --pinnedpubkey sha256//<this>` expects.
 
-**On the specific hash value:** this course was authored without a live
-Docker session to actually run this pipeline against a real cert (see the
-task report). Nowhere in this material is any specific base64 string
-presented as if it were a real, verified pin — every example above uses
-`<hash>`/`REAL_PIN` as a computed-at-runtime placeholder, produced fresh
-by the script from whatever `example.local` certificate is actually
-sitting in your own `ca/intermediate/`. Run the extraction yourself and
-read the real value it produces; don't take any digest string on faith
-from a document, including this one — that's the entire point of
-`-binary | base64` being something *you* run against a cert *you* hold,
-not something handed to you.
+**On the hash value:** your pin is unique to the `example.local` key in
+your own `ca/intermediate/`, so this page shows none. Compute it yourself
+with the pipeline above — never trust a digest string handed to you in a
+document, including this one.
 
 ---
 

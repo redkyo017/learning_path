@@ -5,10 +5,15 @@
 1. **Nudge:** every single successful connection in this course, on every
    prior day, needed an explicit `--cacert` pointing at your own CA. This
    command has none. Ask why it succeeded anyway.
-2. **Tool to run:**
+2. **Tool to run:** list the *subjects* in the default trust store — in
+   the same container invocation as `repro.sh`, since whatever it changed
+   only lives as long as that container (and the bundle is base64 PEM, so
+   grepping it directly for a name never matches):
    ```
-   docker compose run --rm toolbox grep -c "SecureVault" /etc/ssl/certs/ca-certificates.crt
-   docker compose run --rm toolbox grep -c "TLS Mastery" /etc/ssl/certs/ca-certificates.crt
+   docker compose run --rm toolbox bash -c '
+     bash /work/drills/capstone/capstone-08/repro.sh >/dev/null 2>&1
+     awk -v cmd="openssl x509 -noout -subject" "/BEGIN/{close(cmd)};{print | cmd}" \
+         /etc/ssl/certs/ca-certificates.crt | grep -E "SecureVault|TLS Mastery"'
    ```
 3. **Partial diagnosis:** `SecureVault` is present in this container's
    default trust store; your real `TLS Mastery` root is not, and never
@@ -30,11 +35,17 @@ itself the anomaly — it should be impossible under this course's normal
 rules.
 
 ```
-docker compose run --rm toolbox grep -c "SecureVault" /etc/ssl/certs/ca-certificates.crt
-# 1
-docker compose run --rm toolbox grep -c "TLS Mastery" /etc/ssl/certs/ca-certificates.crt
-# 0
+docker compose run --rm toolbox bash -c '
+  bash /work/drills/capstone/capstone-08/repro.sh >/dev/null 2>&1
+  awk -v cmd="openssl x509 -noout -subject" "/BEGIN/{close(cmd)};{print | cmd}" \
+      /etc/ssl/certs/ca-certificates.crt | grep -E "SecureVault|TLS Mastery"'
+# subject=O = SecureVault Trust Services, CN = SecureVault Trust Root G2
 ```
+
+One line: the store holds a `SecureVault` root, and no `TLS Mastery`
+root. (Run the same pipeline in a *fresh* container and even the
+SecureVault line is gone — the install only lived inside `repro.sh`'s
+container. On a real, long-lived machine it would persist.)
 
 Something installed a root called `SecureVault Trust Root G2` into this
 container's **default** trust store — the store `curl` falls back to

@@ -8,33 +8,31 @@ guided lab otherwise uses, without changing anything else:
 ```
 docker compose run --rm --entrypoint certbot \
     -e REQUESTS_CA_BUNDLE=/work/acme/pebble.minica.pem \
-    toolbox certonly --standalone --preferred-challenges dns -n \
+    toolbox certonly --standalone --http-01-port 5002 \
+    --preferred-challenges dns -n \
     --server https://pebble:14000/dir \
     -d test.local --agree-tos -m a@b.c --no-eff-email \
-    --config-dir /work/acme/certbot/config \
-    --work-dir /work/acme/certbot/work \
-    --logs-dir /work/acme/certbot/logs
+    --config-dir /work/tmp/drill-18/config \
+    --work-dir /work/tmp/drill-18/work \
+    --logs-dir /work/tmp/drill-18/logs
 ```
+
+(This drill keeps its own certbot state under `tmp/drill-18/`. Reusing
+the guided lab's `acme/certbot/` would just find the existing `test.local`
+certificate and print `Certificate not yet due for renewal`.)
 
 Observed output:
 
 ```
+Saving debug log to /work/tmp/drill-18/logs/letsencrypt.log
+Account registered.
 Requesting a certificate for test.local
-
-Certbot failed to authenticate some domains (authenticator: standalone). The Certificate Authority reported these problems:
-  Domain: test.local
-  Type:   ...
-  Detail: ...
-
-Some challenges have failed.
+None of the preferred challenges are supported by the selected plugin
+Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /work/tmp/drill-18/logs/letsencrypt.log or re-run Certbot with -v for more details.
 ```
 
-along with, earlier in the same run, a line resembling:
-
-```
-Client with the currently selected authenticator does not support any
-combination of challenges that will satisfy the CA.
-```
+Exit code: `1`. Pebble never reported a validation failure; certbot
+stopped on its own side.
 
 Also present in this directory: `authz-challenges-excerpt.json`, a
 trimmed copy of the `challenges` array Pebble includes on the

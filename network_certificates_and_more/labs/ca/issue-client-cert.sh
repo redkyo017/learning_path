@@ -1,24 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 #
-# issue-server-cert.sh <cn> [san...]
+# issue-client-cert.sh <cn> [san...]
 #
-# Issues a leaf (end-entity) server certificate signed by the intermediate
-# CA. (For a mutual-TLS CLIENT identity use issue-client-cert.sh instead —
-# same flow, but clientAuth instead of serverAuth; see Day 4.)
+# Issues a leaf (end-entity) CLIENT certificate for mutual TLS (Day 4),
+# signed by the intermediate CA. Identical flow to issue-server-cert.sh; the
+# one difference is the [ client_cert ] extension block, whose
+# extendedKeyUsage is clientAuth. nginx (via OpenSSL) rejects a client cert
+# without clientAuth with "unsuitable certificate purpose".
 #
 # subjectAltName is populated from <cn> plus any extra SAN args; each
 # arg is classified as an IP address (IPv4 dotted-quad or anything
 # containing ':' for IPv6) or a DNS name automatically.
 #
 # Run from labs/:
-#   docker compose run --rm toolbox bash ca/issue-server-cert.sh example.local example.local
-#   docker compose run --rm toolbox bash ca/issue-server-cert.sh example.local example.local 127.0.0.1
+#   docker compose run --rm toolbox bash ca/issue-client-cert.sh client01 client01
 #
 # Requires the intermediate CA to already exist (run make-intermediate.sh first).
 #
 # Produces:
-#   ca/intermediate/certs/<cn>.cert.pem    RSA 2048 leaf cert, valid ~13 months.
+#   ca/intermediate/certs/<cn>.cert.pem    RSA 2048 client cert, valid ~13 months.
 #   ca/intermediate/private/<cn>.key.pem   RSA 2048 leaf private key.
 #
 # Safe to run repeatedly for different <cn> values: ca/intermediate/index.txt
@@ -54,7 +55,7 @@ CSR="${INT_DIR}/csr/${CN}.csr.pem"
 CERT="${INT_DIR}/certs/${CN}.cert.pem"
 EXT_CONF="${INT_DIR}/csr/${CN}.ext.cnf"
 
-echo "==> Generating server key (RSA 2048) for CN=${CN}"
+echo "==> Generating client key (RSA 2048) for CN=${CN}"
 openssl genrsa -out "${KEY}" 2048
 chmod 600 "${KEY}"
 
@@ -62,7 +63,7 @@ echo "==> Creating CSR for CN=${CN}"
 openssl req -config "${INT_CONF}" \
     -key "${KEY}" \
     -new -sha256 \
-    -subj "/C=US/ST=CA/O=TLS Mastery Lab/OU=Servers/CN=${CN}" \
+    -subj "/C=US/ST=CA/O=TLS Mastery Lab/OU=Clients/CN=${CN}" \
     -batch \
     -out "${CSR}"
 
@@ -87,9 +88,9 @@ sed '/^\[ alt_names \]/,$d' "${INT_CONF}" > "${EXT_CONF}"
   done
 } >> "${EXT_CONF}"
 
-echo "==> Signing certificate with intermediate CA (server_cert extensions)"
+echo "==> Signing certificate with intermediate CA (client_cert extensions)"
 openssl ca -config "${EXT_CONF}" \
-    -extensions server_cert -days 375 -notext -md sha256 \
+    -extensions client_cert -days 375 -notext -md sha256 \
     -in "${CSR}" \
     -out "${CERT}" \
     -batch

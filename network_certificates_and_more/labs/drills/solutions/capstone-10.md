@@ -25,7 +25,7 @@ pinning specifically: checks 1 through 4 all pass on the *current*
 issued, correctly signed, currently valid, correctly named cert from your
 real CA.
 
-`curl: (90) SSL: public key does not match pinned public key!` is a
+`curl: (90) SSL: public key does not match pinned public key` is a
 distinct failure mode from every other capstone in this gauntlet — it is
 **not** one of Day 1's four checks, and it doesn't map onto any of them.
 Public-key pinning is a check curl runs *in addition to*, and

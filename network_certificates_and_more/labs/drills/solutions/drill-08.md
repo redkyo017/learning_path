@@ -31,6 +31,7 @@ right now"):
 
 ```
 docker compose run --rm toolbox openssl x509 -in /work/drills/drill-08/example.local.expired.cert.pem -noout -checkend 0
+# Certificate will expire
 echo $?
 # 1  (already expired)
 ```

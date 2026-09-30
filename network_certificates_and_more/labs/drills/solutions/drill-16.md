@@ -46,7 +46,7 @@ yours.
 **Fix:** get the certificate's actual matching key, not just the
 certificate. If this is genuinely your own `client01` identity, its real key
 lives at `ca/intermediate/private/client01.key.pem` (issued alongside the
-cert by `ca/issue-server-cert.sh client01 client01`) — never split a cert
+cert by `ca/issue-client-cert.sh client01 client01`) — never split a cert
 from its key when handing it to someone, and never accept just the `.cert.pem`
 half of an identity from a teammate and assume you can "figure out" or reuse
 some other key for it; a certificate only vouches for the *one specific*

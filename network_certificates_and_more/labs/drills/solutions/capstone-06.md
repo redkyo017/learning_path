@@ -25,7 +25,7 @@ docker compose run --rm toolbox openssl x509 -in /work/drills/capstone/capstone-
 # issuer=O = Definitely Not TLS Mastery Lab, CN = Imposter Testing CA
 
 docker compose run --rm toolbox openssl x509 -in /work/ca/intermediate/certs/intermediate.cert.pem -noout -subject
-# subject=O = TLS Mastery Lab, OU = Intermediate CA, CN = TLS Mastery Intermediate CA
+# subject=C = US, ST = CA, O = TLS Mastery Lab, OU = Intermediate CA, CN = TLS Mastery Intermediate CA
 ```
 
 The CN reads `client01` — identical, character for character, to what
@@ -44,17 +44,26 @@ file the server was told to trust. **Check 4: trust anchor** fails, on the
 *client* side of the handshake, exactly as Day 4 Exercise 1 predicted this
 would.
 
-Over the wire this is a handshake-layer failure (curl exit `35`, an
-`unknown ca` alert), not an HTTP-level response — the server rejects the
-client certificate before ever processing a request, the same distinction
-Day 4's guided lab drew between a *missing* client cert (which some
-builds let slip past the TLS layer under TLS 1.3) and a *present but
-untrusted* one (rejected during the handshake itself, every time).
+The server log names the failure directly: `verify error:num=20:unable
+to get local issuer certificate` — nothing in `ca-chain.cert.pem` issued
+this cert. Because the script runs `s_server` with `-verify_return_error`,
+the server then aborts the handshake with an `unknown ca` alert (alert 48).
+Under TLS 1.3, curl considers its handshake finished the moment it sends
+its certificate, so it only sees the alert when it reads the response:
+exit `56` (`SSL_read`), not `35`.
+
+That's `s_server`'s behavior, not nginx's. Day 4's nginx never fails the
+handshake over a bad client cert: it finishes the handshake and answers
+HTTP `400 The SSL certificate error` (curl exit `0`), with the reason only
+in its error log. Same check-4 failure, different way of reporting it. Drop
+`-verify_return_error` from the script and `s_server` logs the same error
+but serves the page anyway — a verifier that logs a failure without
+acting on it is not verifying anything.
 
 **Fix:** never accept a certificate/key pair for an identity you didn't
 issue yourself, no matter how correct the CN looks. Issue the real
 `client01` identity from your own CA:
-`ca/issue-server-cert.sh client01 client01`.
+`ca/issue-client-cert.sh client01 client01`.
 
 ## Lesson
 

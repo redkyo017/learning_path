@@ -1,5 +1,7 @@
 # Day 4 — Mutual TLS + Trust-Store Operations
 
+> Unfamiliar term? Look it up in [GLOSSARY.md](GLOSSARY.md).
+
 Read this before starting the lab. Budget: ~3 hours (45–60 min
 theory/reading, ~90 min guided lab, ~30–45 min exercises + drills).
 
@@ -162,6 +164,12 @@ like `certbot`, is to renew once ~30 days remain) buys you slack to notice
 and fix a reload that silently failed, before the old cert actually
 expires.
 
+That slack is shrinking. Public TLS certs have been capped at 200 days
+since 2026-03-15, falling to 47 days by 2029; Let's Encrypt's default
+drops to 45 days by 2028, and certbot 4.1+ supports ARI, where the CA tells
+the client when to renew. At those lifetimes, automated renew-then-reload
+is mandatory, not a nice-to-have — nobody rotates every few weeks by hand.
+
 Rotating the **CA itself** — the root or intermediate, not just a leaf —
 is a much bigger operation, because every trust anchor referencing the old
 CA has to start trusting the new one *before* you can safely issue new
@@ -191,31 +199,27 @@ day. Nothing here runs on the host.
 ### Part A — Issue a client certificate
 
 ```bash
-docker compose run --rm toolbox bash ca/issue-server-cert.sh client01 client01
+docker compose run --rm toolbox bash ca/issue-client-cert.sh client01 client01
 ```
 
-This reuses Day 2's `issue-server-cert.sh` — there's no separate
-"client-cert" script, because nothing about the *shape* of a client
-certificate differs from a server certificate at the X.509 level; the only
-real difference is how it's *used*. One caveat worth knowing: the script
-signs with the `server_cert` extension block in
-`ca/openssl-intermediate.cnf`, which sets `extendedKeyUsage = serverAuth`
-— it does **not** set `clientAuth`. Strictly, a maximally strict verifier
-could reject a cert lacking `clientAuth` when used as a client identity.
-nginx's `ssl_verify_client`, however, does **not** check `extendedKeyUsage`
-on the client certificate it receives by default — it verifies the chain
-(checks 1, 2, 4) and stops there, so `client01` works for today's lab
-exactly as issued. Flag this as a known gap if you ever harden this setup
-beyond lab purposes: a production mTLS deployment that wants to enforce
-"this cert may only be used as a client identity" would need either a
-dedicated client-cert extension block or explicit application-level
-checking of the EKU field.
+Why not reuse Day 2's `issue-server-cert.sh`? A client cert has the same
+X.509 shape as a server cert, but a different **purpose**. The server
+script signs with the `server_cert` block (`extendedKeyUsage =
+serverAuth`); `issue-client-cert.sh` signs with the `client_cert` block
+in `ca/openssl-intermediate.cnf` (`extendedKeyUsage = clientAuth`).
+nginx's `ssl_verify_client` checks that purpose: present a
+`serverAuth`-only cert and nginx answers `400 The SSL certificate error`,
+logging `unsuitable certificate purpose`. That's exactly what Day 2
+Exercise 3 predicted.
 
-Confirm what you got:
+Confirm what you got — note the EKU line:
 
 ```bash
-docker compose run --rm toolbox openssl x509 -in ca/intermediate/certs/client01.cert.pem -noout -subject -issuer -dates
+docker compose run --rm toolbox openssl x509 -in ca/intermediate/certs/client01.cert.pem -noout -subject -issuer -dates -ext extendedKeyUsage
 ```
+
+Expect `OU = Clients` in the subject and `TLS Web Client Authentication`
+under `X509v3 Extended Key Usage`.
 
 ### Part B — Stage the certs for nginx and enable mTLS
 
@@ -272,21 +276,27 @@ status code, and the *body itself* is the failure signal):
 <body>
 <center><h1>400 Bad Request</h1></center>
 <center>No required SSL certificate was sent</center>
-<hr><center>nginx</center>
+<hr><center>nginx/1.30.5</center>
 </body>
 </html>
 ```
 
-This exact wording — an *HTTP*-level 400, not a TLS handshake failure — is
-specific to TLS 1.3: under TLS 1.3, nginx's OpenSSL stack completes the
-handshake even when the client sends no certificate, and only rejects the
-request afterward, at the HTTP layer. (Under TLS 1.2, the missing-cert
-case fails during the handshake itself, before any HTTP request is
-possible — you'd see a curl-level connection error instead. You are not
-expected to have memorized this distinction yet; it's flagged here so it
-doesn't look like an inconsistency later, e.g. against drill-13, where the
-client *does* send a certificate and the failure genuinely does happen at
-the handshake layer.)
+Note this is an *HTTP*-level 400, not a TLS handshake failure — under
+TLS 1.3 and TLS 1.2 alike. nginx deliberately lets the handshake finish
+and rejects at the HTTP layer, so it can send a readable error page (and
+so `ssl_verify_client optional` can hand the decision to the app). The
+same holds for a cert that *is* sent but fails verification — wrong CA,
+expired, wrong purpose: HTTP `400 The SSL certificate error`, curl exit
+`0`. The page never says *why*. The reason is in nginx's error log,
+which `nginx-mtls.conf` raises to `info` level so you can see it:
+
+```bash
+docker compose logs nginx --tail 5
+# [info] ... client sent no required SSL certificate while reading client request headers ...
+```
+
+A rejected cert logs `client SSL certificate verify error: (NN:reason)`
+instead — OpenSSL's verify code and message.
 
 Now present the client certificate you issued in Part A:
 
@@ -325,10 +335,17 @@ location OpenSSL falls back to for CA material if you don't pass `-CAfile`
 explicitly. Confirm your lab's own CA is nowhere in that bundle:
 
 ```bash
-docker compose run --rm toolbox bash -c "grep -c 'TLS Mastery' /etc/ssl/certs/ca-certificates.crt || true"
+docker compose run --rm toolbox bash -c \
+  "awk -v cmd='openssl x509 -noout -subject' '/BEGIN/{close(cmd)};{print | cmd}' \
+     /etc/ssl/certs/ca-certificates.crt | grep -c 'TLS Mastery' || true"
 ```
 
-Expect `0` (or the command to simply find nothing) — confirming, directly,
+(Why not just `grep 'TLS Mastery' ca-certificates.crt`? The bundle is
+base64 PEM — CA names never appear in it as plain text, so a direct grep
+returns `0` whether your CA is installed or not. The `awk` loop feeds each
+certificate to `openssl x509 -subject` so there's real text to search.)
+
+Expect `0` — confirming, directly,
 the theory section's claim: your private CA was never installed into this
 container's OS trust store, which is exactly why every command all
 course-long has needed an explicit `--cacert`/`ssl_client_certificate`
@@ -386,12 +403,11 @@ binding is only as good as whoever vouched for it. Anyone can self-sign a
 root and issue a certificate claiming to be `CN=client01` today; that's
 precisely the check-1-vs-check-4 distinction from Day 1's mental model,
 now demonstrated on the client side of an mTLS handshake instead of the
-server side. Over the wire this shows up as a TLS handshake failure (curl
-error `35`, an "unknown ca"-class alert from nginx), because — unlike a
-*missing* certificate under TLS 1.3, which today's Part C showed slips
-past the handshake and fails at the HTTP layer instead — a client that
-*does* present a certificate, just an untrusted one, is rejected during
-the handshake itself.
+server side. Over the wire, nginx completes the handshake and answers
+HTTP `400 The SSL certificate error` (curl exit `0`), just like the
+missing-cert case in Part C. The *why* is only in nginx's error log:
+`client SSL certificate verify error: (21:unable to verify the first
+certificate)`.
 
 </details>
 
@@ -444,6 +460,12 @@ needed) and `ssl_client_certificate` to a private CA's chain that only
 internal services are ever issued certificates from. Both directives sit
 in the same `server` block, unbothered by each other's choice of CA — the
 architecture is built for exactly this split.
+
+Since 2026 the split is no longer optional. Chrome Root Program policy
+requires `serverAuth`-only hierarchies for new public issuing CAs (from
+June 2026), and Let's Encrypt dropped `clientAuth` in February 2026. A
+public cert can't serve as an mTLS client identity anymore, so client
+identities have to come from a private CA.
 
 </details>
 

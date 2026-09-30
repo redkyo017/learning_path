@@ -22,8 +22,8 @@ Observed output:
 
 ```
 C = US, ST = CA, O = Drill Fixture Lab, OU = Servers, CN = example.local
-error 10 at 0 depth lookup:certificate has expired
-example.local.expired.cert.pem: verification failed: 10 (certificate has expired)
+error 10 at 0 depth lookup: certificate has expired
+error /work/drills/drill-08/example.local.expired.cert.pem: verification failed
 ```
 
 Exit code: `2`

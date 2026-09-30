@@ -25,6 +25,7 @@ docker compose run --rm toolbox openssl x509 -in /work/drills/drill-14/client01-
 
 ```
 docker compose run --rm toolbox openssl x509 -in /work/drills/drill-14/client01-expired.cert.pem -noout -checkend 0
+# Certificate will expire
 echo $?
 # 1  (already expired)
 ```
@@ -36,7 +37,9 @@ exactly as shown in the symptom:
 ```
 docker compose run --rm toolbox openssl verify -CAfile /work/drills/drill-14/reference-ca.cert.pem \
     /work/drills/drill-14/client01-expired.cert.pem
+# C = US, ST = CA, O = TLS Mastery Lab, OU = Clients, CN = client01
 # error 10 at 0 depth lookup: certificate has expired
+# error /work/drills/drill-14/client01-expired.cert.pem: verification failed
 ```
 
 This is **check 2: validity dates**, and it's the same check, the same
@@ -51,13 +54,24 @@ against the client cert too, in the exact same order, by the exact same
 logic — nginx's `ssl_verify_client on` triggers this same date check
 internally on whatever cert the client presents, and an expired one fails
 here just as surely as an expired server cert fails a browser's check.
+nginx just reports it differently: HTTP `400 The SSL certificate error`
+instead of a failed handshake, with the verify error in its log
+(`docker compose logs nginx --tail 2`):
+
+```
+[info] ... client SSL certificate verify error: (10:certificate has expired) while reading client request headers, client: ...
+```
+
+(This fixture was issued by the drill's own reference CA, which nginx
+doesn't trust either — yet nginx logs only the *last* verify error it saw,
+which here is the expiry. One log line is not always the whole story.)
 
 **Fix:** you cannot edit a certificate's dates in place — doing so would
 invalidate the signature that covers the whole document (Day 1, Exercise 1).
 The only real fix is re-issuing:
 
 ```
-docker compose run --rm toolbox bash ca/issue-server-cert.sh client01 client01
+docker compose run --rm toolbox bash ca/issue-client-cert.sh client01 client01
 ```
 
 which gives you a fresh `notBefore`/`notAfter` window for the same identity.

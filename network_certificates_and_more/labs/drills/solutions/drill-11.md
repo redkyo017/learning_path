@@ -22,9 +22,7 @@
 ```
 docker compose run --rm toolbox bash -c \
   "curl -k -v --connect-to wrong.local:8443:nginx:443 https://wrong.local:8443/ 2>&1 | grep -i subject"
-# expected — not captured:
-# * Server certificate:
-# *  subject: CN=example.local
+# *  subject: C=US; ST=CA; O=TLS Mastery Lab; OU=Servers; CN=example.local
 ```
 
 The certificate nginx sent back is for `example.local` — the only
@@ -58,7 +56,7 @@ actually covers:
 docker compose run --rm toolbox curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
     --connect-to example.local:8443:nginx:443 \
     https://example.local:8443/
-# expected — not captured: SUCCESS, nginx's default response body.
+# example.local is up — TLS Mastery Day 2
 ```
 
 or, if `wrong.local` is genuinely meant to be served by this nginx, issue

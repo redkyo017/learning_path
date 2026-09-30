@@ -10,13 +10,17 @@ docker compose run --rm toolbox bash /work/drills/capstone/capstone-06/repro.sh
 
 That script stands up a throwaway `openssl s_server` (playing the role of
 Day 4's mTLS-enabled nginx: it requires and verifies a client certificate
-against your real `ca-chain.cert.pem`), then presents the contractor's
-`client01` cert/key pair to it via `curl --cert/--key`.
+against your real `ca-chain.cert.pem`, and aborts the handshake if that
+verification fails), then presents the contractor's `client01` cert/key
+pair to it via `curl --cert/--key`.
 
-Observed output:
+Observed output (last lines — the server's log, then curl's error):
 
 ```
-curl: (35) OpenSSL/3.x: error:0A000418:SSL routines::tlsv1 alert unknown ca
+verify depth is 1, must return a certificate
+depth=0 O = Definitely Not TLS Mastery Lab, CN = client01
+verify error:num=20:unable to get local issuer certificate
+curl: (56) OpenSSL SSL_read: OpenSSL/3.0.13: error:0A000418:SSL routines::tlsv1 alert unknown ca, errno 0
 ```
 
 `openssl x509 -in /work/drills/capstone/capstone-06/tmp/client01-imposter.cert.pem

@@ -16,10 +16,13 @@
 ## Full walkthrough
 
 The output is explicit, if you read past the first line: **"The following
-certs are not due for renewal yet... No renewals were attempted."** — this
+certificates are not due for renewal yet... No renewals were attempted.
+No hooks were run."** — this
 is certbot behaving exactly as documented, not failing. `certbot renew`
 only attempts to renew a certificate once it's within its renewal window
-(by default, roughly the last 30 days before `notAfter`) — and the
+(certbot 2.9, the version in this lab's toolbox: a fixed window of the
+last 30 days before `notAfter`. certbot 4.1+ can instead ask the CA via
+ARI when to renew) — and the
 certificate from Part B was issued minutes ago, with a full **90-day**
 validity window ahead of it (`labs/acme/pebble-config.json` pins Pebble's
 `default` profile to exactly that, deliberately matching real-world Let's
@@ -30,8 +33,9 @@ wide margin.
 
 Because nothing was renewed, certbot never ran the `--deploy-hook` at
 all — deploy hooks fire **only** after a certificate is actually
-renewed, never as a no-op courtesy call — which is exactly why
-`/work/acme/renewed.log` doesn't exist. This is the trap: it's easy to
+renewed, never as a no-op courtesy call. certbot even says so (`No hooks
+were run.`), and that's exactly why `/work/acme/renewed.log` doesn't
+exist. This is the trap: it's easy to
 read "exit code 0, no errors" and conclude your renewal automation
 (including the hook that's supposed to reload your server) is working,
 when in fact it has never actually been exercised at all.
@@ -61,6 +65,7 @@ should exist and contain `renewed`.
 yet — but that same safety mechanism means "I ran renew and it exited 0"
 is not evidence your renewal *pipeline* — including any deploy hook that
 reloads a real service — has ever actually been exercised. Test hook
-behavior with `--force-renewal` (or `--dry-run`, which simulates the ACME
-exchange without touching your live cert at all) deliberately, rather
+behavior with `--force-renewal` deliberately (`--dry-run` simulates the
+ACME exchange without touching your live cert, but skips deploy hooks by
+default, so it can't prove the hook works), rather
 than trusting an early, premature production run to have proven anything.

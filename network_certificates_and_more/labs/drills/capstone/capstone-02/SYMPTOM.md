@@ -21,8 +21,12 @@ curl --cacert /work/ca/intermediate/certs/ca-chain.cert.pem \
 Observed output:
 
 ```
-curl: (60) SSL: no alternative certificate subject name matches target
-host name 'portal.example.local'
+curl: (60) SSL: no alternative certificate subject name matches target host name 'portal.example.local'
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the web page mentioned above.
 ```
 
 `openssl x509 -in /work/ca/intermediate/certs/example.local.cert.pem -noout -text

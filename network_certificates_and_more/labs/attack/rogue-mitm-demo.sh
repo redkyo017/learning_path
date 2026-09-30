@@ -16,10 +16,10 @@ set -euo pipefail
 # public key for the defense step (step 6) — it never modifies your real
 # CA or your real example.local key/cert.
 #
-# NOTE: authored without a live Docker session available (see the task
-# report). Every command below is reasoned through against openssl's and
-# curl's documented behavior, but treat the first live run as your own
-# verification pass, exactly as Day 5 asked you to.
+# Verified live (toolbox: OpenSSL 3.0.13, curl 8.5.0) on 2026-10-01: step 4
+# fails with curl (60) "unable to get local issuer certificate", step 5
+# returns s_server's status page, step 6 fails with curl (90) "SSL: public
+# key does not match pinned public key".
 
 if [ ! -f /work/ca/intermediate/certs/example.local.cert.pem ]; then
   echo "ERROR: run Day 2's guided lab first (need ca/intermediate/certs/example.local.cert.pem)." >&2

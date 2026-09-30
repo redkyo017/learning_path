@@ -1,5 +1,7 @@
 # Day 3 — The Handshake on the Wire
 
+> Unfamiliar term? Look it up in [GLOSSARY.md](GLOSSARY.md).
+
 Read this before starting the lab. Budget: ~3.5 hours (75–90 min
 theory/reading, ~75 min guided lab — capture, walk the packets, compare
 versions — ~45 min exercises before starting the drills).
@@ -77,7 +79,7 @@ Here is every message, in order, with what it carries and who sends it:
 
 | # | Message | Sender | Encrypted? | Carries |
 |---|---|---|---|---|
-| 1 | `ClientHello` | Client | No (never is) | client random, supported TLS versions, cipher suites (only the 5 TLS 1.3 suites), a guessed `key_share` (ephemeral ECDHE public key, e.g. for X25519), `signature_algorithms`, **SNI (`server_name` extension)**, **ALPN offer list** |
+| 1 | `ClientHello` | Client | No (never is) | client random, supported TLS versions, cipher suites (TLS 1.3 defines 5 suites and clients typically offer 3 of them; most real ClientHellos also offer TLS 1.2 suites, in case the server is older), a guessed `key_share` (ephemeral ECDHE public key, e.g. for X25519 — see note below), `signature_algorithms`, **SNI (`server_name` extension)**, **ALPN offer list** |
 | 2 | `ServerHello` | Server | No — last plaintext server message | server random, chosen cipher suite, server's `key_share` (its own ephemeral ECDHE public key) |
 | — | *(key derivation happens here)* | both | — | Both sides now have enough to compute the ECDHE shared secret and derive **handshake traffic keys**. Everything the server sends from this point on is encrypted with those keys. |
 | 3 | `EncryptedExtensions` | Server | **Yes** | extensions that don't need to be public — this is where the **ALPN answer** lives in 1.3 |
@@ -87,12 +89,19 @@ Here is every message, in order, with what it carries and who sends it:
 | 7 | `Finished` | Client | Yes | the client's own transcript HMAC |
 | — | *(application data)* | both | Yes | HTTP request/response, etc. |
 
+A note on `key_share`: this lab shows X25519, because the toolbox runs
+OpenSSL 3.0. Chrome 131+, Firefox 132+, and OpenSSL 3.5+ now default to the
+hybrid post-quantum group **X25519MLKEM768** (X25519 combined with ML-KEM),
+so a ClientHello from a current browser looks different. The handshake
+shape is the same.
+
 **This is where the four checks run:** the instant the client has received
 and decrypted message 4 (`Certificate`) — before it ever sends its own
-`Finished`, before any application data flows — the client runs signature
-chain → validity dates → name match → trust anchor entirely offline,
-against the chain it just decrypted. If any check fails, the client aborts
-the handshake with a fatal alert instead of sending `Finished`. Common
+`Finished`, before any application data flows — the client validates the
+chain entirely offline, against what it just decrypted. (Checks 1, 2 and 4
+always happen here; *when* check 3 happens depends on the client — see
+below.) If a check fails here, the client aborts the handshake with a fatal
+alert instead of sending `Finished`. Common
 (though implementation-dependent — TLS doesn't rigidly mandate a 1:1
 mapping) alert choices per failed check:
 
@@ -100,16 +109,22 @@ mapping) alert choices per failed check:
 |---|---|
 | 1. Signature chain | `bad_certificate` (42) or `decrypt_error` (51) |
 | 2. Validity dates | `certificate_expired` (45) |
-| 3. Name match | *(not a TLS alert at all — see below)* |
+| 3. Name match | depends on the client — `bad_certificate` (42) if checked during verification, no alert at all if checked afterwards (see below) |
 | 4. Trust anchor | `unknown_ca` (48) |
 
-Check 3 is worth calling out specifically: **hostname verification is not
-part of the TLS protocol** — TLS itself has no "wrong name" alert. It's an
-application-layer decision made by the TLS *library's caller* (curl,
-a browser, your HTTP client) after the TLS handshake has already
-succeeded at the protocol level. That's why curl's error for a SAN
-mismatch looks completely different from a protocol alert — you'll see it
-directly in the guided lab.
+Check 3 is worth calling out specifically: **TLS itself defines no name
+matching** — there's no "wrong name" alert, and RFC 8446 leaves hostname
+checks to the application. *When* it happens depends on the client:
+
+- **curl** (OpenSSL backend) lets the handshake finish, then checks the
+  name itself. A SAN mismatch shows up as curl's own error
+  (`SSL: no alternative certificate subject name matches target host
+  name`), not a protocol alert — you'll see this in the drills.
+- **Browsers**, and programs using OpenSSL's `SSL_set1_host` (Python's
+  `ssl` module, for one), check the name *during* certificate
+  verification. A mismatch fails verification like any other check, and
+  the client aborts the handshake with an alert, just like the table
+  above.
 
 ### What TLS 1.2 did differently
 
@@ -150,9 +165,9 @@ included, because the server needs to read it before it can derive any
 keys at all. This is why a network operator, ISP, or on-path box can always
 see which hostname you're connecting to over HTTPS, even on TLS 1.3, even
 though it can't see anything else about the connection. (Encrypted Client
-Hello, ECH, is a newer, still-maturing extension designed specifically to
-close this gap — out of scope for today, but worth knowing it exists so you
-aren't surprised later.)
+Hello, ECH — RFC 9849, published 2026 and shipped in major browsers — closes
+this gap by encrypting the real SNI inside an outer ClientHello. Out of
+scope for today, but worth knowing it exists.)
 
 ### ALPN: offer always visible, answer hidden only in 1.3
 
@@ -237,8 +252,8 @@ All commands run through `toolbox`, from `labs/`:
 docker compose run --rm toolbox <command>
 ```
 
-`mkdir -p tmp` first if `labs/tmp/` doesn't exist yet — the capture file
-lands there via the bind mount.
+`mkdir -p tmp` (on the host, from `labs/`) first if `labs/tmp/` doesn't
+exist yet — the capture file lands there via the bind mount.
 
 > **Before you start:** this lab reuses Day 2's running nginx, so
 > `services/active.conf` must still be Day 2's config and the `nginx`
@@ -255,10 +270,6 @@ lands there via the bind mount.
 > result. `--connect-to` redirects the TCP connection to `nginx:443` over
 > the container network while still sending `example.local` as SNI and the
 > `Host` header — exactly as if DNS pointed `example.local` at `nginx`.
-> **This entire lab was authored without a live Docker session available
-> — every command below is reasoned through carefully, but none of it has
-> actually been run; treat every output block marked "expected — not
-> captured" accordingly, and confirm live before trusting it blindly.**
 
 ### Capture a handshake
 
@@ -273,24 +284,28 @@ docker compose run --rm toolbox bash -c \
 head start, `curl` performs the actual TLS handshake and HTTP request
 against Day 2's nginx; `wait` blocks until both background/foreground jobs
 finish so the container doesn't exit early. You should see curl print
-nginx's default response body, and `tmp/hs.pcap` should now exist on the
-host at `labs/tmp/hs.pcap` (openable directly in Wireshark on your host —
-no container needed for the GUI walk).
+`example.local is up — TLS Mastery Day 2` and tshark report
+`36 packets captured` (give or take). tshark also warns about running as
+root and `cap_set_proc() fail` — harmless inside the container. The
+capture is now on the host at `labs/tmp/hs.pcap` (openable directly in
+Wireshark on your host — no container needed for the GUI walk).
 
 ### Inspect the ClientHello — SNI in the clear
 
 ```
-tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==1' -V | grep -i server_name
+docker compose run --rm toolbox tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==1' -V | grep -i server_name
 ```
 
-Expected output (**expected — not captured**; reasoned from how Wireshark's
-TLS dissector renders the SNI extension, not from an actual run):
+Output (TShark 4.2.2):
 
 ```
-Server Name Indication extension
-    Server Name Type: host_name (0)
-    Server Name: example.local
+            Extension: server_name (len=18) name=example.local
+                Type: server_name (0)
 ```
+
+The hostname is right there in the extension summary line. For the full
+breakdown (`Server Name Type: host_name (0)`, `Server Name: example.local`),
+widen the grep: `grep -i -A8 server_name`.
 
 `tls.handshake.type==1` filters for `ClientHello` specifically (handshake
 type `1`, per the IANA TLS HandshakeType registry) — and this filter works
@@ -306,16 +321,26 @@ message type by filtering the same capture:
 
 ```
 # Negotiated version (look in the ServerHello)
-tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==2' -V | grep -i version
+docker compose run --rm toolbox tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==2' -V | grep -i version
 
 # ServerHello itself
-tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==2' -V
+docker compose run --rm toolbox tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==2' -V
 
 # Certificate
-tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==11' -V
+docker compose run --rm toolbox tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==11' -V
 
 # Finished
-tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==20' -V
+docker compose run --rm toolbox tshark -r /work/tmp/hs.pcap -Y 'tls.handshake.type==20' -V
+```
+
+On the lab's nginx, the version grep shows the record and legacy fields as
+`TLS 1.2 (0x0303)` — TLS 1.3 keeps those frozen for compatibility — and
+the real answer in the extension:
+
+```
+            Extension: supported_versions (len=2) TLS 1.3
+                Type: supported_versions (43)
+                Supported Version: TLS 1.3 (0x0304)
 ```
 
 If curl and nginx negotiated **TLS 1.2** (possible if nginx's configured
@@ -326,7 +351,7 @@ the clear, and tshark can parse it directly.
 If they negotiated **TLS 1.3** — the likely default, since modern
 OpenSSL-linked curl and nginx both prefer the highest mutually supported
 version — the `tls.handshake.type==11` and `tls.handshake.type==20` filters
-will return **nothing at all**. Not because those messages weren't sent —
+will return **nothing at all** (the live run: zero lines each). Not because those messages weren't sent —
 they were, right on schedule — but because RFC 8446 deliberately wraps
 every post-`ServerHello` server message in a record whose *outer* type is
 `23` (`application_data`), the exact same outer type used for real HTTP
@@ -335,13 +360,23 @@ those records are handshake messages, let alone which type. Confirm this
 directly:
 
 ```
-tshark -r /work/tmp/hs.pcap -Y 'tls.record.content_type==23'
+docker compose run --rm toolbox tshark -r /work/tmp/hs.pcap -Y 'tls.record.opaque_type==23'
 ```
 
-(older Wireshark builds use the field name `ssl.record.content_type` — try
-that if `tls.record.content_type` returns nothing on your version.) This
-will list several records — some of these opaque, identically-labelled
-`application_data` records are actually the encrypted `Certificate`,
+(Use `tls.record.opaque_type`, not `tls.record.content_type`: for TLS 1.3
+encrypted records, Wireshark files the outer type `23` under
+`opaque_type`, so a `content_type==23` filter returns nothing.) On the
+live run this listed eight packets:
+
+```
+   17 0.396857083   10.77.30.2 → 10.77.30.10  TLSv1.3 4164 Server Hello, Change Cipher Spec, Application Data
+   19 0.399277667   10.77.30.2 → 10.77.30.10  TLSv1.3 879 Application Data, Application Data, Application Data
+   21 0.400503500  10.77.30.10 → 10.77.30.2   TLSv1.3 148 Change Cipher Spec, Application Data
+   ...
+   27 0.401177167  10.77.30.10 → 10.77.30.2   TLSv1.3 92 Application Data
+```
+
+Some of these opaque, identically-labelled `application_data` records are actually the encrypted `Certificate`,
 `CertificateVerify`, and `Finished` messages; others are the real HTTP
 response. From the wire, without keys, you cannot tell which is which —
 which is exactly the confidentiality property TLS 1.3 buys you for the
@@ -504,14 +539,14 @@ fails versus if the underlying TLS library detects a version mismatch
 <summary>Hints</summary>
 
 - Nudge: one of these is a TLS **protocol** failure with a defined alert;
-  the other is a decision made by *code that calls* the TLS library, after
-  the handshake already succeeded at the protocol level.
+  the other isn't defined by TLS at all — so *when* it happens depends on
+  the client.
 - Tool to run: nothing to run — re-read the "This is where the four checks
   run" paragraph and the "Check 3 is worth calling out" note above.
 - Partial diagnosis: a version mismatch means the handshake itself never
-  completes — no certificate is ever exchanged. A name mismatch means the
-  handshake completes just fine; the certificate arrives, is otherwise
-  perfectly valid, and something *outside* TLS decides to reject it anyway.
+  completes — no certificate is ever exchanged. A name mismatch needs the
+  certificate to arrive first; then either the TLS library (if the client
+  asked it to) or the client's own code rejects it.
 
 </details>
 
@@ -531,18 +566,21 @@ failure with a defined fatal alert (`protocol_version`, 70). None of the
 four checks even get a chance to run, because there's no certificate yet
 to check.
 
-**A name mismatch** (check 3) is fundamentally different: the handshake
-*succeeds completely* at the protocol level — the certificate arrived,
-its signature chain validated, its dates are current, it chains to a
-trusted root. TLS has no opinion about hostnames; it delivers the
-certificate to whatever code called it and considers its own job done.
-**Hostname verification is a decision made by the caller** (curl, a
-browser's HTTP stack, an SSH client, a JWT library) *after* TLS itself
-reports success. That's why it doesn't produce a TLS alert at all — it
-produces an application-level error (curl's `SSL: no alternative
-certificate subject name matches target host name '...'`, exit code 60),
-generated entirely outside the TLS handshake, after that handshake already
-finished.
+**A name mismatch** (check 3) is different: the certificate *does*
+arrive, and may pass checks 1, 2 and 4. TLS itself defines no name
+matching, so what happens next depends on the client:
+
+- **curl** (OpenSSL backend) lets the handshake finish, then compares the
+  name itself. No TLS alert is sent; you get curl's own error
+  (`SSL: no alternative certificate subject name matches target host
+  name '...'`, exit code 60) — drill 11 shows exactly this.
+- **Browsers** and clients using OpenSSL's `SSL_set1_host` (e.g. Python)
+  check the name *during* certificate verification. A mismatch fails
+  verification, and the client aborts the handshake with an alert
+  (typically `bad_certificate`) before sending `Finished`.
+
+Either way the failure comes *after* the certificate arrived — unlike the
+version mismatch, which never gets that far.
 
 </details>
 
@@ -565,8 +603,7 @@ Each drill directory has a `SYMPTOM.md` stating the observed symptom, the
 exact command that produced it, and a minimal reproduction asset — no
 diagnosis. Work the drill yourself first. Full graduated-hint walkthroughs
 live in `labs/drills/solutions/drill-NN.md` if you get stuck; resist
-opening them until you've actually reasoned about (or, once Docker is
-available to you, run) something.
+opening them until you've actually run something.
 
 ## Journal template
 
