@@ -90,3 +90,13 @@ Skip the traditional learning path - give me the unconventional strategy that th
 Focus mainly on creating an single extra appendix document (and if there is a glossary would be much better) for this learning path which describe and explain all concept, concept, flows, techniques of the oauth2/OICD like: Resource Owner, Client, Authorization Server, Resource Server, all token types, grant type, login type, claims, exchange token, SCIM2, CIBA, endpoints, IDP, trusted issuer, federated...etc. all that we can cover to comprehend and master the theory of it
 use the local skill.md file as a standard skill
 Ask me questions before answering it.
+
+I want to master all main industry authn and authz technique, design and integration patterns that are pragmatic as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time
+Focus mainly on all main technique and integration pattern of WSO2 latest capacities as well as AWS agentcore gateway OBO patterns ...etc. all that we can cover to comprehend and master the theory of it
+the main purpose is to search and build architect for the need of my company in the comming feature for integrating backend services with WSO2 stack (APIM & IS 7.3) include the adoption of builing solution for building and integrating MCP service, AI agent with AWS agentcore, agentcore gateway
+can think of it as an extra course for the current 'system_architect_design' or the 'aws_system_integrations'
+use the local skill.md file as a standard skill
+Ask me questions before answering it.
+
+Continue the xyz path. Read xyz/PROGRESS.md and follow the Next Session Instructions.
