@@ -1,0 +1,190 @@
+# ============================================================
+# Day 14 Lab — IS 7.3 CIBA Configuration
+# ============================================================
+# File: <IS_HOME>/repository/conf/deployment.toml
+#
+# USAGE: This is an annotated stub. Copy relevant stanzas into
+# your deployment.toml. Never paste real secrets — see PLACEHOLDER
+# comments for fields you must fill in.
+#
+# RESTART REQUIRED after changing deployment.toml:
+#   sh <IS_HOME>/bin/wso2server.sh restart
+# ============================================================
+
+
+# ============================================================
+# SECTION 1: Global CIBA configuration
+# ============================================================
+
+[oauth.ciba]
+
+# [REQUIRED] Enable the CIBA grant type globally across IS 7.3.
+# Without this, POST /oauth2/ciba returns 400 unsupported_grant_type.
+enabled = true
+
+# Seconds an auth_req_id is valid before IS 7.3 returns expired_token.
+# Default: 120. Tune upward for mobile flows where users may take longer.
+# Do not set too high — it extends the window for abandoned auth requests.
+ciba_auth_req_expiry_seconds = 120
+
+# Minimum polling interval in seconds for poll-mode clients.
+# IS 7.3 returns slow_down if the client polls faster than this.
+# Clients must add this value to their wait on slow_down.
+ciba_auth_req_id_poll_interval = 5
+
+
+# ============================================================
+# SECTION 2: Poll mode — backchannel auth request
+# ============================================================
+#
+# Poll mode is the IS 7.3 default when no client_notification_endpoint
+# is registered in the application's CIBA settings.
+#
+# HTTP EXAMPLE — POST /oauth2/ciba (poll mode request)
+# -------------------------------------------------------
+# POST /oauth2/ciba HTTP/1.1
+# Host: identity.bank.com
+# Content-Type: application/x-www-form-urlencoded
+#
+# scope=openid%20payments
+# &login_hint=customer%40bank.com
+#   # Identifies which user should authenticate.
+#   # Resolved against IS 7.3 username by default.
+#   # Use login_hint_token (signed JWT) for email-based lookup.
+#
+# &binding_message=PAY-8821
+#   # Short human-readable string shown on BOTH consumption device
+#   # and user's mobile app. Agent reads this to the customer.
+#   # Anti-substitution control — do not skip.
+#
+# &authorization_details=%5B%7B%22type%22%3A%22payment_initiation%22%7D%5D
+#   # Optional RAR payload for fine-grained authorization.
+#
+# &client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+#   # REQUIRED: identifies that client_assertion is a private_key_jwt.
+#   # MUST be in the form body — NOT in Authorization header.
+#
+# &client_assertion=<PLACEHOLDER: jwt_signed_with_client_private_key>
+#   # JWT claims: iss=client_id, sub=client_id, aud=token_endpoint, exp, jti
+#   # Signed with the client's registered private key (PS256 or ES256 for FAPI).
+#   # NEVER write a real key here.
+#
+# IS 7.3 RESPONSE (poll mode):
+# {
+#   "auth_req_id": "<PLACEHOLDER: opaque_request_identifier>",
+#   "expires_in": 120,
+#   "interval": 5
+# }
+# -------------------------------------------------------
+
+
+# ============================================================
+# SECTION 3: Poll mode — token polling request
+# ============================================================
+#
+# HTTP EXAMPLE — POST /oauth2/token (poll attempt)
+# -------------------------------------------------------
+# POST /oauth2/token HTTP/1.1
+# Host: identity.bank.com
+# Content-Type: application/x-www-form-urlencoded
+#
+# grant_type=urn%3Aopenid%3Aparams%3Agrant-type%3Aciba
+#   # REQUIRED: full URN for CIBA grant type. Do not abbreviate.
+#
+# &auth_req_id=<PLACEHOLDER: auth_req_id_from_ciba_response>
+#   # Opaque ID returned by POST /oauth2/ciba.
+#   # Cannot be reused after it is consumed or expires.
+#
+# &client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+# &client_assertion=<PLACEHOLDER: client_jwt>
+#   # Same client auth as the bc-authorize request.
+#   # Form body — NOT Authorization header.
+#
+# IS 7.3 POLL RESPONSES:
+# While pending:  400 {"error": "authorization_pending"}
+# Poll too fast:  400 {"error": "slow_down"}
+#   → Add interval seconds to current wait. Use new (longer) interval going forward.
+# On approval:   200 {"access_token": "...", "id_token": "...", "token_type": "Bearer"}
+# After expiry:  400 {"error": "expired_token"}
+# After reject:  400 {"error": "access_denied"}
+# -------------------------------------------------------
+
+
+# ============================================================
+# SECTION 4: Push mode — application-level configuration
+# ============================================================
+#
+# Push mode is activated PER APPLICATION in IS 7.3 Console or via
+# the IS 7.3 Management REST API.
+#
+# The global deployment.toml CIBA enable (Section 1) is still required.
+# Push mode is NOT a deployment.toml setting — it is per-application.
+#
+# IS 7.3 MANAGEMENT API — enable push mode on an application:
+# -------------------------------------------------------
+# PATCH /api/server/v1/applications/<PLACEHOLDER: application_id> HTTP/1.1
+# Host: identity.bank.com
+# Content-Type: application/json
+# Authorization: Bearer <PLACEHOLDER: admin_access_token>
+#
+# {
+#   "inboundProtocolConfiguration": {
+#     "oidc": {
+#       "cibaParameters": {
+#         "enabled": true,
+#
+#         "deliveryMode": "push",
+#           # CHANGE 1 (from poll): set to "push" instead of "poll"
+#           # Without this, IS 7.3 uses poll mode regardless of the endpoint below.
+#
+#         "clientNotificationEndpoint": "https://backend.bank.com/ciba/notify",
+#           # CHANGE 2 (from poll): add the HTTPS notification endpoint URL.
+#           # IS 7.3 POSTS tokens here on user approval — no client polling required.
+#           # MUST be HTTPS. HTTP is rejected by IS 7.3 at registration time.
+#           # Replace with your real endpoint URL.
+#
+#         "authRequestExpirySeconds": 120
+#       }
+#     }
+#   }
+# }
+# -------------------------------------------------------
+#
+# SUMMARY — three changes to switch from poll to push mode:
+#   1. deployment.toml: [oauth.ciba] enabled = true (already present for poll mode)
+#      No deployment.toml change is needed to switch modes — mode is per-application.
+#   2. Application setting: deliveryMode = "push"
+#   3. Application setting: clientNotificationEndpoint = "https://..." (HTTPS required)
+
+
+# ============================================================
+# SECTION 5: Push mode — IS 7.3 notification delivery
+# ============================================================
+#
+# When push mode is configured and the user approves, IS 7.3 sends:
+#
+# POST https://backend.bank.com/ciba/notify HTTP/1.1
+# Content-Type: application/json
+# Authorization: Bearer <PLACEHOLDER: client_notification_token>
+#   # IS 7.3-issued token authenticating THIS notification delivery.
+#   # The notification endpoint MUST validate this token before processing.
+#   # Without validation, any party that knows the endpoint URL can inject
+#   # forged approval responses.
+#
+# {
+#   "auth_req_id": "<PLACEHOLDER: auth_req_id_value>",
+#     # Matches the auth_req_id originally returned to the backend.
+#     # The backend can correlate this to its pending payment request.
+#
+#   "access_token": "<PLACEHOLDER: issued_access_token>",
+#     # The actual access token — treat this as sensitive.
+#     # Delivered directly; the backend does NOT need to call POST /oauth2/token.
+#
+#   "token_type": "Bearer",
+#
+#   "expires_in": 3600,
+#     # Seconds until access_token expires.
+#
+#   "id_token": "<PLACEHOLDER: id_token_jwt>"
+#     # OIDC ID token identifying the user who approved.
+# }

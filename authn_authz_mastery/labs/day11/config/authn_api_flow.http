@@ -1,0 +1,104 @@
+### Step 1: Initiate App-Native Auth flow
+POST /api/identity/auth/v1.0/authenticate HTTP/1.1
+Host: <PLACEHOLDER: is-host:9443>
+Content-Type: application/json
+
+{
+  "clientId": "<PLACEHOLDER: app-client-id>",
+  "redirectUri": "https://banking.example.com/callback",
+  "responseType": "code",
+  "scope": "openid accounts",
+  "pkce": {
+    "challenge": "<PLACEHOLDER: base64url(sha256(code_verifier))>",
+    "challengeMethod": "S256"
+  }
+}
+
+### Response 1: IS 7.3 returns flowId and first step
+# HTTP 200 OK
+{
+  "flowId": "<PLACEHOLDER: server-uuid-session-id>",
+  "flowStatus": "INCOMPLETE",
+  "nextStep": {
+    "stepType": "MULTI_OPTIONS_PROMPT",
+    "authenticators": [
+      {
+        "authenticatorId": "BasicAuthenticator",
+        "authenticator": "Username & Password",
+        "idp": "LOCAL",
+        "requiredParams": ["username", "password"]
+      }
+    ]
+  }
+}
+
+### Step 2: Submit username/password for Step 1
+POST /api/identity/auth/v1.0/authenticate HTTP/1.1
+Host: <PLACEHOLDER: is-host:9443>
+Content-Type: application/json
+
+{
+  "flowId": "<PLACEHOLDER: same-flowId-as-step1>",
+  "selectedAuthenticator": {
+    "authenticatorId": "BasicAuthenticator",
+    "params": {
+      "username": "<PLACEHOLDER: user@bank.example.com>",
+      "password": "<PLACEHOLDER: password>"
+    }
+  }
+}
+
+### Response 2: Step 1 passed, next step is TOTP
+# HTTP 200 OK
+{
+  "flowId": "<PLACEHOLDER: same-flowId>",
+  "flowStatus": "INCOMPLETE",
+  "nextStep": {
+    "stepType": "MULTI_OPTIONS_PROMPT",
+    "authenticators": [
+      {
+        "authenticatorId": "totp",
+        "authenticator": "TOTP",
+        "idp": "LOCAL",
+        "requiredParams": ["token"]
+      }
+    ]
+  }
+}
+
+### Step 3: Submit TOTP code for Step 2
+POST /api/identity/auth/v1.0/authenticate HTTP/1.1
+Host: <PLACEHOLDER: is-host:9443>
+Content-Type: application/json
+
+{
+  "flowId": "<PLACEHOLDER: same-flowId>",
+  "selectedAuthenticator": {
+    "authenticatorId": "totp",
+    "params": {
+      "token": "<PLACEHOLDER: 6-digit-totp-code>"
+    }
+  }
+}
+
+### Response 3: Auth complete — authCode issued
+# HTTP 200 OK
+{
+  "flowId": "<PLACEHOLDER: same-flowId>",
+  "flowStatus": "SUCCESS_COMPLETED",
+  "authData": {
+    "code": "<PLACEHOLDER: authorization-code>",
+    "session_state": "<PLACEHOLDER: session-state-hash>"
+  }
+}
+
+### Step 4: Exchange auth code for tokens
+POST /oauth2/token HTTP/1.1
+Host: <PLACEHOLDER: is-host:9443>
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=<PLACEHOLDER: authorization-code>
+&redirect_uri=https://banking.example.com/callback
+&client_id=<PLACEHOLDER: app-client-id>
+&code_verifier=<PLACEHOLDER: original-code-verifier>

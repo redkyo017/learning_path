@@ -1,0 +1,341 @@
+### Day 25 Lab — Complete AgentCore + OBO Flow
+### This HTTP request file traces all 8 steps of the AgentCore → IS 7.3 → Payment API flow
+
+# ============================================================================
+# STEP 1: User authenticates to IS 7.3
+# ============================================================================
+# User uses App-Native Auth or browser OIDC to get an IS 7.3 access token
+
+# Request (browser-based, not shown in HTTP format, but the result is:)
+
+# Response from IS 7.3:
+# HTTP 200 OK
+# {
+#   "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+#   "token_type": "Bearer",
+#   "expires_in": 3600,
+#   "scope": "payments:initiate"
+# }
+#
+# JWT payload (decoded):
+# {
+#   "iss": "https://is.bank.com:9443/oauth2/token",
+#   "sub": "user-123",
+#   "aud": "banking-app",
+#   "scope": "payments:initiate",
+#   "exp": 1727786400,
+#   "iat": 1727782800,
+#   "jti": "uuid-user-token-jti"
+# }
+
+### Step 1 - User token obtained
+@USER_ACCESS_TOKEN = eyJ...  # <PLACEHOLDER: full user access token from IS 7.3>
+@USER_ID = user-123
+
+# ============================================================================
+# STEP 2: User token passed to AgentCore session context (out-of-band)
+# ============================================================================
+# This happens via secure app-level mechanism (not HTTP).
+# User's app calls AgentCore API or stores token in secure session store.
+
+# ============================================================================
+# STEP 3: AgentCore obtains OIDC token from AWS STS
+# ============================================================================
+# AgentCore has already assumed an IAM role with session tags.
+# AgentCore now calls AWS STS to get an OIDC identity token.
+# The agent can make this call because it has temporary IAM credentials.
+
+# This is NOT an HTTP request we show here (it's AWS STS internal).
+# But the result is an OIDC token signed by AWS:
+#
+# {
+#   "iss": "https://oidc.eks.us-east-1.amazonaws.com/id/EXAMPLEBUCKET",
+#   "sub": "arn:aws:iam::123456789012:role/PaymentOrchestratorAgentRole",
+#   "aud": "https://is.bank.com:9443/oauth2/token",
+#   "exp": 1727786400,
+#   "iat": 1727782800,
+#   "kid": "example-key-id"
+# }
+# Signature: signed by AWS private key, verifiable via AWS JWKS
+
+### Step 3 - OIDC token obtained
+@AGENT_OIDC_TOKEN = eyJ...  # <PLACEHOLDER: AWS OIDC token>
+@AGENT_ROLE_ARN = arn:aws:iam::123456789012:role/PaymentOrchestratorAgentRole
+
+# ============================================================================
+# STEP 4: IS 7.3 External IdP Registration (one-time setup)
+# ============================================================================
+# IS 7.3 must be configured to trust AWS OIDC tokens.
+# This is typically done in Console, but shown as HTTP here for reference.
+
+POST https://is.bank.com:9443/api/identity/providers HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer <PLACEHOLDER: admin-token>
+
+{
+  "provider_name": "AWS-OIDC",
+  "provider_type": "OpenIDConnect",
+  "enabled": true,
+  "discovery_url": "https://oidc.eks.us-east-1.amazonaws.com/id/<PLACEHOLDER: cluster-id>/.well-known/openid-configuration",
+  "client_id": "is-bank-idp-client",
+  "client_secret": "<PLACEHOLDER: secret>",
+  "scopes": ["openid", "profile"],
+  "name_id_format": "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+}
+
+# Response:
+# HTTP 201 Created
+# {
+#   "provider_id": "aws-oidc-idp-001",
+#   "status": "active"
+# }
+
+# ============================================================================
+# STEP 5 & 6: Agent calls IS 7.3 token exchange endpoint
+# ============================================================================
+
+POST https://is.bank.com:9443/oauth2/token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Host: is.bank.com:9443
+
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&subject_token={{USER_ACCESS_TOKEN}}
+&subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&actor_token={{AGENT_OIDC_TOKEN}}
+&actor_token_type=urn:ietf:params:oauth:token-type:jwt
+&scope=payments:initiate
+&requested_token_type=urn:ietf:params:oauth:token-type:access_token
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: agent-private-key-jwt>
+
+# Notes on this request:
+# - subject_token: User's IS 7.3 token (obtained in Step 1)
+# - actor_token: Agent's AWS OIDC token (obtained in Step 3)
+# - scope: Must be a subset of subject_token's scope
+# - client_assertion: Agent's private_key_jwt for authentication to IS 7.3
+#
+# IS 7.3 processing (Steps 5 in the flow):
+#   1. Validate client_assertion (agent's private_key_jwt) → authenticates agent to IS 7.3
+#   2. Validate subject_token signature → confirms it's a valid IS 7.3 token
+#   3. Extract sub=user-123 from subject_token
+#   4. Fetch AWS OIDC JWKS from discovery_url (cached)
+#   5. Validate actor_token signature using AWS public key
+#   6. Check actor_token.aud == "https://is.bank.com:9443/oauth2/token"
+#   7. Extract sub=agent-role from actor_token
+#   8. Check actor trust policy: is agent-role allowed to exchange for user-123?
+#   9. If all checks pass, issue exchange token
+
+### Step 5 & 6 - Token Exchange
+@IS73_TOKEN_ENDPOINT = https://is.bank.com:9443/oauth2/token
+
+# ============================================================================
+# RESPONSE: Exchange Token (Step 6)
+# ============================================================================
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "scope": "payments:initiate",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token"
+}
+
+# Decoded JWT payload:
+# {
+#   "iss": "https://is.bank.com:9443/oauth2/token",
+#   "sub": "user-123",
+#   "act": {
+#     "sub": "arn:aws:iam::123456789012:role/PaymentOrchestratorAgentRole"
+#   },
+#   "aud": "payment-api",
+#   "scope": "payments:initiate",
+#   "azp": "payment-orchestrator-client",
+#   "exp": 1727783700,
+#   "iat": 1727782800,
+#   "jti": "uuid-exchange-token-jti"
+# }
+
+# Key observations:
+# - sub: PRESERVED from subject_token (original user)
+# - act.sub: ADDED from actor_token (agent's identity)
+# - scope: NARROWED to what was requested (payments:initiate)
+# - exp: SHORTER TTL (15 minutes = 900 seconds) vs user token (1 hour)
+# - aud: Token is for payment-api
+
+@EXCHANGE_TOKEN = eyJ...  # <PLACEHOLDER: exchange token from response>
+
+# ============================================================================
+# STEP 7: Agent calls Payment API with exchange token
+# ============================================================================
+
+POST https://payment-api.bank.com/api/payments/initiate HTTP/1.1
+Authorization: Bearer {{EXCHANGE_TOKEN}}
+Content-Type: application/json
+
+{
+  "amount": 100.00,
+  "currency": "USD",
+  "recipient": "account-456",
+  "reference": "Payment from agent on behalf of user"
+}
+
+# Notes:
+# - Bearer token is the exchange token from Step 6
+# - Token has sub=user-123, act.sub=agent, scope=payments:initiate
+# - Payment API can trust this token because:
+#   1. IS 7.3 signed it (verified by Payment API via JWKS)
+#   2. IS 7.3 validated the full chain (user token + agent OIDC token)
+
+# ============================================================================
+# STEP 8: Payment API introspects the token before processing
+# ============================================================================
+
+POST https://is.bank.com:9443/oauth2/introspect HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic <PLACEHOLDER: payment-api-credentials>
+
+token={{EXCHANGE_TOKEN}}
+&token_type_hint=access_token
+
+# Response:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "active": true,
+  "scope": "payments:initiate",
+  "client_id": "payment-orchestrator-client",
+  "username": "user-123",
+  "sub": "user-123",
+  "act": {
+    "sub": "arn:aws:iam::123456789012:role/PaymentOrchestratorAgentRole"
+  },
+  "aud": "payment-api",
+  "iss": "https://is.bank.com:9443/oauth2/token",
+  "exp": 1727783700,
+  "iat": 1727782800,
+  "jti": "uuid-exchange-token-jti"
+}
+
+# Key observations:
+# - active=true: Token is valid and not revoked
+# - sub=user-123: Original user (can scope data access to this user)
+# - act.sub=agent-role: Acting agent (can enforce agent-specific policies)
+# - scope=payments:initiate: Requested operation is within scope
+# - aud=payment-api: Token was issued for this API
+
+# Payment API decision logic:
+# ✅ active=true → Token is valid
+# ✅ scope contains "payments:initiate" → Operation is authorized
+# ✅ sub=user-123 → Scope API access to this user's records
+# ✅ act.sub matches orchestrator role → Log this action as orchestrator agent
+
+# ============================================================================
+# CONTINUATION: Payment API processes the request
+# ============================================================================
+
+# Response from Payment API:
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "transaction_id": "txn-20261001-12345",
+  "status": "initiated",
+  "amount": 100.00,
+  "currency": "USD",
+  "recipient": "account-456",
+  "timestamp": "2026-10-01T14:33:45Z",
+  "initiated_by": {
+    "user": "user-123",
+    "agent": "arn:aws:iam::123456789012:role/PaymentOrchestratorAgentRole",
+    "session_id": "<from AgentCore caller_identity>"
+  }
+}
+
+# ============================================================================
+# SCENARIO: User revokes consent — token becomes invalid
+# ============================================================================
+# User opens IS 7.3 Console and clicks "Revoke" on the payment orchestrator agent.
+
+# Revocation takes effect immediately in IS 7.3:
+# IS 7.3 marks: user-123's consent for payment-orchestrator = REVOKED
+
+# Agent attempts another payment API call (still has exchange token):
+
+POST https://payment-api.bank.com/api/payments/initiate HTTP/1.1
+Authorization: Bearer {{EXCHANGE_TOKEN}}
+Content-Type: application/json
+
+{
+  "amount": 200.00,
+  "currency": "USD",
+  "recipient": "account-789"
+}
+
+# Payment API introspects again:
+
+POST https://is.bank.com:9443/oauth2/introspect HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic <PLACEHOLDER: payment-api-credentials>
+
+token={{EXCHANGE_TOKEN}}
+
+# Response: Token is now REVOKED
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "active": false,
+  "error": "revoked",
+  "error_description": "Token has been revoked by user consent withdrawal"
+}
+
+# Payment API sees active=false and rejects:
+
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": "invalid_token",
+  "error_description": "Token is revoked or expired"
+}
+
+# ============================================================================
+# IMPORTANT NOTES
+# ============================================================================
+#
+# 1. SCOPE NARROWING:
+#    If subject_token has scope="payments:read payments:write accounts:read"
+#    and agent requests scope="payments:initiate"
+#    Then IS 7.3 issues token with scope="payments:initiate" (narrowed)
+#    Agent CANNOT use the same token for accounts:read
+#
+# 2. ACTOR TRUST POLICY:
+#    IS 7.3 must have actor trust policy configured (per-application in Console):
+#    - PaymentOrchestratorRole: allowed
+#    - FraudCheckerToolRole: allowed
+#    - AdminProvisioningRole: NOT allowed
+#    If AdminProvisioningRole tries to exchange, IS 7.3 returns:
+#    HTTP 400 Bad Request
+#    {
+#      "error": "invalid_grant",
+#      "error_description": "actor_not_trusted_for_exchange"
+#    }
+#
+# 3. INTROSPECTION CACHING:
+#    Payment API may cache introspection results (typical cache TTL: 5 minutes)
+#    If user revokes and Payment API has a cached "active=true" response,
+#    it may take up to 5 minutes for the revocation to propagate.
+#    This is a compliance tradeoff: lower latency at cost of revocation delay.
+#
+# 4. REVOCATION PROPAGATION:
+#    When user token is revoked or expires:
+#    - All derived exchange tokens become invalid on next introspection
+#    - Already-cached introspection responses remain until cache expires
+#    - APIs using local JWT validation (no introspection) will not see revocation
+#    - Banking compliance mandates introspection-based validation
+#

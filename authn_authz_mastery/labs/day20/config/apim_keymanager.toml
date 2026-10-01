@@ -1,0 +1,82 @@
+# APIM 4.7 deployment.toml — IS 7.3 as Key Manager
+# Add to: <APIM_HOME>/repository/conf/deployment.toml
+#
+# Replace any existing [apim.key_manager] or [[apim.key_manager]] block entirely.
+# If upgrading from IS 2.x, the old block likely had type = "IsKeyManager" or pointed
+# to the IS-KM WAR endpoints — both are gone in IS 7.3.
+
+[[apim.key_manager]]
+# Key Manager name — must match what APIM admin portal shows
+# Used in APIM internal references; changing after setup requires DB migration
+name = "WSO2IdentityServer"
+
+# Native IS 7.3 connector type — IS 7.3 removed the IS-KM WAR; use this value
+# Old value for IS 2.x: "IsKeyManager" or "KeycloakConnector" (both wrong for IS 7.3)
+type = "WSO2-IS"
+
+# Human-readable label in the APIM Developer Portal
+display_name = "WSO2 Identity Server 7.3"
+
+# IS 7.3 base URL
+# Fill in: the hostname/IP of your IS 7.3 node
+# Example: wso2is.internal.example.com
+url = "https://<PLACEHOLDER: is-host>:9443"
+
+# Introspection endpoint — APIM calls this on every API request with an opaque Bearer token
+# IS 7.3 responds: {active, sub, scope, org_id, cnf, exp, iat, iss, aud, ...}
+# Never called for JWT tokens when EnableLocalJWTValidation = true
+introspect_url = "https://<PLACEHOLDER: is-host>:9443/oauth2/introspect"
+
+# JWKS endpoint — APIM fetches IS 7.3 public keys here for local JWT signature verification
+# APIM caches the JWKS response; TTL controlled by JWKSCacheTTL in [configuration] below
+# After IS 7.3 key rotation: cached JWKS becomes stale; APIM rejects valid JWTs until TTL expires
+jwks_url = "https://<PLACEHOLDER: is-host>:9443/oauth2/jwks"
+
+# DCR endpoint — APIM registers an OAuth2 client here when a developer generates API keys
+# in the Developer Portal. One call per application key generation (not per API request)
+# IS 7.3 uses DCR v1.1 path; IS 2.x used a different path — update this on IS upgrade
+client_registration_url = "https://<PLACEHOLDER: is-host>:9443/api/identity/oauth2/dcr/v1.1/register"
+
+# Token endpoint — APIM uses this to obtain its own service account tokens for authenticating
+# to IS 7.3 introspection and DCR endpoints (basic credential auth or client credentials)
+token_url = "https://<PLACEHOLDER: is-host>:9443/oauth2/token"
+
+# Revoke endpoint — APIM calls this when a developer deletes an application key in the Dev Portal
+# Ensures IS 7.3 immediately revokes the associated access and refresh tokens
+revoke_url = "https://<PLACEHOLDER: is-host>:9443/oauth2/revoke"
+
+# Service account credentials — APIM authenticates to IS 7.3 using these credentials
+# for introspection calls and DCR requests.
+# NEVER hardcode real credentials here. Options:
+#   1. Reference an environment variable: password = "${env:APIM_KM_PASSWORD}"
+#   2. Use WSO2 Secure Vault: password = "$secret{apim.km.password}"
+[apim.key_manager.credentials]
+username = "<PLACEHOLDER: apim-km-service-account>"
+password = "<PLACEHOLDER>"
+
+[apim.key_manager.configuration]
+# IS 7.3 JWT / introspection response claim that carries the organization ID
+# APIM reads this claim for org-scoped B2B subscription enforcement:
+#   - extracts org_id from token
+#   - checks org's subscription for the requested API
+#   - adds X-Org-ID header to backend request
+# Must match the claim name configured in IS 7.3's token issuer
+OrgIdClaimName = "org_id"
+
+# FAPI 2.0 mode — enforces PAR requirement for APIs flagged as FAPI in the Publisher
+# When true: APIM validates that tokens for FAPI APIs were issued from a PAR flow
+# Set false if your deployment does not publish FAPI-flagged APIs
+FAPIConformance = true
+
+# JWKS cache TTL in seconds (default 3600 = 1 hour)
+# Controls how long APIM trusts the cached JWKS before re-fetching from IS 7.3
+# After IS 7.3 signing key rotation, APIM rejects valid JWTs for up to this duration
+# Lower this value if IS 7.3 key rotation is frequent (e.g., 300 = 5 minutes)
+# Raise it in stable environments to reduce load on IS 7.3
+JWKSCacheTTL = 3600
+
+# Local JWT validation — when true, APIM verifies JWT signatures using cached JWKS
+# without calling IS 7.3 introspection per request. Significantly reduces latency.
+# Set false only if you need per-request server-side token validation
+# (e.g., immediate revocation for JWT tokens — unusual; opaque tokens handle this better)
+EnableLocalJWTValidation = true

@@ -1,0 +1,164 @@
+### RAR + Consent Portal — IS 7.3 HTTP Exchange
+### Lab: Day 18 — RAR + Consent Portal
+###
+### All credential values are PLACEHOLDERS — replace before use.
+### This file traces the full consent lifecycle: PAR → consent approval → token → revocation.
+
+###############################################################################
+### PART 1: PAR REQUEST WITH authorization_details
+###############################################################################
+
+### Step 1: Push Authorization Request (PAR) with authorization_details
+# The TPP sends the authorization request directly to IS 7.3 via PAR (RFC 9126).
+# This prevents leaking authorization_details via the browser URL.
+#
+# QUESTION: Why is authorization_details sent in a PAR body request rather than in the browser URL?
+# QUESTION: What does IS 7.3 return, and how does the TPP use it?
+# NOTE: client_assertion is form body params, NOT Authorization: Bearer header
+
+POST https://<PLACEHOLDER: is-host>/oauth2/par
+Content-Type: application/x-www-form-urlencoded
+
+client_id=<PLACEHOLDER: tpp-client-id>
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: private_key_jwt signed with TPP private key>
+&response_type=code
+&scope=openid+payments
+&redirect_uri=https%3A%2F%2Ftpp.example.com%2Fcallback
+&code_challenge=<PLACEHOLDER: base64url(sha256(code_verifier))>
+&code_challenge_method=S256
+&authorization_details=%5B%7B%22type%22%3A%22payment_initiation%22%2C%22instructedAmount%22%3A%7B%22currency%22%3A%22EUR%22%2C%22amount%22%3A%22150.00%22%7D%2C%22creditorName%22%3A%22<PLACEHOLDER%3A+Merchant+Name>%22%2C%22creditorAccount%22%3A%7B%22iban%22%3A%22<PLACEHOLDER%3A+IBAN>%22%7D%7D%5D
+
+###
+### Decoded authorization_details (for readability):
+### [
+###   {
+###     "type": "payment_initiation",
+###     "instructedAmount": { "currency": "EUR", "amount": "150.00" },
+###     "creditorName": "<PLACEHOLDER: Merchant Name>",
+###     "creditorAccount": { "iban": "<PLACEHOLDER: creditor-IBAN>" },
+###     "debtorAccount": { "iban": "<PLACEHOLDER: debtor-IBAN>" },
+###     "remittanceInformationUnstructured": "<PLACEHOLDER: payment reference>"
+###   }
+### ]
+###
+### Expected response — HTTP 201 Created
+### {
+###   "request_uri": "urn:ietf:params:oauth:request_uri:<PLACEHOLDER: unique-id>",
+###   "expires_in": 90
+### }
+###
+### NOTE: The TPP must use this request_uri in the authorization redirect within 90 seconds.
+### NOTE: The full authorization_details never appears in the browser URL — only the opaque request_uri.
+
+###############################################################################
+
+### Step 2: Authorization redirect (reference — browser navigation, not an API call)
+# The TPP redirects the user's browser to IS 7.3 using the request_uri.
+# IS 7.3 retrieves the stored PAR object, including authorization_details.
+# IS 7.3 then redirects to the consent portal, passing authorization_details.
+#
+# Browser URL (conceptual — not an HTTP client call):
+# GET https://<PLACEHOLDER: is-host>/oauth2/authorize
+#     ?request_uri=urn:ietf:params:oauth:request_uri:<PLACEHOLDER>
+#     &client_id=<PLACEHOLDER: tpp-client-id>
+#
+# IS 7.3 then redirects internally to:
+# GET /authenticationendpoint/oauth2_consent.do
+#     ?client=<PLACEHOLDER: tpp-client-id>
+#     &authorization_details=<URL-encoded JSON>
+#     &scope=openid+payments
+#     &sessionDataKey=<PLACEHOLDER: session-key>
+#
+# QUESTION: How does the consent portal template access `creditorName` from authorization_details?
+# QUESTION: What happens in IS 7.3 after the user clicks "Approve" in the consent portal?
+
+###############################################################################
+### PART 2: CONSENT MANAGEMENT API
+###############################################################################
+
+### Step 3: List active consents for a user
+# After the user approves, IS 7.3 stores a consent record. This call retrieves it.
+# Useful for: consent receipts, user-facing consent management UI, compliance audits.
+#
+# QUESTION: What fields does IS 7.3 return in the consent record?
+# QUESTION: Which field links this consent to the authorization_details type?
+
+GET https://<PLACEHOLDER: is-host>/api/identity/consent-mgt/v1.0/consents?userId=<PLACEHOLDER: user@banking.example.com>&clientId=<PLACEHOLDER: tpp-client-id>&state=ACTIVE
+Authorization: Bearer <PLACEHOLDER: admin-token>
+Accept: application/json
+
+###
+### Expected response — HTTP 200 OK
+### [
+###   {
+###     "consentId": "<PLACEHOLDER: uuid>",
+###     "userId": "<PLACEHOLDER: user@banking.example.com>",
+###     "clientId": "<PLACEHOLDER: tpp-client-id>",
+###     "consentType": "payment_initiation",
+###     "state": "ACTIVE",
+###     "createdTime": "<PLACEHOLDER: ISO-8601>",
+###     "updatedTime": "<PLACEHOLDER: ISO-8601>",
+###     "consentAttributes": {
+###       "instructedAmount_currency": "EUR",
+###       "instructedAmount_amount": "150.00",
+###       "creditorName": "<PLACEHOLDER: Merchant Name>",
+###       "creditorAccount_iban": "<PLACEHOLDER: creditor-IBAN>",
+###       "debtorAccount_iban": "<PLACEHOLDER: debtor-IBAN>"
+###     }
+###   }
+### ]
+###
+### NOTE: This is the machine-readable consent receipt. PSD2 audits require this to be producible
+###       on demand for any active or historical consent.
+
+###############################################################################
+
+### Step 4: Revoke a specific consent
+# The user revokes only the payment initiation consent.
+# Account information consent (if any) remains active — selective revocation.
+#
+# QUESTION: What state does the consent record move to after this DELETE?
+# QUESTION: Is the existing access token immediately invalid after this call?
+
+DELETE https://<PLACEHOLDER: is-host>/api/identity/consent-mgt/v1.0/consents/<PLACEHOLDER: consentId>
+Authorization: Bearer <PLACEHOLDER: admin-token>
+
+###
+### Expected response — HTTP 200 OK (no body, or confirmation message)
+###
+### The consent record state is now REVOKED.
+### IS 7.3 does NOT immediately revoke issued access tokens — they remain valid until `exp`.
+### Only the refresh token grant is blocked (checked at grant time, not at resource server).
+
+###############################################################################
+
+### Step 5: Attempt token refresh after consent revocation
+# The TPP's access token has expired. It tries to get a new one with the refresh token.
+# IS 7.3 checks the consent record state before issuing a new access token.
+#
+# QUESTION: What does IS 7.3 check before issuing a new access token from a refresh token?
+# QUESTION: What HTTP status and error code does IS 7.3 return?
+# NOTE: client_assertion is form body params, NOT Authorization: Bearer header
+
+POST https://<PLACEHOLDER: is-host>/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token
+&refresh_token=<PLACEHOLDER: refresh-token-from-authorization-code-grant>
+&client_id=<PLACEHOLDER: tpp-client-id>
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: fresh private_key_jwt>
+
+###
+### Expected response — HTTP 400 Bad Request
+### {
+###   "error": "consent_revoked",
+###   "error_description": "Consent has been revoked"
+### }
+###
+### IS 7.3 checks: find consent record linked to this refresh token → state is REVOKED →
+### reject the token grant with consent_revoked.
+###
+### The TPP must surface this error to the user: "Your payment consent has been revoked."
+### The TPP cannot re-authorize silently — a new user interaction is required to create new consent.

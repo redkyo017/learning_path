@@ -1,0 +1,358 @@
+# WSO2 IS 7.3 Hub Configuration — All Three Integration Flows
+# This file shows the deployment.toml sections that enable FAPI 2.0, B2B mTLS, and AI agent OBO flows
+# on a single IS 7.3 instance.
+# All <PLACEHOLDER> values must be filled in per deployment environment.
+
+[server]
+# Server identification
+hostname = "<PLACEHOLDER: is.bank.com>"
+node_ip = "<PLACEHOLDER: 10.0.1.5>"
+
+[server.fapi]
+# Enable FAPI 2.0 compliance mode
+# This section activates FAPI-specific security policies:
+# - Enforces PKCE for all authorization code flows
+# - Enforces request_uri (PAR) for customer-facing flows
+# - Enables response_mode=jwt (JARM)
+# - Validates DPoP proofs
+# - Enforces PAR request expiry (60s)
+enable_fapi_mode = true
+enforce_request_uri = true
+enable_jarm = true
+
+[oauth]
+# Global OAuth2 settings applied to all applications
+# If an app overrides a setting in Console, the app-level setting takes precedence
+
+# Grant types allowed globally
+# Each application can enable a subset of these in Console
+allowed_grant_types = [
+    "authorization_code",
+    "refresh_token",
+    "client_credentials",
+    "urn:ietf:params:oauth:grant-type:token-exchange",
+    "urn:ietf:params:oauth:grant-type:jwt-bearer"
+]
+
+# Token endpoint authentication methods
+# Supported for all applications; per-app Console config selects which to use
+token_endpoint_auth_methods = [
+    "client_secret_basic",
+    "client_secret_post",
+    "private_key_jwt",
+    "mtls_client_auth"
+]
+
+# Response types
+response_types = ["code", "token", "id_token"]
+
+# Token lifetime defaults (can be overridden per app in Console)
+access_token_default_lifetime = 3600  # 1h for customer flows
+
+# Refresh token
+refresh_token_enabled = true
+refresh_token_lifetime = 604800  # 7 days
+
+# Allow refresh token grant for all flows
+allow_refresh_token_grant = true
+
+[oauth.par]
+# Pushed Authorization Request (used by all three flows)
+# Customer flow: PAR is mandatory (FAPI compliance)
+# B2B flow: PAR optional but recommended
+# AI agent flow: PAR optional
+enable_par = true
+par_request_uri_lifetime = 60  # Request URI expires in 60 seconds
+par_endpoint = "/oauth2/par"
+
+[oauth.dpop]
+# Demonstration of Possession (DPoP) binding
+# Used by: Customer-facing FAPI 2.0 flows
+# Not used by: B2B mTLS (has certificate binding instead), AI agent OBO (scope narrowing is control)
+enable_dpop = true
+dpop_proof_lifetime = 60  # DPoP proof is valid for 60 seconds
+require_dpop_for_fapi = true  # Enforce DPoP for FAPI apps
+
+[oauth.mtls]
+# Mutual TLS (mTLS) client authentication
+# Used by: B2B partner payment API flow
+# Validates client certificate and binds token to certificate hash (cnf.x5t#S256)
+enable_client_cert_auth = true
+client_cert_validation_mode = "STRICT"  # Require valid certificate chain
+# Path to trusted CA certificates for partner organizations
+trusted_ca_path = "/opt/is-home/wso2/repository/resources/security/partner-ca-certs.pem"
+# Claim mapping: extract org_id from certificate subject
+# Example: if cert subject is "CN=partner-org,OU=payments,O=bank.com"
+# Map to org_id claim: org_id = CN value (partner-org)
+cert_claim_mapping {
+    org_id = "CN"
+    dept = "OU"
+}
+
+[oauth.ciba]
+# Client-Initiated Backchannel Authentication (used for SCA in customer flow)
+# Used by: Customer-facing banking app (out-of-band SCA verification)
+# Not used by: B2B, AI agent
+enable_ciba = true
+ciba_endpoint = "/oauth2/ciba"
+# Backchannel request timeout (user has this long to approve on their device)
+ciba_request_expiry = 600  # 10 minutes
+ciba_auth_req_id_lifetime = 3600  # 1 hour
+
+[oauth.token_exchange]
+# RFC 8693 Token Exchange (used by AI agent OBO flows)
+# Used by: AI agent orchestrator and tool exchanges
+# Enables the "urn:ietf:params:oauth:grant-type:token-exchange" grant type
+# Per-app configuration in Console (actor trust policies):
+# - Which agent client_ids can exchange tokens
+# - Which user groups can be exchanged for
+# - Scope narrowing rules
+enable_token_exchange = true
+token_exchange_endpoint = "/oauth2/token"  # Same endpoint as standard token requests
+# Maximum number of hops in delegation chain (user -> orch -> tool -> api)
+# Recommended: 3 hops; 4+ adds complexity
+max_delegation_depth = 3
+# Allow "may_act" claim in exchange responses (pre-authorize downstream exchanges)
+enable_may_act_claim = true
+
+[oauth.jwt]
+# JWT configuration (used by all flows)
+# Customer flow: verifies DPoP proof JWTs, JARM response JWTs
+# B2B flow: verifies token JWTs (optional; some use introspection)
+# AI agent: verifies actor_token JWTs, client_assertion JWTs
+enable_jwt_validation = true
+jwt_signature_algorithm = "RS256"  # RSA SHA-256 (recommended for banking)
+jwt_encryption_algorithm = "RSA-OAEP"  # For encrypted JWTs
+# JWKS endpoint (shared by all flows)
+jwks_endpoint = "/oauth2/jwks"
+# JWKS cache lifetime (clients cache the public keys)
+jwks_cache_lifetime = 3600  # 1 hour
+# Key rotation: include new key before rotating out old key
+# Set key ID (kid) in JWKS for key versioning
+enable_key_versioning = true
+
+[oauth.scope]
+# Scope configuration (defines what each flow can request)
+# Scopes are per-application and enforced per-token
+
+# Customer flow scopes (user-initiated, granular)
+[[oauth.scope.definitions]]
+scope = "payments:read"
+description = "Read payment history"
+apps = ["MobileBank"]
+
+[[oauth.scope.definitions]]
+scope = "payments:write"
+description = "Initiate payments"
+apps = ["MobileBank"]
+
+[[oauth.scope.definitions]]
+scope = "accounts:read"
+description = "Read account details"
+apps = ["MobileBank"]
+
+[[oauth.scope.definitions]]
+scope = "accounts:write"
+description = "Modify account settings"
+apps = ["MobileBank"]
+
+# B2B partner scopes
+[[oauth.scope.definitions]]
+scope = "partner-api:read"
+description = "Read partner API"
+apps = ["PartnerAPI"]
+
+[[oauth.scope.definitions]]
+scope = "partner-api:write"
+description = "Write partner API"
+apps = ["PartnerAPI"]
+
+# AI agent scopes (agent-specific, narrowed)
+[[oauth.scope.definitions]]
+scope = "agent:payments:initiate"
+description = "Agent can initiate payments (narrower than payments:write)"
+apps = ["AgentOrchestrator", "AgentTool"]
+
+[[oauth.scope.definitions]]
+scope = "agent:accounts:read"
+description = "Agent can read accounts"
+apps = ["AgentOrchestrator", "AgentTool"]
+
+# MCP tool scopes
+[[oauth.scope.definitions]]
+scope = "mcp:payments:read"
+description = "MCP tool: read payments"
+apps = ["MCPPaymentsTool"]
+
+[[oauth.scope.definitions]]
+scope = "mcp:payments:write"
+description = "MCP tool: initiate payments"
+apps = ["MCPPaymentsTool"]
+
+[oauth.consent]
+# Consent and revocation framework (applies to all flows)
+# Customer flow: user can see granted scopes and revoke in mobile app
+# B2B flow: admin can revoke partner access (scheduled)
+# AI agent: user can revoke; propagates to all agent tokens via introspection
+enable_consent_management = true
+consent_endpoint = "/oauth2/consent"
+# Introspection caching (impacts revocation propagation latency)
+introspection_cache_lifetime = 300  # 5 minutes (compliance requirement for banking)
+# When a token is revoked:
+# - Customer flow: introspection returns active:false within 5min (cache TTL)
+# - B2B flow: long-lived tokens often validated locally; introspection TTL = 1h
+# - AI agent: introspection required; propagates within 5min
+
+[oauth.introspection]
+# Token introspection endpoint
+# All three flows use this to validate tokens
+enable_introspection = true
+introspection_endpoint = "/oauth2/introspect"
+# Include token claims in introspection response (needed to verify "act" claim for agents)
+include_token_claims = true
+
+[oauth.revocation]
+# Token revocation endpoint (used by all flows)
+enable_revocation = true
+revocation_endpoint = "/oauth2/revoke"
+# Revocation triggers invalidation in introspection cache
+invalidate_cache_on_revoke = true
+
+[apim.key_manager]
+# APIM API Gateway Key Manager configuration
+# IS 7.3 is registered as a key manager in WSO2 APIM 4.7
+# APIM calls IS 7.3 endpoints to:
+# - Validate tokens (introspection)
+# - Revoke tokens (revocation)
+# - Register applications (DCR)
+
+# Primary Key Manager (IS 7.3)
+[[apim.key_manager.providers]]
+name = "IS73_KeyManager"
+type = "WSO2-IS"
+# Token validation endpoint
+token_validation_endpoint = "https://<PLACEHOLDER: is.bank.com>:9443/oauth2/introspect"
+# Token revocation endpoint
+token_revocation_endpoint = "https://<PLACEHOLDER: is.bank.com>:9443/oauth2/revoke"
+# DCR endpoint (for app registration)
+dcr_endpoint = "https://<PLACEHOLDER: is.bank.com>:9443/api/identity/oauth2/dcr/v1.1/register"
+# Credentials for APIM to authenticate to IS 7.3
+dcr_username = "<PLACEHOLDER: apim-service-account>"
+dcr_password = "<PLACEHOLDER: apim-service-account-password>"
+# Cache configuration
+cache_enabled = true
+cache_timeout = 900  # 15 minutes (balance: reduced load vs. stale tokens)
+
+[identity_provider]
+# External IdP for AWS AgentCore federation
+# IS 7.3 trusts AWS IAM tokens (from AgentCore) as actor_tokens in OBO exchanges
+# This enables: AgentCore agent -> IS 7.3 token exchange -> backend API
+
+[[identity_provider.federated_idps]]
+name = "AWS_AgentCore"
+type = "OIDC"
+# Discovery URL for AWS OIDC provider
+# For Amazon EKS: https://oidc.eks.<region>.amazonaws.com/id/<cluster-id>/.well-known/openid-configuration
+# For AWS IAM Identity Center: https://oidc.<region>.identityCenter.amazonaws.com/oidc/authorize
+oidc_discovery_url = "https://oidc.eks.<PLACEHOLDER: aws-region>.amazonaws.com/id/<PLACEHOLDER: cluster-id>/.well-known/openid-configuration"
+# IS 7.3 fetches the JWKS from this IdP to validate AgentCore OIDC tokens
+jwks_uri = "https://oidc.eks.<PLACEHOLDER: aws-region>.amazonaws.com/id/<PLACEHOLDER: cluster-id>/keys"
+# Trusted audiences for the OIDC tokens
+# The token's "aud" claim must match one of these (prevents token reuse across different IS 7.3 tenants)
+trusted_audiences = [
+    "https://<PLACEHOLDER: is.bank.com>:9443/oauth2/token",
+    "https://<PLACEHOLDER: is.bank.com>:9443/oauth2/token-exchange"
+]
+# Claim mappings
+# IS 7.3 extracts the agent ID from the OIDC token's "sub" claim
+# and uses it as the actor in "act" claims of exchanged tokens
+subject_claim = "sub"  # Agent client_id is in the "sub" claim
+
+[audit]
+# Audit logging (applies to all three flows)
+# Every token request, exchange, revocation, and introspection is logged
+enable_audit_logging = true
+audit_log_path = "/opt/is-home/repository/logs/audit.log"
+# Include full token claims in audit log (for compliance tracing)
+include_token_claims_in_audit = true
+# Structured log format (JSON) for correlation and analysis
+audit_log_format = "JSON"
+# Fields to include in audit: sub, act, aud, scope, jti (trace correlation)
+audit_log_fields = ["sub", "act", "aud", "scope", "jti", "iss", "exp", "iat"]
+
+[database]
+# Database configuration (stores users, credentials, policies, audit logs)
+type = "MySQL"
+hostname = "<PLACEHOLDER: db.bank.com>"
+port = 3306
+database = "wso2is_db"
+username = "<PLACEHOLDER: db-user>"
+password = "<PLACEHOLDER: db-password>"
+# Connection pool for handling high concurrency (introspection load)
+max_pool_size = 100
+# Replication for HA (multiple replicas for read-heavy operations like introspection)
+replica_enabled = true
+replica_hosts = [
+    "<PLACEHOLDER: replica1.bank.com>",
+    "<PLACEHOLDER: replica2.bank.com>"
+]
+
+[clustering]
+# Clustering for IS 7.3 High Availability
+# Multiple IS 7.3 nodes behind a load balancer
+# Spreads introspection load horizontally
+enabled = true
+# Cluster members
+[[clustering.members]]
+hostname = "<PLACEHOLDER: is-node1.bank.com>"
+port = 4000
+
+[[clustering.members]]
+hostname = "<PLACEHOLDER: is-node2.bank.com>"
+port = 4000
+
+[[clustering.members]]
+hostname = "<PLACEHOLDER: is-node3.bank.com>"
+port = 4000
+
+# Load balancer virtual hostname
+virtual_hostname = "<PLACEHOLDER: is-lb.bank.com>"
+
+# Notes on per-flow configuration (configured in IS 7.3 Console, not in deployment.toml)
+#
+# Application 1: MobileBank (Customer-Facing FAPI 2.0)
+# - Grant types: authorization_code, refresh_token
+# - Token endpoint auth: private_key_jwt + PKCE
+# - Response mode: jwt (JARM)
+# - DPoP: required
+# - FAPI strictness: high
+# - Audience: mobilebank
+# - Scopes: payments:read, payments:write, accounts:read, accounts:write
+#
+# Application 2: PartnerAPI (B2B mTLS)
+# - Grant types: client_credentials
+# - Token endpoint auth: mtls_client_auth
+# - Audience: partner-api
+# - Scopes: partner-api:read, partner-api:write
+# - Claim mappings: org_id from certificate CN
+#
+# Application 3: AgentOrchestrator (AI Agent OBO)
+# - Grant types: urn:ietf:params:oauth:grant-type:token-exchange
+# - Token endpoint auth: private_key_jwt
+# - Audience: payment-api
+# - Scopes: agent:payments:initiate, agent:accounts:read
+# - Actor trust policy: restrict agents to specific user groups/orgs
+# - External IdP trust: AWS OIDC provider (AgentCore)
+#
+# Application 4: AgentTool (AI Agent OBO — Tool)
+# - Grant types: urn:ietf:params:oauth:grant-type:token-exchange
+# - Token endpoint auth: private_key_jwt
+# - Audience: payment-api
+# - Scopes: agent:payments:initiate (narrow; tool only initiates, doesn't read)
+# - Actor trust policy: restrict tool agents to specific scopes
+#
+# Application 5: MCPPaymentsTool (MCP OAuth2 Resource Server)
+# - Serves as the OAuth2 AS for MCP tool authentication
+# - Scopes: mcp:payments:read, mcp:payments:write
+# - Client registration endpoint exposed for MCP clients to register
+

@@ -1,0 +1,104 @@
+{
+  "_comment_file": "Full annotated PSD2 AIS consent object. Replace all <PLACEHOLDER> values before use. IBANs, PSU IDs, and TPP IDs must never be real data in version control.",
+
+  "consentId": "<PLACEHOLDER-consent-uuid>",
+  "_comment_consentId": "Server-assigned unique identifier for this consent. Immutable after creation. Used as the primary key to link access tokens, audit logs, and consent receipts.",
+
+  "access": {
+    "_comment_access": "Defines the exact data scope the TPP is authorised to access. The PSU sees this scope during the authorisation flow and the consent receipt.",
+    "accounts": [
+      {
+        "iban": "<PLACEHOLDER-account-iban-1>",
+        "_comment": "Replace with a real IBAN in a non-production environment only. Never commit real IBANs."
+      }
+    ],
+    "balances": [
+      {
+        "iban": "<PLACEHOLDER-account-iban-1>",
+        "_comment": "Same account — TPP is requesting balance read access."
+      }
+    ],
+    "transactions": [
+      {
+        "iban": "<PLACEHOLDER-account-iban-1>",
+        "_comment": "Same account — TPP is requesting transaction history read access."
+      }
+    ]
+  },
+
+  "recurringIndicator": true,
+  "_comment_recurringIndicator": "true = AIS recurring consent. Governs the 90-day re-authentication requirement under PSD2 RTS Article 10. If false, this is a one-time access; validUntil can be set to today.",
+
+  "validUntil": "<PLACEHOLDER-date-max-90-days-from-creation>",
+  "_comment_validUntil": "The maximum date until which this consent is valid. For AIS with recurringIndicator=true, this MUST NOT exceed today + 90 days (PSD2 RTS Article 10). Format: ISO 8601 date (YYYY-MM-DD). After this date, consentStatus becomes expired and all linked tokens return 401.",
+
+  "frequencyPerDay": 4,
+  "_comment_frequencyPerDay": "Maximum number of API calls this consent allows per day per account. PSD2 RTS Article 36 permits up to 4 AIS API calls per day per account per TPP in the absence of a user session. Set based on the TPP's use case agreed during onboarding.",
+
+  "consentStatus": "received",
+  "_comment_consentStatus": "Current lifecycle state. Valid values: received, valid, expired, revokedByPsu, revokedByAspsp, rejected. Starts as 'received' when the TPP creates the consent object. Transitions to 'valid' after PSU authorisation.",
+
+  "psuId": "<PLACEHOLDER-psu-internal-id>",
+  "_comment_psuId": "The bank's internal identifier for the PSU (payment service user). Set after the PSU completes the authorisation flow. Empty at creation.",
+
+  "tppId": "<PLACEHOLDER-tpp-client-id>",
+  "_comment_tppId": "The OAuth2 client_id of the TPP that created this consent. Used to verify that only the creating TPP can use the resulting access token.",
+
+  "createdAt": "<PLACEHOLDER-iso8601-timestamp>",
+  "_comment_createdAt": "When the consent object was created (POST /consents). Immutable. Used to calculate the 90-day validity window and for audit.",
+
+  "authorisedAt": null,
+  "_comment_authorisedAt": "Timestamp when the PSU completed authorisation. Null until the PSU authorises. Set by the AS when the authorisation flow completes.",
+
+  "revokedAt": null,
+  "_comment_revokedAt": "Timestamp when the consent was revoked. Null unless consentStatus is revokedByPsu or revokedByAspsp. Required for audit — regulators need to verify immediate revocation.",
+
+  "revokedBy": null,
+  "_comment_revokedBy": "Who triggered revocation: 'PSU' or 'ASPSP'. Null until revocation. Set at the same time as revokedAt.",
+
+  "revocationReason": null,
+  "_comment_revocationReason": "Free-text or coded reason for revocation. Examples: 'USER_REQUEST', 'FRAUD_DETECTED', 'REGULATORY_ORDER'. Null until revocation.",
+
+  "accessRights": {
+    "_comment": "Immutable copy of the access scope at the time of consent creation. Stored separately from the mutable access field to preserve audit evidence even if the access field is updated.",
+    "original_authorization_details": [
+      {
+        "type": "account_information",
+        "access": ["accounts", "balances", "transactions"],
+        "accounts": ["<PLACEHOLDER-account-iban-1>"]
+      }
+    ]
+  },
+
+  "consentReceipt": {
+    "_comment": "Structured JSON receipt handed to the PSU at authorisation time. Documents exactly what the PSU agreed to. The bank retains this as audit evidence.",
+    "receiptId": "<PLACEHOLDER-receipt-uuid>",
+    "issuedAt": "<PLACEHOLDER-iso8601-timestamp>",
+    "psuId": "<PLACEHOLDER-psu-internal-id>",
+    "tppName": "<PLACEHOLDER-tpp-display-name>",
+    "tppId": "<PLACEHOLDER-tpp-client-id>",
+    "accessScope": {
+      "accounts": ["<PLACEHOLDER-account-iban-1>"],
+      "balances": ["<PLACEHOLDER-account-iban-1>"],
+      "transactions": ["<PLACEHOLDER-account-iban-1>"]
+    },
+    "validUntil": "<PLACEHOLDER-date-max-90-days-from-creation>",
+    "recurringIndicator": true,
+    "frequencyPerDay": 4
+  },
+
+  "linkedTokenJtis": [],
+  "_comment_linkedTokenJtis": "Array of JWT IDs (jti claims) of all access tokens issued under this consent. Populated by the AS when a token is issued. Used during revocation: each jti in this array is added to the token revocation list, immediately invalidating all outstanding tokens.",
+
+  "modificationHistory": [
+    {
+      "timestamp": "<PLACEHOLDER-iso8601-timestamp>",
+      "previousStatus": null,
+      "newStatus": "received",
+      "actor": "TPP",
+      "actorId": "<PLACEHOLDER-tpp-client-id>",
+      "note": "Consent created by TPP"
+    }
+  ],
+  "_comment_modificationHistory": "Append-only array of all status transitions with timestamps and actors. Required by regulators to reconstruct the complete consent lifecycle. Never delete entries."
+}

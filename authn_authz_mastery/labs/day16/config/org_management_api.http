@@ -1,0 +1,249 @@
+### ============================================================
+### Day 16 Lab — IS 7.3 Organization Management API
+### ============================================================
+### Annotated HTTP exchanges for B2B partner onboarding.
+### NEVER use real tokens, org IDs, or client secrets here.
+### All <PLACEHOLDER> values must be replaced before executing.
+### ============================================================
+
+
+### ============================================================
+### STEP 1: Create a sub-organization (root admin)
+### ============================================================
+###
+### Called by: root-org admin (super-admin or org management role)
+### Effect: creates a new sub-org within the root org (super-tenant)
+
+POST https://identity.bank.com/o/api/identity/organization-mgt/v1.0/organizations
+Content-Type: application/json
+Authorization: Bearer <PLACEHOLDER: root_admin_access_token>
+
+{
+  "name": "PartnerBankXYZ",
+  "description": "B2B partner — PartnerBankXYZ financial services",
+
+  "parentId": "<PLACEHOLDER: root_org_id>",
+  // Required. The root org's ID. Obtain via:
+  // GET /o/api/identity/organization-mgt/v1.0/organizations?filter=name+eq+<root_name>
+  // If parentId is the super-tenant root, this is the well-known root org ID.
+
+  "attributes": [
+    {
+      "key": "partner_type",
+      "value": "bank"
+    },
+    {
+      "key": "onboarding_date",
+      "value": "2026-10-01"
+    }
+  ]
+}
+
+### EXPECTED RESPONSE: 201 Created
+### {
+###   "id": "<PLACEHOLDER: new_sub_org_id>",
+###     // Save this ID — used in all subsequent sub-org API calls.
+###
+###   "name": "PartnerBankXYZ",
+###   "status": "ACTIVE",
+###   "created": "2026-10-01T08:00:00.000Z",
+###   "lastModified": "2026-10-01T08:00:00.000Z",
+###   "parent": {
+###     "id": "<PLACEHOLDER: root_org_id>",
+###     "ref": "https://identity.bank.com/o/api/identity/organization-mgt/v1.0/organizations/<root_org_id>"
+###   }
+### }
+
+
+### ============================================================
+### STEP 2: Register federated IdP at sub-org level
+### ============================================================
+###
+### Called by: root admin using sub-org-scoped API path (/o/{orgId}/...)
+### Effect: registers PartnerBankXYZ's Okta as the IdP for sub-org org-abc123
+###
+### CRITICAL: Use /o/{orgId}/api/server/v1/identity-providers (sub-org path)
+### NOT /api/server/v1/identity-providers (root-org path)
+### A root-org registration would make this IdP available to ALL sub-orgs.
+
+POST https://identity.bank.com/o/<PLACEHOLDER: sub_org_id>/api/server/v1/identity-providers
+Content-Type: application/json
+Authorization: Bearer <PLACEHOLDER: root_admin_access_token>
+
+{
+  "name": "PartnerBankXYZ-Okta",
+  "description": "Okta IdP for PartnerBankXYZ sub-org",
+  "isPrimary": false,
+  "isFederationHub": false,
+
+  "federatedAuthenticators": {
+    "defaultAuthenticatorId": "T3BlbklEQ29ubmVjdA==",
+    "authenticators": [
+      {
+        "authenticatorId": "T3BlbklEQ29ubmVjdA==",
+        "isEnabled": true,
+        "properties": [
+          {
+            "key": "ClientId",
+            "value": "<PLACEHOLDER: okta_client_id>"
+            // The OAuth2 client ID registered in PartnerBankXYZ's Okta.
+          },
+          {
+            "key": "ClientSecret",
+            "value": "<PLACEHOLDER: okta_client_secret>"
+            // Never commit. Use IS 7.3 secrets vault reference in production.
+          },
+          {
+            "key": "AuthorizationEndpoint",
+            "value": "https://partnerbank.okta.com/oauth2/v1/authorize"
+          },
+          {
+            "key": "TokenEndpoint",
+            "value": "https://partnerbank.okta.com/oauth2/v1/token"
+          },
+          {
+            "key": "UserInfoEndpoint",
+            "value": "https://partnerbank.okta.com/oauth2/v1/userinfo"
+          },
+          {
+            "key": "Scopes",
+            "value": "openid email profile"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+### EXPECTED RESPONSE: 201 Created
+### {
+###   "id": "<PLACEHOLDER: idp_id>",
+###   "name": "PartnerBankXYZ-Okta",
+###   "isEnabled": true
+### }
+
+
+### ============================================================
+### STEP 3: Obtain org-scoped access token (partner user)
+### ============================================================
+###
+### The partner user completes authentication against the sub-org
+### (via Okta federation from Step 2) and exchanges the auth code
+### at the sub-org-specific token endpoint.
+###
+### CRITICAL: Token endpoint path includes the sub-org ID:
+###   /o/{orgId}/oauth2/token
+### NOT /oauth2/token (which is the root-org token endpoint)
+
+POST https://identity.bank.com/o/<PLACEHOLDER: sub_org_id>/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=<PLACEHOLDER: authorization_code>
+&redirect_uri=https%3A%2F%2Fpartnerapp.partnerbank.com%2Fcallback
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER: client_jwt_signed_by_tpp_private_key>
+
+### EXPECTED RESPONSE: 200 OK
+### {
+###   "access_token": "<PLACEHOLDER: org_scoped_access_token>",
+###   "token_type": "Bearer",
+###   "expires_in": 3600,
+###   "scope": "payments read:accounts",
+###   "id_token": "<PLACEHOLDER: id_token>"
+### }
+###
+### SAMPLE ORG-SCOPED TOKEN JWT (decoded payload):
+### {
+###   "sub": "<PLACEHOLDER: user_subject>",
+###   "iss": "https://identity.bank.com/o/<PLACEHOLDER: sub_org_id>/oauth2/token",
+###     // iss includes the sub-org ID — resource servers validate this matches
+###     // the expected sub-org. A root-org token has iss without the /o/{orgId} path.
+###
+###   "aud": "<PLACEHOLDER: client_id>",
+###   "exp": 1789012345,
+###   "iat": 1789008745,
+###   "jti": "<PLACEHOLDER: token_jti>",
+###   "scope": "payments read:accounts",
+###
+###   "org_id": "<PLACEHOLDER: sub_org_id>",
+###     // The sub-org this token was issued for.
+###     // Resource servers MUST validate this matches the expected org.
+###     // A token without org_id OR with a different org_id must be rejected.
+###
+###   "org_name": "PartnerBankXYZ",
+###     // Human-readable sub-org name (informational, do not use for authorization).
+###
+###   "user_org": "<PLACEHOLDER: sub_org_id>",
+###     // The org where the user's identity is stored.
+###
+###   "account_type": "USER"
+### }
+
+
+### ============================================================
+### STEP 4: Organization switch grant
+### ============================================================
+###
+### A sub-org user switches to the root-org context to access
+### a shared root-org service — without re-authentication.
+
+POST https://identity.bank.com/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Aorganization_switch
+# Full URN required. Do not abbreviate.
+
+&token=<PLACEHOLDER: current_sub_org_access_token>
+# The current org-abc123-scoped token. IS 7.3 validates this is active
+# and determines the user's identity from it.
+
+&token_type_hint=access_token
+
+&switching_organization=<PLACEHOLDER: root_org_id>
+# The target org to switch into. Can be root-org or another sub-org
+# (if the user has cross-org permissions).
+
+&scope=analytics
+# Scopes requested in the new org context. Must be available in the target org.
+
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER: client_jwt>
+
+### EXPECTED RESPONSE: 200 OK
+### {
+###   "access_token": "<PLACEHOLDER: root_org_token>",
+###   "token_type": "Bearer",
+###   "expires_in": 3600,
+###   "scope": "analytics"
+### }
+###
+### ROOT-ORG TOKEN JWT (decoded payload):
+### {
+###   "sub": "<PLACEHOLDER: user_subject>",
+###   "iss": "https://identity.bank.com/oauth2/token",
+###     // Root-org issuer — no /o/{orgId} path component.
+###
+###   "org_id": "<PLACEHOLDER: root_org_id>",
+###     // Now set to root org ID, not sub-org.
+###     // Resource servers serving root-org resources validate against this.
+###
+###   "scope": "analytics",
+###   "exp": 1789012345
+### }
+###
+### NOTE: No re-authentication occurred. IS 7.3 derived trust from the
+### validated sub-org token. The switch grant is a token exchange, not a
+### full auth flow.
+
+
+### ============================================================
+### UTILITY: List sub-organizations
+### ============================================================
+
+GET https://identity.bank.com/o/api/identity/organization-mgt/v1.0/organizations
+Authorization: Bearer <PLACEHOLDER: root_admin_token>
+
+### Returns paginated list of sub-orgs.
+### Use ?filter=name+eq+PartnerBankXYZ to find a specific org.
+### The "id" field in results is the orgId for all subsequent sub-org API calls.

@@ -1,0 +1,86 @@
+{
+  "_comment_file": "Two SCIM PATCH operation payloads for Day 07 lab. Replace <PLACEHOLDER> values with real IDs in your environment.",
+  "operations": [
+    {
+      "_comment": "PATCH 1: Offboarding — deactivate user and remove from payment-approvers group",
+      "_target_endpoint": "PATCH /Users/<PLACEHOLDER-user-id>",
+      "_target_headers": {
+        "Authorization": "Bearer <PLACEHOLDER-scim-client-token>",
+        "Content-Type": "application/scim+json"
+      },
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      "Operations": [
+        {
+          "_comment_op": "Set active=false. This disables the account without deleting the record. The user cannot log in. Access tokens must be invalidated separately.",
+          "op": "replace",
+          "path": "active",
+          "value": false
+        },
+        {
+          "_comment_op": "Remove the user from the payment-approvers group. Note: this PATCH targets the User resource but the groups attribute on User is read-only in most SCIM implementations. In those cases, send a separate PATCH to the Group resource (see SOLUTION.md). This entry is here for completeness and to illustrate the intent.",
+          "op": "remove",
+          "path": "groups",
+          "value": [
+            {
+              "value": "<PLACEHOLDER-group-id-payment-approvers>",
+              "display": "payment-approvers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "_comment": "PATCH 2: Re-activation — re-hire same user identified by externalId",
+      "_precondition": "Before this call, the SCIM client must have searched: GET /Users?filter=externalId eq '<PLACEHOLDER-external-id>' and confirmed id=<PLACEHOLDER-user-id> with active=false.",
+      "_target_endpoint": "PATCH /Users/<PLACEHOLDER-user-id>",
+      "_target_headers": {
+        "Authorization": "Bearer <PLACEHOLDER-scim-client-token>",
+        "Content-Type": "application/scim+json"
+      },
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      "Operations": [
+        {
+          "_comment_op": "Set active=true. Re-enables the account. The historical audit records (previous access events, consent history) remain linked to this user-id.",
+          "op": "replace",
+          "path": "active",
+          "value": true
+        },
+        {
+          "_comment_op": "Update email in case it changed during the gap. Using filter path syntax to target only the work email value.",
+          "op": "replace",
+          "path": "emails[type eq \"work\"].value",
+          "value": "<PLACEHOLDER-new-work-email>"
+        },
+        {
+          "_comment_op": "Update department if the employee is returning to a different cost centre. Uses EnterpriseUser extension path.",
+          "op": "replace",
+          "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:department",
+          "value": "<PLACEHOLDER-department>"
+        }
+      ]
+    },
+    {
+      "_comment": "PATCH 3: Group resource update — add user back to payment-approvers (send this after PATCH 2)",
+      "_note": "Group membership must be managed on the Group resource, not on the User resource. This is a separate PATCH call.",
+      "_target_endpoint": "PATCH /Groups/<PLACEHOLDER-group-id-payment-approvers>",
+      "_target_headers": {
+        "Authorization": "Bearer <PLACEHOLDER-scim-client-token>",
+        "Content-Type": "application/scim+json"
+      },
+      "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
+      "Operations": [
+        {
+          "_comment_op": "Add the re-hired user back to the payment-approvers group members list.",
+          "op": "add",
+          "path": "members",
+          "value": [
+            {
+              "value": "<PLACEHOLDER-user-id>",
+              "display": "<PLACEHOLDER-user-display-name>"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

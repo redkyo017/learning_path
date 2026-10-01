@@ -1,0 +1,353 @@
+# Day 26 Lab — IS 7.3 deployment.toml Configuration for MCP Tools
+# This file shows the additions/modifications to deployment.toml to enable MCP OAuth2 authentication
+
+# ============================================================================
+# Section 1: Enable OAuth2 Scopes for MCP Tools
+# ============================================================================
+
+[oauth.scopes]
+
+# Read operations for payments MCP tool
+mcp_payments_read = {
+    name = "mcp:payments:read",
+    description = "Read-only access to payments and account information (GetBalance, ListAccounts, ListTransactions)",
+    display_name = "Payments Read",
+    supported_claims = ["sub", "act", "scope", "aud", "iat", "exp"],
+    tier = "basic"
+}
+
+# Write operations for payments MCP tool (grouped write scope)
+mcp_payments_write = {
+    name = "mcp:payments:write",
+    description = "Write access to initiate and manage payments (InitiatePayment, ApprovePayment, CancelPayment)",
+    display_name = "Payments Write",
+    supported_claims = ["sub", "act", "scope", "aud", "iat", "exp"],
+    tier = "premium"
+}
+
+# Fine-grained write scopes (recommended for sensitive operations)
+mcp_payments_write_initiate = {
+    name = "mcp:payments:write:initiate",
+    description = "Initiate new payment transactions",
+    display_name = "Payments Write - Initiate",
+    supported_claims = ["sub", "act", "scope", "aud", "iat", "exp"],
+    tier = "premium"
+}
+
+mcp_payments_write_approve = {
+    name = "mcp:payments:write:approve",
+    description = "Approve pending payment transactions (high-privilege operation)",
+    display_name = "Payments Write - Approve",
+    supported_claims = ["sub", "act", "scope", "aud", "iat", "exp"],
+    tier = "admin"
+}
+
+mcp_payments_write_cancel = {
+    name = "mcp:payments:write:cancel",
+    description = "Cancel or reverse payment transactions",
+    display_name = "Payments Write - Cancel",
+    supported_claims = ["sub", "act", "scope", "aud", "iat", "exp"],
+    tier = "premium"
+}
+
+# Account information scopes
+mcp_accounts_read = {
+    name = "mcp:accounts:read",
+    description = "Read account details and metadata",
+    display_name = "Accounts Read",
+    supported_claims = ["sub", "act", "scope", "aud", "iat", "exp"],
+    tier = "basic"
+}
+
+# ============================================================================
+# Section 2: OAuth2 Token Configuration
+# ============================================================================
+
+[oauth]
+
+# Enable token exchange grant for MCP clients (agents exchanging user tokens)
+enabled_grant_types = [
+    "authorization_code",
+    "refresh_token",
+    "client_credentials",
+    "urn:ietf:params:oauth:grant-type:token-exchange",
+    "urn:ietf:params:oauth:grant-type:jwt-bearer"
+]
+
+# Short-lived tokens for MCP operations
+mcp_token_lifetime = 300  # 5 minutes — single operation
+
+# Standard user/session tokens
+user_token_lifetime = 3600  # 1 hour
+
+# Orchestrator delegation tokens (via token exchange)
+agent_token_lifetime = 900  # 15 minutes
+
+# Introspection cache settings
+introspection_cache_ttl = 300  # 5 minutes (must be <= token_lifetime for compliance)
+
+# Consent and revocation settings
+consent_expiry_enabled = true
+consent_expiry_lifetime = 2592000  # 30 days — user consent for agent tool access
+
+# ============================================================================
+# Section 3: MCP Resource Server Registration
+# ============================================================================
+
+# This section documents the resource servers (MCP tools) registered with IS 7.3
+# In practice, this is configured via Console or REST API, but we document it here
+
+[oauth.resource_servers."payments_mcp_tool"]
+display_name = "Payments MCP Tool"
+description = "MCP tool server for payment operations (ReadBalance, InitiatePayment, etc.)"
+resource_server_context = "/mcp/payments"
+default_scopes = ["mcp:payments:read"]
+access_token_type = "Bearer"
+
+# Scopes available for this resource server
+scopes = [
+    "mcp:payments:read",
+    "mcp:payments:write",
+    "mcp:payments:write:initiate",
+    "mcp:payments:write:approve",
+    "mcp:payments:write:cancel"
+]
+
+# Token validation settings for this resource server
+token_validation = {
+    required_claims = ["sub", "act", "scope", "aud", "jti"],
+    audience = "<PLACEHOLDER: payments-mcp-tool-aud>",
+    require_user_context = true,  # Must have sub claim (user context)
+    allow_delegated_tokens = true  # Accept tokens with act claim (from agents)
+}
+
+# ============================================================================
+# Section 4: MCP Client Registration (DCR Configuration)
+# ============================================================================
+
+[oauth.dcr]
+
+# Dynamic Client Registration endpoint for MCP clients
+enabled = true
+endpoint = "/api/identity/oauth2/dcr/v1.1/register"
+
+# Default values for MCP client registration
+default_client_type = "service"
+default_auth_method = "private_key_jwt"
+
+# Required response types for MCP clients
+required_response_types = ["code"]
+required_grant_types = ["authorization_code", "urn:ietf:params:oauth:grant-type:token-exchange"]
+
+# MCP client validation
+mcp_client_requirements = {
+    token_endpoint_auth_method = "private_key_jwt",
+    require_jwks_uri = true,
+    require_software_id = true,
+    max_redirect_uris = 5
+}
+
+# ============================================================================
+# Section 5: MCP Scope Assignment Rules
+# ============================================================================
+
+# Define which agents/clients can request which scopes
+
+[oauth.scope_assignment."payment_orchestrator"]
+# Payment orchestrator agent can request:
+allowed_scopes = [
+    "mcp:payments:read",
+    "mcp:payments:write:initiate"
+]
+description = "Payment orchestrator agent — can read and initiate payments"
+max_token_lifetime = 900  # 15 minutes for orchestrator tokens
+
+[oauth.scope_assignment."fraud_checker_tool"]
+# Fraud checker tool can only read
+allowed_scopes = [
+    "mcp:payments:read",
+    "mcp:accounts:read"
+]
+description = "Fraud checker tool — read-only access"
+max_token_lifetime = 300  # 5 minutes for tool tokens
+
+[oauth.scope_assignment."admin_provisioning"]
+# Admin provisioning — NO access to MCP payment scopes (this agent doesn't call MCP tools)
+allowed_scopes = []
+description = "Admin provisioning agent — cannot request MCP scopes"
+
+# ============================================================================
+# Section 6: MCP Token Exchange Configuration
+# ============================================================================
+
+[oauth.token_exchange]
+enabled = true
+
+# MCP-specific token exchange settings
+allow_refresh_token_grant = false  # MCP tokens are short-lived, no refresh
+mcp_token_exchange_config = {
+    subject_token_required = true,  # Must have user context (subject_token with sub claim)
+    scope_narrowing_enforced = true,  # Scope must be subset of subject_token scope
+    scope_validation_method = "strict",  # Validate scopes against resource server scopes
+    actor_trust_policy_enabled = true,  # Verify agent is trusted to request these scopes
+    aud_claim_required = true  # Exchange result must have aud=resource_server
+}
+
+# ============================================================================
+# Section 7: Consent Framework for MCP
+# ============================================================================
+
+# MCP operations require user consent (compliance requirement)
+
+[oauth.consent]
+mcp_consent_required = true
+
+# MCP consent flow
+mcp_consent_config = {
+    display_scopes_in_consent_screen = true,
+    group_mcp_scopes = true,
+    consent_expiry_enabled = true,
+    consent_expiry_lifetime = 2592000,  # 30 days
+    allow_consent_revocation = true,
+    revocation_propagation_immediate = true  # Introspection returns active=false immediately
+}
+
+# Consent message for MCP tools
+consent_message_mcp = """
+You are allowing {agent_name} to:
+- Call MCP payment operations on your behalf
+- Read your account and payment information
+- Initiate and manage payments (if permitted)
+
+This consent will expire in 30 days. You can revoke it anytime.
+"""
+
+# ============================================================================
+# Section 8: Audit and Logging for MCP
+# ============================================================================
+
+[audit]
+# Log all MCP token exchanges
+log_mcp_token_exchange = true
+
+# Log all MCP tool introspections
+log_mcp_introspection = true
+
+# Log consent grants/revocations
+log_mcp_consent_changes = true
+
+# MCP audit log format
+mcp_audit_fields = [
+    "timestamp",
+    "event_type",  # e.g., "token_exchange", "introspection", "consent_revoked"
+    "agent_id",  # act.sub
+    "user_id",   # sub
+    "scopes",
+    "resource_server",
+    "result",  # success, denied, revoked
+    "reason"   # e.g., insufficient_scope, user_consent_withdrawn
+]
+
+# ============================================================================
+# Section 9: MCP Discovery Endpoint
+# ============================================================================
+
+# MCP tools publish their OAuth2 metadata at /.well-known/oauth-authorization-server
+# This is what agents discover
+
+[mcp]
+# Enable MCP discovery endpoint
+discovery_enabled = true
+discovery_endpoint = "/.well-known/oauth-authorization-server"
+
+# MCP discovery response includes:
+discovery_response = {
+    issuer = "https://is.bank.com:9443/oauth2/token",
+    authorization_endpoint = "https://is.bank.com:9443/oauth2/authorize",
+    token_endpoint = "https://is.bank.com:9443/oauth2/token",
+    introspection_endpoint = "https://is.bank.com:9443/oauth2/introspect",
+    revocation_endpoint = "https://is.bank.com:9443/oauth2/revoke",
+    jwks_uri = "https://is.bank.com:9443/oauth2/jwks",
+    registration_endpoint = "https://is.bank.com:9443/api/identity/oauth2/dcr/v1.1/register",
+    scopes_supported = [
+        "mcp:payments:read",
+        "mcp:payments:write",
+        "mcp:payments:write:initiate",
+        "mcp:payments:write:approve",
+        "mcp:accounts:read"
+    ],
+    grant_types_supported = [
+        "authorization_code",
+        "urn:ietf:params:oauth:grant-type:token-exchange"
+    ],
+    response_types_supported = ["code"],
+    token_endpoint_auth_methods_supported = ["private_key_jwt"],
+    token_endpoint_auth_signing_alg_values_supported = ["RS256"]
+}
+
+# ============================================================================
+# Section 10: Compliance & Security Settings for MCP
+# ============================================================================
+
+[security]
+
+# Require HTTPS for all MCP endpoints
+mcp_enforce_https = true
+
+# MCP client registration validation
+mcp_dcr_validation = {
+    require_redirect_uris = true,
+    require_token_endpoint_auth_method = true,
+    allow_public_clients = false,  # MCP clients must be confidential
+    require_software_identification = true
+}
+
+# Revocation enforcement
+revoke_when_user_consent_withdrawn = true
+revoke_all_derived_tokens = true  # When user revokes, ALL agent tokens are revoked
+
+# Rate limiting for MCP token requests
+mcp_token_request_rate_limit = {
+    enabled = true,
+    requests_per_minute = 60,
+    per_user = true
+}
+
+# ============================================================================
+# CONFIGURATION NOTES
+# ============================================================================
+
+# Notes for Implementation:
+#
+# 1. SCOPE DESIGN:
+#    - Use fine-grained scopes for high-privilege operations
+#    - Approval operations require mcp:payments:write:approve (separate from initiate)
+#    - Read scopes can be coarser (mcp:payments:read covers all read ops)
+#
+# 2. TOKEN LIFETIME:
+#    - MCP tokens: 5 minutes (single operation)
+#    - Agent delegation tokens: 15 minutes (orchestrator token)
+#    - User tokens: 1 hour (session)
+#    - Introspection cache: 5 minutes (max for compliance)
+#
+# 3. CONSENT AND REVOCATION:
+#    - User must give consent to allow agent to call MCP tools
+#    - Consent is granted per {agent, scopes} pair
+#    - User can revoke consent at any time
+#    - Revocation invalidates active tokens immediately (via introspection)
+#
+# 4. AUDITABILITY:
+#    - Every MCP token request logs: user, agent, scopes, result
+#    - Every introspection logs: token used, scopes validated, result
+#    - Enables compliance question: "Show me all MCP calls by agent X for user Y"
+#
+# 5. DCR FOR MCP CLIENTS:
+#    - Agents register at runtime: POST /api/identity/oauth2/dcr/v1.1/register
+#    - Must provide: client_name, grant_types, jwks_uri, token_endpoint_auth_method
+#    - Receives: client_id for use in token requests
+#
+# 6. REPLACEMENTS NEEDED:
+#    - Replace <PLACEHOLDER: payments-mcp-tool-aud> with actual tool audience value
+#    - Replace "is.bank.com" with actual IS 7.3 hostname
+#    - Replace <PLACEHOLDER: cluster-id> in external IdP URLs
+#

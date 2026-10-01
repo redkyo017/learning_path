@@ -1,0 +1,60 @@
+### Step 1: Backchannel Authorization Request
+### The consumption device (call centre backend) initiates authentication for the user.
+### Note: private_key_jwt uses form body params, not Authorization header.
+
+POST https://as.bank.com/bc-authorize
+Content-Type: application/x-www-form-urlencoded
+
+client_id=call_centre_backend
+&scope=openid+payments
+&login_hint=user%40bank.com
+&binding_message=PAY-4821
+&authorization_details=%5B%7B%22type%22%3A%22payment_initiation%22%2C%22instructedAmount%22%3A%7B%22amount%22%3A%2250000.00%22%2C%22currency%22%3A%22EUR%22%7D%7D%5D
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER-private_key_jwt>
+
+### Expected 200 response:
+### {
+###   "auth_req_id": "0c7839a1-4b2d-4e8f-9a3c-1f2e3d4c5b6a",
+###   "expires_in": 120,
+###   "interval": 5
+### }
+
+
+### Step 2: Token Endpoint Poll #1 (5 seconds after bc-authorize)
+### The client polls using the CIBA grant type. User has not yet approved.
+
+POST https://as.bank.com/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn%3Aopenid%3Aparams%3Agrant-type%3Aciba
+&auth_req_id=0c7839a1-4b2d-4e8f-9a3c-1f2e3d4c5b6a
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER-private_key_jwt>
+
+### Expected 400 response (user has not yet approved):
+### {
+###   "error": "authorization_pending",
+###   "error_description": "The end-user has not yet authenticated. Continue polling."
+### }
+
+
+### Step 3: Token Endpoint Poll #2 (user has approved on mobile app)
+### Same request — identical parameters. Response changes after user approves.
+
+POST https://as.bank.com/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn%3Aopenid%3Aparams%3Agrant-type%3Aciba
+&auth_req_id=0c7839a1-4b2d-4e8f-9a3c-1f2e3d4c5b6a
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER-private_key_jwt>
+
+### Expected 200 response (after user approves):
+### {
+###   "access_token": "<PLACEHOLDER>",
+###   "token_type": "Bearer",
+###   "expires_in": 300,
+###   "scope": "openid payments",
+###   "id_token": "<PLACEHOLDER>"
+### }

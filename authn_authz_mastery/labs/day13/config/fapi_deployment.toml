@@ -1,0 +1,42 @@
+# WSO2 IS 7.3 — FAPI 2.0 Compliance Configuration
+# File location: <IS_HOME>/repository/conf/deployment.toml
+
+[oauth]
+# Enable FAPI 2.0 compliance mode globally
+# This enforces PAR, JARM, and strict client auth at the server level.
+# Individual applications must also have FAPI mode enabled in the Console.
+fapi_conformance_enabled = true
+
+# Allowed token endpoint auth methods (FAPI 2.0: private_key_jwt or tls_client_auth only)
+# client_secret_basic and client_secret_post are implicitly disallowed when fapi_conformance_enabled=true
+supported_client_auth_methods = ["private_key_jwt", "tls_client_auth"]
+
+[oauth.oidc.jarm]
+# JARM: sign all authorization responses as JWTs
+# This enables response_mode=jwt for all FAPI-registered applications
+jarm_response_jwt_validity = 120
+# Signing algorithm: PS256 (FAPI 2.0 required) or ES256
+jarm_signing_algorithm = "PS256"
+# JWKS endpoint (TPP uses this to verify JARM signatures):
+# https://<is-host>:9443/oauth2/jwks
+
+[oauth.par]
+# PAR endpoint: POST /oauth2/par
+# Requests without PAR are rejected for FAPI applications
+par_request_expiry_time = 90
+# Maximum size of the PAR request body (bytes) — increase if authorization_details is large
+par_request_maximum_size = 65536
+
+[oauth.token]
+# Token binding: enable DPoP support
+dpop_enable = true
+# mTLS token binding: extract client cert from TLS and embed cnf.x5t#S256
+mtls_token_binding_enable = true
+
+# IS 7.3 DCR endpoint for FAPI client registration:
+# POST /api/identity/oauth2/dcr/v1.1/register
+# Requires valid registration access token (issued to trusted registration client)
+[oauth.dcr]
+dcr_endpoint_enabled = true
+# Require software_statement assertion for DCR (ecosystem-level cert from trust framework)
+require_software_statement = false   # Set true for regulated open banking ecosystems

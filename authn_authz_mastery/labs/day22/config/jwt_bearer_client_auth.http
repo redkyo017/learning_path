@@ -1,0 +1,211 @@
+### Day 22 Lab — RFC 7523 Client Authentication HTTP Examples
+
+## Part 1: DCR Registration with `private_key_jwt`
+
+### Request: Register Payment Orchestrator Client
+
+POST https://<PLACEHOLDER: is-host>:9443/api/identity/oauth2/dcr/v1.1/register
+Content-Type: application/json
+Authorization: Basic <PLACEHOLDER: admin-credentials-base64>
+
+{
+  "client_name": "payment-orchestrator",
+  "client_uri": "https://<PLACEHOLDER: fintech-host>",
+  "grant_types": [
+    "authorization_code",
+    "urn:ietf:params:oauth:grant-type:token-exchange"
+  ],
+  "redirect_uris": [
+    "https://<PLACEHOLDER: fintech-host>/oauth/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks_uri": "https://<PLACEHOLDER: fintech-host>/.well-known/jwks.json",
+  "require_auth_time": false
+}
+
+### Response: DCR Registration Success
+
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "client_id": "payment-orchestrator-v1",
+  "client_secret": null,
+  "client_id_issued_at": <PLACEHOLDER: unix-timestamp>,
+  "client_name": "payment-orchestrator",
+  "grant_types": [
+    "authorization_code",
+    "urn:ietf:params:oauth:grant-type:token-exchange"
+  ],
+  "redirect_uris": [
+    "https://<PLACEHOLDER: fintech-host>/oauth/callback"
+  ],
+  "response_types": [
+    "code"
+  ],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks_uri": "https://<PLACEHOLDER: fintech-host>/.well-known/jwks.json"
+}
+
+---
+
+## Part 2: Token Request with `client_assertion` (Form Body)
+
+### Request: Token Exchange with JWT Bearer Assertion
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=<PLACEHOLDER: authorization-code>
+&redirect_uri=https://<PLACEHOLDER: fintech-host>/oauth/callback
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: base64url-encoded-jwt>
+
+### Client Assertion JWT Payload (Decoded)
+
+Before encoding, the JWT contains:
+
+{
+  "alg": "RS256",
+  "kid": "2024-fintech-key-001",
+  "typ": "JWT"
+}
+
+---HEADER ABOVE, PAYLOAD BELOW---
+
+{
+  "iss": "payment-orchestrator-v1",
+  "sub": "payment-orchestrator-v1",
+  "aud": "https://<PLACEHOLDER: is-host>:9443/oauth2/token",
+  "jti": "<PLACEHOLDER: UUIDv4>",
+  "exp": <PLACEHOLDER: unix-timestamp now+300>,
+  "iat": <PLACEHOLDER: unix-timestamp now>
+}
+
+### Breakdown of JWT Claims
+
+| Claim | Value | Purpose |
+|-------|-------|---------|
+| `iss` | `payment-orchestrator-v1` | **Issuer** — who signed this JWT? Must match client_id. |
+| `sub` | `payment-orchestrator-v1` | **Subject** — who is the subject of this assertion? For client auth, same as `iss`. |
+| `aud` | `https://<host>:9443/oauth2/token` | **Audience** — who should accept this JWT? Must match token endpoint URL exactly. Prevents reuse at other endpoints. |
+| `jti` | `<UUIDv4>` | **JWT ID** — unique identifier. IS 7.3 caches this to prevent replay. Generate fresh UUID per request. |
+| `exp` | `now+300` | **Expiration** — when does this assertion expire? Max 5 min recommended. IS 7.3 may reject if > 5 min. |
+| `iat` | `now` | **Issued At** — when was this JWT issued? Sanity check for clock skew. |
+
+### Response: Token Issued
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "access_token": "<PLACEHOLDER: issued-jwt>",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "authorization_code"
+}
+
+### Issued Access Token Payload (Decoded)
+
+{
+  "sub": "payment-orchestrator-v1",
+  "aud": [
+    "https://<PLACEHOLDER: resource-server-1>",
+    "https://<PLACEHOLDER: resource-server-2>"
+  ],
+  "iss": "https://<PLACEHOLDER: is-host>:9443/oauth2/token",
+  "azp": "payment-orchestrator-v1",
+  "scope": "authorization_code",
+  "auth_time": <PLACEHOLDER: unix-timestamp>,
+  "exp": <PLACEHOLDER: unix-timestamp now+3600>,
+  "iat": <PLACEHOLDER: unix-timestamp now>,
+  "jti": "<PLACEHOLDER: new-UUIDv4>"
+}
+
+---
+
+## Part 3: CRITICAL — What NOT to Do
+
+### ❌ WRONG: Authorization Header with Bearer
+
+```
+POST /oauth2/token
+Authorization: Bearer <PLACEHOLDER: client-assertion>
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=<auth-code>
+&redirect_uri=https://fintech.local/callback
+```
+
+**Why this fails:**
+- IS 7.3 interprets `Authorization: Bearer` as a resource access token, not client authentication
+- The `client_assertion` in the header is ignored
+- IS 7.3 sees: anonymous request, no client_id, no authentication
+- Result: `401 Unauthorized` or `invalid_client`
+
+**Correct approach:**
+- Put `client_assertion` in the **form body** (POST body, not header)
+- Include `client_assertion_type` also in form body
+- No `Authorization` header needed (IS 7.3 extracts client_id from JWT `iss` claim)
+
+---
+
+## Part 4: Subsequent Token Exchange (RFC 8693)
+
+After receiving the access token above, the client can use it for token exchange:
+
+### Request: Token Exchange for Agent Delegation
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&subject_token=<PLACEHOLDER: user-access-token>
+&subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&actor_token=<PLACEHOLDER: orchestrator-jwt-assertion>
+&actor_token_type=urn:ietf:params:oauth:token-type:jwt
+&scope=payments:initiate
+&requested_token_type=urn:ietf:params:oauth:token-type:access_token
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: new-jwt-for-this-request>
+
+### Note
+
+For token exchange, the client AGAIN authenticates with `private_key_jwt`:
+- Generate a **new** JWT assertion (fresh `jti`, fresh `iat`/`exp`)
+- Include it in the token exchange request as `client_assertion`
+- IS 7.3 validates this assertion before processing the exchange
+
+---
+
+## Troubleshooting: Common Errors
+
+### Error: `invalid_client: JWKS validation failed`
+
+**Possible causes:**
+1. JWKS URI unreachable from IS 7.3's network (firewall, DNS, SSL/TLS issue)
+   - **Fix:** Check network connectivity. Verify JWKS URI in DCR is correct. Test: `curl https://fintech.local/.well-known/jwks.json`
+2. JWT algorithm mismatch (JWT uses RS256, JWKS has only ES256)
+   - **Fix:** Ensure JWT `alg` matches a key in JWKS with same algorithm
+3. JWT `kid` not in JWKS (key rotation mismatch)
+   - **Fix:** Ensure the `kid` in JWT header matches a `kid` in JWKS. Implement key rotation with overlap period.
+
+### Error: `invalid_client: assertion_lifetime_exceeds_limit`
+
+**Cause:** JWT `exp` is too far in the future (e.g., now+7200 when IS 7.3 max is 600s)
+**Fix:** Set `exp` to `now + 300` (5 minutes)
+
+### Error: `invalid_client: assertion_already_used`
+
+**Cause:** Same `jti` used in two requests
+**Fix:** Generate a fresh UUIDv4 for each request
+
+### Error: `invalid_client: aud_mismatch`
+
+**Cause:** JWT `aud` doesn't match the token endpoint URL
+**Fix:** Ensure `aud` is exactly `https://<is-host>:9443/oauth2/token`

@@ -1,0 +1,154 @@
+# ============================================================
+# Day 15 Lab — IS 7.3 DPoP + mTLS Token Binding Configuration
+# ============================================================
+# File: <IS_HOME>/repository/conf/deployment.toml
+#
+# USAGE: Annotated stub. Copy relevant stanzas to your deployment.toml.
+# NEVER write real certificates, private keys, or thumbprints here.
+# RESTART REQUIRED after changes:
+#   sh <IS_HOME>/bin/wso2server.sh restart
+# ============================================================
+
+
+# ============================================================
+# SECTION 1: DPoP token binding
+# ============================================================
+
+[oauth]
+
+# [REQUIRED FOR DPOP] Enable DPoP token binding globally.
+# When true: IS 7.3 checks for a DPoP: header on token requests.
+# If a valid DPoP proof is present, IS 7.3 embeds cnf.jkt in the issued token.
+# Without this flag, IS 7.3 ignores DPoP: headers entirely.
+dpop_token_binding_enabled = true
+
+# [OPTIONAL] Require DPoP for ALL token issuance to DPoP-capable clients.
+# true  → IS 7.3 returns 400 invalid_dpop_proof if no DPoP: header presented
+#          Use for FAPI 2.0 banking deployments where DPoP is mandatory.
+# false → DPoP is optional; clients without proof receive unbound Bearer tokens
+#          WARNING: in this mode, a gateway stripping DPoP: silently downgrades
+#          to unbound tokens — DDoP binding becomes invisible.
+dpop_token_binding_required = false
+
+# [REQUIRED FOR MTLS BINDING] Enable certificate-bound access tokens per RFC 8705.
+# When true: IS 7.3 embeds cnf.x5t#S256 (cert SHA-256 thumbprint) in the token
+# when a client certificate is presented at the token endpoint.
+# This flag is independent of dpop_token_binding_enabled.
+tls_client_certificate_bound_access_tokens = true
+
+
+# ============================================================
+# SECTION 2: mTLS reverse proxy configuration
+# ============================================================
+
+[transport.https.ssl]
+
+# [REQUIRED WHEN IS 7.3 IS BEHIND A TLS-TERMINATING PROXY]
+# The HTTP header name containing the PEM-encoded, URL-escaped client certificate.
+# The reverse proxy (NGINX, HAProxy, AWS ALB with mTLS) must forward the cert here.
+#
+# NGINX example:
+#   proxy_set_header ssl-client-cert $ssl_client_escaped_cert;
+#
+# The header name here MUST match the proxy config exactly (case-insensitive for HTTP headers,
+# but verify your proxy implementation). Mismatch = IS 7.3 reads no cert, issues no cnf.x5t#S256.
+ssl_client_cert_header_name = "ssl-client-cert"
+
+# [REQUIRED WHEN USING ssl_client_cert_header_name]
+# Set to true to instruct IS 7.3 to read client certs from the header above
+# rather than from the direct TLS session.
+#
+# Use false ONLY when IS 7.3 terminates TLS directly (no proxy between client and IS 7.3).
+# Behind any TLS-terminating proxy, this MUST be true — otherwise IS 7.3 looks at the
+# IS 7.3↔proxy HTTP connection for a client cert, finds none, and emits no cnf.x5t#S256.
+enable_ssl_cert_from_header = true
+
+
+# ============================================================
+# SECTION 3: Annotated DPoP token request
+# ============================================================
+#
+# HTTP EXAMPLE — POST /oauth2/token with DPoP proof
+# -------------------------------------------------------
+# POST /oauth2/token HTTP/1.1
+# Host: identity.bank.com
+# Content-Type: application/x-www-form-urlencoded
+#
+# DPoP: <PLACEHOLDER: dpop_proof_jwt>
+#   # DPoP proof JWT — must be forwarded by the API gateway.
+#   # Header claims: alg, jwk (client's EC or RSA public key)
+#   # Payload claims:
+#   #   htm: "POST"                             (HTTP method — must match exactly)
+#   #   htu: "https://identity.bank.com/oauth2/token"  (token endpoint URL)
+#   #   iat: <PLACEHOLDER: unix_timestamp>      (within 60s skew of IS 7.3 clock)
+#   #   jti: "<PLACEHOLDER: unique_id>"         (IS 7.3 checks for replay)
+#   #
+#   # GATEWAY REQUIREMENT: proxy_pass_header DPoP; (or equivalent)
+#   # If the gateway strips this header, IS 7.3 issues an unbound Bearer token.
+#
+# grant_type=authorization_code
+# &code=<PLACEHOLDER: authorization_code>
+# &redirect_uri=https%3A%2F%2Fapp.bank.com%2Fcallback
+# &code_verifier=<PLACEHOLDER: pkce_verifier>
+# &client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+# &client_assertion=<PLACEHOLDER: client_jwt>
+#
+# IS 7.3 RESPONSE (DPoP-bound token):
+# {
+#   "access_token": "<PLACEHOLDER: access_token>",
+#   "token_type": "DPoP",    ← "DPoP", not "Bearer" — indicates DPoP-bound
+#   "expires_in": 3600,
+#   "scope": "payments"
+# }
+# -------------------------------------------------------
+
+
+# ============================================================
+# SECTION 4: Annotated IS 7.3 introspection response with cnf
+# ============================================================
+#
+# IS 7.3 includes the cnf object in introspection responses for bound tokens.
+#
+# HTTP EXAMPLE — POST /oauth2/introspect (resource server calls this)
+# -------------------------------------------------------
+# POST /oauth2/introspect HTTP/1.1
+# Host: identity.bank.com
+# Content-Type: application/x-www-form-urlencoded
+# Authorization: Basic <PLACEHOLDER: base64_client_id_secret>
+#
+# token=<PLACEHOLDER: access_token_to_introspect>
+#
+# IS 7.3 RESPONSE:
+# {
+#   "active": true,
+#   "sub": "<PLACEHOLDER: user_subject>",
+#   "aud": "<PLACEHOLDER: client_id>",
+#   "iss": "https://identity.bank.com/oauth2/token",
+#   "scope": "payments",
+#   "exp": 1789012345,
+#   "iat": 1789008745,
+#
+#   "cnf": {
+#     "jkt": "<PLACEHOLDER: dpop_jwk_thumbprint_base64url>",
+#       # SHA-256 thumbprint of the DPoP public key from the proof presented
+#       # at the token endpoint. Resource server MUST validate DPoP proof header.
+#       # Computed as: BASE64URL(SHA256(utf8(JWK_Thumbprint(dpop_public_key))))
+#
+#     "x5t#S256": "<PLACEHOLDER: cert_sha256_thumbprint_base64url>"
+#       # SHA-256 thumbprint of the mTLS client certificate.
+#       # Present if mTLS binding was also applied.
+#       # In practice: if DPoP was present, only jkt is embedded (DPoP takes precedence).
+#       # Both are shown here for illustration.
+#   }
+# }
+#
+# RESOURCE SERVER OBLIGATION when cnf.jkt is present:
+#   1. Check DPoP: header is present in the incoming request.
+#   2. Verify DPoP proof signature against the public key whose thumbprint = cnf.jkt.
+#   3. Verify htm matches the request method.
+#   4. Verify htu matches the request URL.
+#   5. Verify ath = base64url(SHA-256(raw_access_token)).
+#   6. Verify iat within acceptable clock skew.
+#   7. Verify jti has not been seen before (replay prevention).
+#   → If ANY check fails: reject with 401 WWW-Authenticate: DPoP error="invalid_dpop_proof"
+# -------------------------------------------------------

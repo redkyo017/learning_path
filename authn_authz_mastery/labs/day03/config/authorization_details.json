@@ -1,0 +1,31 @@
+[
+  {
+    "type": "payment_initiation",
+    "instructedAmount": {
+      "currency": "EUR",
+      "amount": "250.00"
+    },
+    "creditorAccount": {
+      "iban": "GB29NWBK60161331926819"
+    },
+    "creditorName": "Acme GmbH",
+    "remittanceInformationUnstructured": "Invoice INV-2026-0042"
+  },
+  {
+    "type": "account_information",
+    "access": {
+      "accounts": [
+        { "iban": "DE89370400440532013000" }
+      ],
+      "balances": [
+        { "iban": "DE89370400440532013000" }
+      ],
+      "transactions": [
+        { "iban": "DE89370400440532013000" }
+      ]
+    },
+    "recurringIndicator": false,
+    "validUntil": "2026-12-31",
+    "frequencyPerDay": 4
+  }
+]

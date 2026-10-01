@@ -1,0 +1,45 @@
+### Step 1: PAR POST — all parameters go here, not in the redirect
+#
+# client_assertion_type and client_assertion are form body params (RFC 7523).
+# private_key_jwt client auth does NOT use an Authorization header —
+# the client assertion is submitted as URL-encoded form fields in the body.
+#
+# Body field annotations:
+#   client_id              — identifies the TPP client
+#   response_type=code     — FAPI 2.0: auth code only, no implicit/hybrid
+#   redirect_uri           — registered; validated server-side, not echoed in logs
+#   code_challenge         — PKCE S256 challenge; verifier sent later at token exchange
+#   code_challenge_method  — must be S256; plain is prohibited by FAPI 2.0
+#   scope                  — requested scopes
+#   authorization_details  — RAR payload (URL-encoded JSON); never visible in redirect URL
+#   client_assertion_type  — signals private_key_jwt client authentication
+#   client_assertion       — JWT signed with TPP's private key; server verifies via jwks_uri
+
+POST /par HTTP/1.1
+Host: auth.bank.example.com
+Content-Type: application/x-www-form-urlencoded
+
+client_id=<PLACEHOLDER: tpp_client_id>
+&response_type=code
+&redirect_uri=https://tpp.example.com/callback
+&code_challenge=<PLACEHOLDER: base64url(sha256(code_verifier))>
+&code_challenge_method=S256
+&scope=openid+payments+accounts
+&authorization_details=%5B%7B%22type%22%3A%22payment_initiation%22%2C%22instructedAmount%22%3A%7B%22currency%22%3A%22EUR%22%2C%22amount%22%3A%22250.00%22%7D%7D%5D
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER: jwt_signed_with_tpp_private_key>
+
+### Step 1 Response
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "request_uri": "urn:ietf:params:oauth:request_uri:6esc_11ACC5bwc014ltc14eY",
+  "expires_in": 90
+}
+
+### Step 2: Redirect — only opaque request_uri, no sensitive parameters in URL
+# Browser URL bar shows: /authorize?client_id=...&request_uri=urn:ietf:...
+# Server logs show: same — no payment details, no IBAN, no amount
+GET /authorize?client_id=<PLACEHOLDER>&request_uri=urn:ietf:params:oauth:request_uri:6esc_11ACC5bwc014ltc14eY HTTP/1.1
+Host: auth.bank.example.com

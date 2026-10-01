@@ -1,0 +1,209 @@
+{
+  "RoleName": "PaymentOrchestratorAgentRole",
+  "Description": "IAM role for payment orchestrator AI agent deployed via AWS AgentCore. Uses temporary credentials with session tags for fine-grained audit trail and access control.",
+
+  "TrustPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::<PLACEHOLDER: agentcore-account-id>:root"
+        },
+        "Action": "sts:AssumeRole",
+        "Condition": {
+          "StringEquals": {
+            "sts:ExternalId": "<PLACEHOLDER: agentcore-external-id-value>"
+          }
+        }
+      }
+    ],
+    "Comment": "Only AgentCore's service principal can assume this role, verified by a secret external ID to prevent confused deputy attacks."
+  },
+
+  "PermissionPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DynamoDBReadCustomerAccounts",
+        "Effect": "Allow",
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        "Resource": "arn:aws:dynamodb:<PLACEHOLDER: region>:<PLACEHOLDER: account-id>:table/CustomerAccounts",
+        "Condition": {
+          "StringEquals": {
+            "aws:PrincipalTag/agentId": "payment-orchestrator"
+          }
+        },
+        "Comment": "Allow read-only access to customer accounts table, but ONLY for the payment orchestrator agent. Session tag condition prevents other agents (e.g., fraud-checker) from accessing this resource even if they use the same role."
+      },
+      {
+        "Sid": "PaymentAPICallViaAgentCore",
+        "Effect": "Allow",
+        "Action": "execute-api:Invoke",
+        "Resource": "arn:aws:execute-api:<PLACEHOLDER: region>:<PLACEHOLDER: account-id>:*/<PLACEHOLDER: api-id>/*/POST/payments/initiate",
+        "Condition": {
+          "StringEquals": {
+            "aws:PrincipalTag/agentId": "payment-orchestrator"
+          }
+        },
+        "Comment": "Allow the agent to invoke the payment initiation API endpoint through API Gateway. Session tag condition ensures only the orchestrator agent (agentId=payment-orchestrator) can call this high-privilege endpoint."
+      },
+      {
+        "Sid": "CloudWatchLogsWrite",
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource": "arn:aws:logs:<PLACEHOLDER: region>:<PLACEHOLDER: account-id>:log-group:/aws/agentcore/payment-orchestrator:*",
+        "Condition": {
+          "StringEquals": {
+            "aws:PrincipalTag/agentId": "payment-orchestrator"
+          }
+        },
+        "Comment": "Allow the agent to write audit logs to CloudWatch. Session tag ensures logs are tagged with this agent's identity."
+      },
+      {
+        "Sid": "DenyAllOtherAgents",
+        "Effect": "Deny",
+        "Action": [
+          "dynamodb:*",
+          "execute-api:*",
+          "logs:*"
+        ],
+        "Resource": "*",
+        "Condition": {
+          "StringNotEquals": {
+            "aws:PrincipalTag/agentId": "payment-orchestrator"
+          }
+        },
+        "Comment": "Explicit deny for any agent with a different agentId. This is a defense-in-depth measure. If somehow another agent type uses this role (which should not happen), they are explicitly denied."
+      },
+      {
+        "Sid": "RequireUserIdTag",
+        "Effect": "Deny",
+        "Action": "*",
+        "Resource": "*",
+        "Condition": {
+          "StringNotLike": {
+            "aws:PrincipalTag/userId": "*"
+          }
+        },
+        "Comment": "Enforce that every credential must include a userId tag. This requirement is typically enforced by a Service Control Policy (SCP) at the org level, but we include it here as defense-in-depth."
+      },
+      {
+        "Sid": "RequireSessionIdTag",
+        "Effect": "Deny",
+        "Action": "*",
+        "Resource": "*",
+        "Condition": {
+          "StringNotLike": {
+            "aws:PrincipalTag/sessionId": "*"
+          }
+        },
+        "Comment": "Enforce that every credential must include a sessionId tag for audit trail correlation. Enables tracing each API call back to the AgentCore session."
+      }
+    ]
+  },
+
+  "SessionTagPolicy": {
+    "Comment": "This policy would be enforced by AWS Organizations Service Control Policy (SCP) to mandate that all agent role assumptions include required tags.",
+    "Example": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "RequireAgentSessionTags",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "sts:AssumeRole",
+          "Resource": "arn:aws:iam::*:role/PaymentOrchestratorAgentRole",
+          "Condition": {
+            "StringNotLike": {
+              "sts:TransitiveTagKeys": ["agentId", "userId", "sessionId"]
+            }
+          }
+        }
+      ]
+    }
+  },
+
+  "CloudTrailExample": {
+    "Comment": "When this role is used to make an API call, CloudTrail records include session tag metadata",
+    "ExampleEntry": {
+      "eventTime": "2026-10-01T14:32:00Z",
+      "eventSource": "dynamodb.amazonaws.com",
+      "eventName": "GetItem",
+      "sourceIPAddress": "<agent-pod-ip>",
+      "userIdentity": {
+        "principalId": "AIDACKCEVSQ6C2EXAMPLE:payment-orchestrator",
+        "type": "AssumedRole",
+        "arn": "arn:aws:iam::<PLACEHOLDER: account-id>:role/PaymentOrchestratorAgentRole",
+        "sessionContext": {
+          "sessionIssuer": {
+            "principalId": "AIDAI<agentcore-principal>",
+            "arn": "arn:aws:iam::<PLACEHOLDER: agentcore-account-id>:root",
+            "type": "IAMUser",
+            "principalName": "agentcore"
+          },
+          "webIdFederationData": {},
+          "attributes": {
+            "mfaAuthenticated": "false",
+            "creationDate": "2026-10-01T14:32:00Z"
+          }
+        }
+      },
+      "requestParameters": {
+        "tableName": "CustomerAccounts",
+        "key": {
+          "userId": {
+            "S": "user-123"
+          }
+        }
+      },
+      "responseElements": null,
+      "awsRegion": "<PLACEHOLDER: region>",
+      "tags": {
+        "agentId": "payment-orchestrator",
+        "userId": "user-123",
+        "sessionId": "sess-abc-def-ghi"
+      }
+    }
+  },
+
+  "ImplementationNotes": {
+    "CredentialVendingCycle": [
+      "1. AgentCore receives agent startup request",
+      "2. AgentCore calls sts:AssumeRole with PaymentOrchestratorAgentRole + session tags",
+      "3. AWS STS validates trust policy (only AgentCore allowed via external ID)",
+      "4. STS validates session tags meet policy requirements (agentId, userId, sessionId present)",
+      "5. STS vends temporary credentials with 15-minute TTL",
+      "6. AgentCore returns credentials to agent",
+      "7. Agent uses credentials to sign all requests (SigV4)",
+      "8. Every request includes session tags in CloudTrail (enables audit trail)",
+      "9. After 15 minutes, credentials expire → agent requests new credentials",
+      "10. No static keys ever stored or transmitted"
+    ],
+
+    "RecommendedChanges": [
+      "Replace <PLACEHOLDER> account IDs with your AWS account ID (e.g., 123456789012)",
+      "Replace <PLACEHOLDER> region with your region (e.g., us-east-1)",
+      "Replace <PLACEHOLDER> agentcore-account-id with the AWS account where AgentCore is deployed",
+      "Replace <PLACEHOLDER> agentcore-external-id-value with a random, confidential external ID (recommend: UUIDv4)",
+      "Replace <PLACEHOLDER: api-id> with your actual API Gateway API ID",
+      "Create similar roles for other agent types (fraud-detector, risk-scorer, etc.) with different agentId tag values",
+      "Enforce session tag requirements via Organization SCP (separate from this role)"
+    ],
+
+    "AuditComplianceChecks": [
+      "✅ Every API call is traceable to: which user (userId tag) → which agent (agentId tag) → which session (sessionId tag)",
+      "✅ No shared service accounts — each agent type has dedicated role",
+      "✅ Per-agent revocation is possible — disable AgentCore's assumption of this role if agent is compromised",
+      "✅ Per-session audit correlation — use sessionId to link CloudTrail entries to agent session logs",
+      "✅ Compliant with banking audit requirements for authorization traceability"
+    ]
+  }
+}

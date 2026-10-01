@@ -1,0 +1,418 @@
+### Day 23 Lab — RFC 8693 Token Exchange (OBO) HTTP Examples
+
+## Part 1: First Exchange (User → Orchestrator)
+
+### Request: Orchestrator Exchanges User Token
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&subject_token=<PLACEHOLDER: user-access-token>
+&subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&actor_token=<PLACEHOLDER: orchestrator-jwt-assertion>
+&actor_token_type=urn:ietf:params:oauth:token-type:jwt
+&scope=payments:initiate
+&requested_token_type=urn:ietf:params:oauth:token-type:access_token
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: orchestrator-client-assertion>
+
+### Parameter Breakdown
+
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| `grant_type` | `urn:ietf:params:oauth:grant-type:token-exchange` | RFC 8693 token exchange grant type |
+| `subject_token` | User's access token (from App-Native Auth) | The token being delegated (user's identity + scope) |
+| `subject_token_type` | `urn:ietf:params:oauth:token-type:access_token` | Tells IS 7.3 this is an access token, not a refresh token |
+| `actor_token` | Orchestrator's JWT (signed with private key) | The token identifying the agent (orchestrator) requesting the exchange |
+| `actor_token_type` | `urn:ietf:params:oauth:token-type:jwt` | Actor token is a JWT |
+| `scope` | `payments:initiate` | Requested scope for the delegated token (MUST ⊆ subject_token scope) |
+| `requested_token_type` | `urn:ietf:params:oauth:token-type:access_token` | Wants an access token in response |
+| `client_assertion_type` | `urn:ietf:params:oauth:client-assertion-type:jwt-bearer` | RFC 7523 client auth (Day 22) |
+| `client_assertion` | Orchestrator's signed JWT | Authenticates the orchestrator to IS 7.3 (proves client_id) |
+
+### Response: Orchestrator Token Issued
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "access_token": "<PLACEHOLDER: base64url-orchestrator-token>",
+  "token_type": "Bearer",
+  "expires_in": 900,
+  "scope": "payments:initiate"
+}
+
+### Orchestrator Token Payload (Decoded)
+
+```json
+{
+  "iss": "https://<PLACEHOLDER: is-host>:9443/oauth2/token",
+  "sub": "alice_id_2024",
+  "aud": "https://<PLACEHOLDER: payment-api>",
+  "azp": "payment-processor-v1",
+  "act": {
+    "sub": "payment-processor-v1"
+  },
+  "scope": "payments:initiate",
+  "exp": <PLACEHOLDER: now+900>,
+  "iat": <PLACEHOLDER: now>,
+  "jti": "<PLACEHOLDER: uuid-o1>"
+}
+```
+
+### Key Claims After First Exchange
+
+| Claim | Value | Significance |
+|-------|-------|--------------|
+| `sub` | `alice_id_2024` | **Preserved from subject_token** — Alice's identity throughout the chain |
+| `act` | `{"sub": "payment-processor-v1"}` | **Added by IS 7.3** — identifies the orchestrator agent |
+| `scope` | `payments:initiate` | **Narrowed from subject_token** — user had `payments:initiate,accounts:read`, orchestrator gets only `payments:initiate` |
+| `exp` | `now+900` | **15 minutes** — shorter than user token (3600s), forces re-exchange if needed |
+| `aud` | `https://payment-api` | Audience (resource server that will use this token) |
+
+---
+
+## Part 2: Second Exchange (Orchestrator → Tool)
+
+### Request: RiskAssessment Tool Exchanges Orchestrator Token
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&subject_token=<PLACEHOLDER: orchestrator-exchange-token>
+&subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&actor_token=<PLACEHOLDER: risk-assessment-jwt-assertion>
+&actor_token_type=urn:ietf:params:oauth:token-type:jwt
+&scope=payments:initiate
+&requested_token_type=urn:ietf:params:oauth:token-type:access_token
+&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+&client_assertion=<PLACEHOLDER: risk-assessment-client-assertion>
+
+### Notable Changes in Second Exchange
+
+- `subject_token` is NOW the orchestrator_token (from Part 1)
+- `actor_token` is the RiskAssessment tool's JWT
+- `scope` is still `payments:initiate` (no further narrowing, already minimal)
+- `client_assertion` authenticates RiskAssessment tool to IS 7.3
+
+### Response: Tool Token Issued
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "access_token": "<PLACEHOLDER: base64url-tool-token>",
+  "token_type": "Bearer",
+  "expires_in": 300,
+  "scope": "payments:initiate"
+}
+
+### Tool Token Payload (Decoded, 2-Hop)
+
+```json
+{
+  "iss": "https://<PLACEHOLDER: is-host>:9443/oauth2/token",
+  "sub": "alice_id_2024",
+  "aud": "https://<PLACEHOLDER: risk-api>",
+  "azp": "risk-assessment-v1",
+  "act": {
+    "sub": "risk-assessment-v1",
+    "act": {
+      "sub": "payment-processor-v1"
+    }
+  },
+  "scope": "payments:initiate",
+  "exp": <PLACEHOLDER: now+300>,
+  "iat": <PLACEHOLDER: now>,
+  "jti": "<PLACEHOLDER: uuid-r1>"
+}
+```
+
+### Key Claims After Second Exchange
+
+| Claim | Value | Significance |
+|-------|-------|--------------|
+| `sub` | `alice_id_2024` | **Preserved AGAIN** — still Alice throughout all 3 hops |
+| `act` | Nested structure | **Nesting, not replacement**: `act.sub` is the immediate caller (tool), `act.act.sub` is the previous hop (orchestrator) |
+| | `{"sub": "risk-assessment-v1", "act": {"sub": "payment-processor-v1"}}` | Full delegation chain is now recorded in the token |
+| `scope` | `payments:initiate` | **Unchanged** — already narrowed at first hop |
+| `exp` | `now+300` | **5 minutes** — even shorter for per-operation tool |
+| `jti` | `uuid-r1` | **New unique ID** — different from orchestrator token's `jti` |
+
+---
+
+## Part 3: Token Introspection (Validate in Backend API)
+
+### Request: Backend API Introspects Token
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/introspect
+Content-Type: application/x-www-form-urlencoded
+
+token=<PLACEHOLDER: tool-token-from-request>
+&token_type_hint=access_token
+
+### Response: IS 7.3 Returns Token Status
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "active": true,
+  "sub": "alice_id_2024",
+  "aud": "https://<PLACEHOLDER: risk-api>",
+  "azp": "risk-assessment-v1",
+  "act": {
+    "sub": "risk-assessment-v1",
+    "act": {
+      "sub": "payment-processor-v1"
+    }
+  },
+  "scope": "payments:initiate",
+  "exp": <PLACEHOLDER: now+300>,
+  "iat": <PLACEHOLDER: now>,
+  "jti": "<PLACEHOLDER: uuid-r1>"
+}
+
+### What the Backend API Validates
+
+```
+1. active: true                  → Token is not revoked
+2. sub: alice_id_2024            → User is known (Alice)
+3. act nesting present           → Full delegation chain visible
+4. scope: payments:initiate      → Fits the API's authorization policy
+5. exp > current_time            → Token not expired
+6. jti: uuid-r1                  → Unique token for audit trail correlation
+```
+
+### Delegation Chain Reconstruction
+
+From the introspection response, the API reconstructs:
+
+```
+User: alice_id_2024
+Agent Chain:
+  1. Immediate caller (outermost act): risk-assessment-v1
+  2. Previous hop (nested act.act): payment-processor-v1
+
+Full path: alice_id_2024 → payment-processor-v1 → risk-assessment-v1
+```
+
+---
+
+## Part 4: Revocation Propagation
+
+### Request: User Revokes Session
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/revoke
+Content-Type: application/x-www-form-urlencoded
+
+token=<PLACEHOLDER: user-human-token>
+&token_type_hint=access_token
+
+### IS 7.3 Marks Human Token as Revoked
+
+IS 7.3 internal state:
+```
+token_id=uuid-h1:
+  status: revoked
+  revoked_at: now
+  reason: user_request
+```
+
+All derived tokens are NOT explicitly revoked, but their status is now invalid.
+
+### Subsequent Introspection Call (Any Derived Token)
+
+POST https://<PLACEHOLDER: is-host>:9443/oauth2/introspect
+Content-Type: application/x-www-form-urlencoded
+
+token=<PLACEHOLDER: tool-token>
+
+### Response: Derived Token Now Shows Inactive
+
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "active": false,
+  "jti": "<PLACEHOLDER: uuid-r1>"
+}
+
+### Why Revocation Propagated
+
+IS 7.3's introspection logic:
+```
+1. Token = tool_token
+2. Check: is tool_token directly revoked? No.
+3. Check: trace exchange chain
+   - tool_token came from orchestrator_token (uuid-o1)
+   - orchestrator_token came from human_token (uuid-h1)
+4. Check: is human_token (uuid-h1) revoked? YES
+5. Result: tool_token is INACTIVE (revocation cascaded)
+```
+
+---
+
+## Part 5: Audit Trail Reconstruction
+
+### Scenario: Compliance Officer Reviews Transaction TXN-123
+
+**Question**: "Prove that Alice authorized the $50k transfer and show the full agent chain."
+
+**Method**: Use token `jti` values to correlate logs.
+
+### Step 1: Find Transaction in Payment API Log
+
+```
+Payment API transaction log:
+{
+  "txn_id": "TXN-123",
+  "amount": 50000,
+  "timestamp": "2024-10-01T14:22:33Z",
+  "token_jti": "uuid-o1",
+  "agent": "payment-processor-v1"
+}
+```
+
+### Step 2: Query IS 7.3 Token Exchange Audit Log
+
+```
+IS 7.3 audit log (search for jti=uuid-o1):
+{
+  "event": "token_exchange",
+  "timestamp": "2024-10-01T14:22:00Z",
+  "issued_jti": "uuid-o1",
+  "subject_jti": "uuid-h1",
+  "actor_client_id": "payment-processor-v1",
+  "issued_scope": "payments:initiate",
+  "status": "success"
+}
+```
+
+### Step 3: Trace Back to Human Token
+
+```
+IS 7.3 audit log (search for jti=uuid-h1):
+{
+  "event": "token_issued",
+  "timestamp": "2024-10-01T14:15:00Z",
+  "jti": "uuid-h1",
+  "subject": "alice_id_2024",
+  "grant_type": "authorization_code",
+  "scope": "payments:initiate,accounts:read",
+  "status": "success"
+}
+```
+
+### Step 4: Search Risk Assessment Exchange
+
+```
+IS 7.3 audit log (search for subject_jti=uuid-o1):
+{
+  "event": "token_exchange",
+  "timestamp": "2024-10-01T14:22:15Z",
+  "issued_jti": "uuid-r1",
+  "subject_jti": "uuid-o1",
+  "actor_client_id": "risk-assessment-v1",
+  "issued_scope": "payments:initiate",
+  "status": "success"
+}
+```
+
+### Compliance Report
+
+```
+Transaction TXN-123 (jti=uuid-o1) audit trail:
+
+1. HUMAN TOKEN (uuid-h1)
+   - Subject: alice_id_2024
+   - Issued: 2024-10-01T14:15:00Z
+   - Scope: payments:initiate,accounts:read
+   - Status: ✓ Alice authenticated
+
+2. FIRST EXCHANGE (uuid-h1 → uuid-o1)
+   - Subject: alice_id_2024 (preserved)
+   - Actor: payment-processor-v1
+   - Issued: 2024-10-01T14:22:00Z
+   - Scope: payments:initiate (narrowed)
+   - Status: ✓ Orchestrator delegated by Alice
+
+3. SECOND EXCHANGE (uuid-o1 → uuid-r1)
+   - Subject: alice_id_2024 (preserved)
+   - Actors: risk-assessment-v1 → payment-processor-v1 (nested)
+   - Issued: 2024-10-01T14:22:15Z
+   - Scope: payments:initiate (unchanged)
+   - Status: ✓ Tool delegated by orchestrator
+
+4. TRANSACTION INITIATED (with uuid-o1)
+   - Amount: $50,000
+   - Timestamp: 2024-10-01T14:22:33Z
+   - Agent: payment-processor-v1
+   - Status: ✓ Initiated by authorized agent
+
+FINAL CONCLUSION:
+✓ Alice (alice_id_2024) authorized the session
+✓ Payment Orchestrator (payment-processor-v1) initiated the transaction
+✓ Risk Assessment Tool (risk-assessment-v1) evaluated the transfer
+✓ Scope narrowed appropriately at each hop
+✓ Full delegation chain recorded in `act` claims
+✓ Audit trail is complete and auditable
+```
+
+---
+
+## Scope Narrowing Rules
+
+**IS 7.3 enforces**: `requested_scope ⊆ subject_token.scope`
+
+### Example 1: Valid Narrowing
+
+```
+subject_token.scope = "payments:initiate,accounts:read"
+requested_scope = "payments:initiate"
+Result: ✓ ACCEPTED (subset)
+```
+
+### Example 2: Invalid Escalation
+
+```
+subject_token.scope = "payments:initiate"
+requested_scope = "payments:initiate,accounts:read"
+Result: ✗ REJECTED with invalid_scope
+(Cannot escalate scope via exchange)
+```
+
+### Example 3: Identical Scope
+
+```
+subject_token.scope = "payments:initiate"
+requested_scope = "payments:initiate"
+Result: ✓ ACCEPTED (equal = subset)
+```
+
+---
+
+## Common Errors and Fixes
+
+### Error: `invalid_scope`
+
+```
+actor_token invalid, or scope exceeds subject_token scope
+Fix: Ensure requested_scope ⊆ subject_token.scope
+```
+
+### Error: `invalid_grant` or `invalid_actor`
+
+```
+actor_token validation failed or actor_client_id not authorized
+Fix: Ensure actor_token is signed, aud matches token endpoint, actor trust policy allows this client
+```
+
+### Error: `token_inactive` or revocation not propagating
+
+```
+Introspection says token is active, but API doesn't see changes
+Fix: Ensure API calls /oauth2/introspect, not local JWT validation. Set introspection cache TTL ≤ 5 min.
+```

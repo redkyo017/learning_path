@@ -1,0 +1,61 @@
+{
+  "_comment": "DPoP proof JWT — decoded for annotation. In transit this is a compact JWT string.",
+  "_note": "All key material and token values are PLACEHOLDER. Do not insert real keys.",
+
+  "dpop_proof_header": {
+    "typ": "dpop+jwt",
+    "_typ_comment": "Signals this JWT is a DPoP proof, not a regular access token or client assertion",
+
+    "alg": "ES256",
+    "_alg_comment": "ECDSA with P-256 and SHA-256. RS256 is not recommended for DPoP; EC keys are smaller.",
+
+    "jwk": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "<PLACEHOLDER-x-coordinate-base64url>",
+      "y": "<PLACEHOLDER-y-coordinate-base64url>"
+    },
+    "_jwk_comment": "Public key embedded directly in the proof header. No 'kid' reference — the RS verifies the proof using this key, then checks cnf.jkt in the token matches this key's thumbprint. Private key never appears here or anywhere in the proof."
+  },
+
+  "dpop_proof_claims": {
+    "jti": "<PLACEHOLDER-unique-uuid-per-request>",
+    "_jti_comment": "Unique identifier for this proof. The RS stores seen jti values and rejects duplicates — prevents replay attacks where an attacker reuses a captured proof.",
+
+    "htm": "GET",
+    "_htm_comment": "HTTP method this proof is valid for. The RS checks htm matches the actual request method. A proof for GET cannot be used for POST.",
+
+    "htu": "https://api.bank.com/accounts",
+    "_htu_comment": "HTTP URL this proof is valid for (scheme + host + path, no query string). The RS checks htu matches the actual request URL. Binds proof to one specific endpoint.",
+
+    "iat": 1727654400,
+    "_iat_comment": "Issued-at Unix timestamp. The RS rejects proofs older than a short window (typically 60 seconds) to limit the replay window even if jti cache is not perfect.",
+
+    "ath": "<PLACEHOLDER-base64url-sha256-of-access-token>",
+    "_ath_comment": "Access token hash: base64url(sha256(access_token_bytes)). Binds this proof to one specific access token. An attacker who has this proof cannot use it with a different token.",
+
+    "nonce": "<PLACEHOLDER-server-issued-nonce>",
+    "_nonce_comment": "Optional but required if the AS/RS issued a DPoP-Nonce challenge. Must match the nonce the server issued. Prevents offline pre-generation of proof batches."
+  },
+
+  "access_token_decoded": {
+    "_comment": "Access token issued by AS after DPoP token request. Decoded payload shown for annotation.",
+
+    "sub": "<PLACEHOLDER-user-or-client-id>",
+    "iss": "https://as.bank.com",
+    "aud": "https://api.bank.com",
+    "exp": 1727654700,
+    "iat": 1727654400,
+
+    "token_type": "DPoP",
+    "_token_type_comment": "Signals to the RS that this token requires DPoP proof validation. The RS must reject requests that use 'Authorization: Bearer' with a DPoP-bound token.",
+
+    "cnf": {
+      "jkt": "<PLACEHOLDER-jwk-thumbprint-base64url>",
+      "_jkt_comment": "JWK thumbprint: base64url(sha256(canonical JSON of the jwk in the DPoP proof header)). The RS computes the thumbprint of the jwk in the received proof and verifies it matches this value. Binds the token to one specific key pair."
+    },
+
+    "scope": "openid accounts",
+    "authorization_details": []
+  }
+}

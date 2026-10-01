@@ -1,0 +1,89 @@
+# mTLS Client Auth + Certificate-Bound Token Configuration
+# All certificate values are PLACEHOLDER — replace with real certs in a secure environment.
+# Never commit real certificates or private keys to version control.
+
+# ─── Client Registration at Authorization Server ───────────────────────────────
+
+client_registration:
+  client_id: "tpp_payment_client"
+
+  # tls_client_auth: cert must chain to a CA in the AS trust store.
+  # The Subject DN or SAN is verified against tls_client_auth_subject_dn.
+  # Use this when your ecosystem defines a list of accepted CAs (e.g., open banking trust frameworks).
+  tls_client_auth:
+    token_endpoint_auth_method: "tls_client_auth"
+    tls_client_auth_subject_dn: "CN=tpp.example.com, O=Example TPP Ltd, C=GB"
+    # Fill in: the Subject DN must exactly match the certificate presented at token endpoint.
+
+  # self_signed_tls_client_auth: cert does not need to chain to a known CA.
+  # The AS computes x5t#S256 of the presented cert and matches it against the registered value.
+  # Use this when the client manages its own PKI (closed ecosystems, internal services).
+  self_signed_tls_client_auth:
+    token_endpoint_auth_method: "self_signed_tls_client_auth"
+    jwks_uri: "https://tpp.example.com/jwks"
+    # The JWKS URI must return the certificate's x5c field so the AS can compute x5t#S256.
+
+  jwks:
+    keys:
+      - kty: "RSA"
+        use: "sig"
+        alg: "PS256"
+        kid: "tpp-mtls-cert-2024"
+        # x5c: base64-encoded DER certificate (NOT PEM — no header/footer, no newlines).
+        x5c:
+          - "<PLACEHOLDER-base64-der-encoded-certificate>"
+        # x5t#S256: base64url(sha256(DER certificate bytes))
+        # Computed by: openssl x509 -in cert.pem -outform DER | openssl dgst -sha256 -binary | base64url
+        "x5t#S256": "<PLACEHOLDER-base64url-sha256-of-cert-der>"
+        # RSA modulus and exponent (public key material for signature verification)
+        n: "<PLACEHOLDER-rsa-modulus-base64url>"
+        e: "AQAB"
+
+# ─── Token Response (certificate-bound access token) ──────────────────────────
+
+token_response:
+  access_token: "<PLACEHOLDER-jwt-or-opaque-token>"
+  token_type: "Bearer"
+  expires_in: 300
+  scope: "openid accounts payments"
+
+  # cnf (confirmation) claim — embedded in the access token by the AS at issuance time.
+  # x5t#S256 is extracted from the client certificate presented during the token request.
+  cnf:
+    # x5t#S256: base64url(sha256(DER bytes of the client certificate used for mTLS auth))
+    # This binds the token to that specific certificate.
+    # Any RS receiving this token must verify the presenting client's cert produces the same thumbprint.
+    "x5t#S256": "<PLACEHOLDER-base64url-sha256-of-client-cert-der>"
+    # Fill in: this value must match what the gateway forwards in X-Client-Cert-Thumbprint.
+
+# ─── Resource Server / API Gateway Configuration ──────────────────────────────
+
+api_gateway_config:
+  tls:
+    # Require client certificates on all inbound connections.
+    require_client_cert: true
+    # AS trust store: list of CA certificates the gateway accepts for tls_client_auth.
+    # For self_signed_tls_client_auth, the gateway validates the thumbprint against registered values instead.
+    trusted_ca_bundle: "/etc/ssl/certs/open-banking-ca-bundle.pem"
+    # Fill in: path to the CA bundle file, or configure programmatically.
+
+  cert_forwarding:
+    # Extract x5t#S256 from the client cert and forward to backend services.
+    # Do NOT forward the full PEM — it is large and exposes PKI structure unnecessarily.
+    forward_thumbprint_header: "X-Client-Cert-Thumbprint"
+    # Strip this header from any inbound external requests to prevent spoofing.
+    strip_external_header: true
+
+resource_server_validation:
+  # Backend service validates: X-Client-Cert-Thumbprint == cnf.x5t#S256 from token introspection.
+  introspection_endpoint: "https://as.bank.com/introspect"
+
+  validation_steps:
+    - step: 1
+      action: "Extract X-Client-Cert-Thumbprint from request header"
+    - step: 2
+      action: "Introspect the access token to retrieve cnf.x5t#S256"
+    - step: 3
+      action: "Assert: header thumbprint == cnf.x5t#S256"
+    - step: 4
+      action: "Reject with 401 if thumbprints do not match"

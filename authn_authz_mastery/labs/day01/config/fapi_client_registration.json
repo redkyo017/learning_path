@@ -1,0 +1,18 @@
+{
+  "client_name": "PSD2 Payment Initiation TPP",
+  "redirect_uris": ["https://tpp.example.com/callback"],
+  "grant_types": ["authorization_code"],
+  "response_types": ["code"],
+  "scope": "openid payments accounts",
+  "token_endpoint_auth_method": "private_key_jwt",
+  "token_endpoint_auth_signing_alg": "PS256",
+  "request_object_signing_alg": "PS256",
+  "authorization_signed_response_alg": "PS256",
+  "authorization_encrypted_response_alg": "RSA-OAEP",
+  "authorization_encrypted_response_enc": "A256GCM",
+  "require_pushed_authorization_requests": true,
+  "require_signed_request_object": true,
+  "tls_client_certificate_bound_access_tokens": true,
+  "jwks_uri": "https://tpp.example.com/.well-known/jwks.json",
+  "id_token_signed_response_alg": "PS256"
+}

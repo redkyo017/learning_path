@@ -1,0 +1,195 @@
+### Day 09 Lab — SCA Step-Up Authentication HTTP Exchange
+### Replace all <PLACEHOLDER> values before sending requests.
+### This file shows four phases: normal call, 401 trigger, step-up auth, payment retry.
+
+### ============================================================
+### PHASE 1: Normal API call — succeeds with initial single-factor token
+### ============================================================
+
+### 1a. GET account balance — succeeds (password-level ACR is sufficient for read)
+GET https://<PLACEHOLDER-bank-api-host>/accounts/<PLACEHOLDER-account-id>/balances
+Authorization: Bearer <PLACEHOLDER-initial-access-token>
+Accept: application/json
+
+### Expected response: 200 OK
+### {
+###   "account": {"iban": "<PLACEHOLDER-account-iban>"},
+###   "balances": [{"balanceAmount": {"currency": "EUR", "amount": "5000.00"}, "balanceType": "closingBooked"}]
+### }
+###
+### Token claims at this point:
+###   acr: "urn:openid:params:acr:classes:password"   <- single-factor, password only
+###   amr: ["password"]
+###   scope: "accounts balances transactions"
+
+---
+
+### ============================================================
+### PHASE 2: Payment attempt — triggers step-up 401
+### ============================================================
+
+### 2a. POST payment to new payee — high value, triggers SCA requirement
+POST https://<PLACEHOLDER-bank-api-host>/payments/sepa-credit-transfers
+Authorization: Bearer <PLACEHOLDER-initial-access-token>
+Content-Type: application/json
+Accept: application/json
+
+{
+  "instructedAmount": {
+    "currency": "EUR",
+    "amount": "1500.00"
+  },
+  "creditorAccount": {
+    "iban": "<PLACEHOLDER-new-payee-iban>"
+  },
+  "creditorName": "<PLACEHOLDER-new-payee-name>",
+  "debtorAccount": {
+    "iban": "<PLACEHOLDER-debtor-iban>"
+  },
+  "remittanceInformationUnstructured": "Invoice payment"
+}
+
+### Expected response: 401 Unauthorized
+### HTTP/1.1 401 Unauthorized
+### WWW-Authenticate: Bearer error="insufficient_user_authentication",
+###   error_description="SCA required: payment exceeds threshold and payee is not a trusted beneficiary",
+###   acr_values="urn:openid:params:acr:mfa"
+###
+### Why this 401:
+###   - amount=1500 exceeds TRA exemption threshold
+###   - payee IBAN is not in the user's trusted beneficiary list
+###   - current token acr=password is insufficient for MFA-required operation
+###   - TRA engine evaluated: high risk, no applicable exemption
+###
+### The client must now initiate a step-up authorization flow.
+
+---
+
+### ============================================================
+### PHASE 3: Step-up authorization — OIDC authorize + PAR
+### ============================================================
+
+### 3a. Push authorization request (PAR) to bind step-up parameters securely
+POST https://<PLACEHOLDER-as-host>/as/par
+Content-Type: application/x-www-form-urlencoded
+
+response_type=code
+&client_id=<PLACEHOLDER-client-id>
+&redirect_uri=<PLACEHOLDER-redirect-uri>
+&scope=openid+payments
+&acr_values=urn%3Aopenid%3Aparams%3Aacr%3Amfa
+&max_age=0
+&prompt=login
+&code_challenge=<PLACEHOLDER-pkce-code-challenge>
+&code_challenge_method=S256
+&authorization_details=%5B%7B%22type%22%3A%22payment_initiation%22%2C%22amount%22%3A%7B%22currency%22%3A%22EUR%22%2C%22amount%22%3A%221500.00%22%7D%2C%22creditorAccount%22%3A%7B%22iban%22%3A%22%3CPLACEHOLDER-new-payee-iban%3E%22%7D%7D%5D
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER-signed-jwt-for-client-auth>
+
+### Expected response: 201 Created
+### {
+###   "request_uri": "urn:ietf:params:oauth:request_uri:<PLACEHOLDER-request-uri-id>",
+###   "expires_in": 90
+### }
+###
+### Notes:
+###   acr_values=urn:openid:params:acr:mfa    <- requires MFA-level authentication
+###   max_age=0                                <- forces immediate re-authentication, ignores existing session
+###   prompt=login                             <- explicit re-authentication required
+###   authorization_details contains the specific payment (amount + payee) for dynamic linking
+###   client_assertion_type and client_assertion are form body params (NOT Authorization: Bearer header)
+
+---
+
+### 3b. Redirect user to AS authorization endpoint with PAR request_uri
+GET https://<PLACEHOLDER-as-host>/as/authorize
+  ?client_id=<PLACEHOLDER-client-id>
+  &request_uri=urn%3Aietf%3Aparams%3Aoauth%3Arequest_uri%3A<PLACEHOLDER-request-uri-id>
+
+### AS presents SCA challenge to user:
+###   Factor 1 (Possession): device-bound key in banking app authenticator
+###   Factor 2 (Knowledge): PIN entered on device
+###   Dynamic linking: AS generates authentication code from (device-key + amount=1500 + payee-IBAN)
+###
+### User approves on device → AS verifies dynamic link → issues authorization code
+
+---
+
+### ============================================================
+### PHASE 4: Token exchange and payment retry
+### ============================================================
+
+### 4a. Exchange authorization code for step-up access token
+POST https://<PLACEHOLDER-as-host>/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&code=<PLACEHOLDER-authorization-code>
+&redirect_uri=<PLACEHOLDER-redirect-uri>
+&code_verifier=<PLACEHOLDER-pkce-code-verifier>
+&client_id=<PLACEHOLDER-client-id>
+&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer
+&client_assertion=<PLACEHOLDER-signed-jwt-for-client-auth>
+
+### Expected response: 200 OK
+### {
+###   "access_token": "<PLACEHOLDER-step-up-access-token>",
+###   "token_type": "Bearer",
+###   "expires_in": 300,
+###   "scope": "openid payments"
+### }
+###
+### Step-up access token claims (decoded):
+###   {
+###     "sub": "<PLACEHOLDER-user-id>",
+###     "acr": "urn:openid:params:acr:mfa",          <- upgraded from password to mfa
+###     "amr": ["mfa", "swk"],                        <- swk = software key (device-bound)
+###     "authorization_details": [{
+###       "type": "payment_initiation",
+###       "amount": {"currency": "EUR", "amount": "1500.00"},
+###       "creditorAccount": {"iban": "<PLACEHOLDER-new-payee-iban>"}
+###     }],
+###     "dynamic_link_verified": true,                <- dynamic linking was verified
+###     "exp": <PLACEHOLDER-unix-timestamp>,
+###     "jti": "<PLACEHOLDER-token-jti>"
+###   }
+
+---
+
+### 4b. Retry payment with step-up access token — succeeds
+POST https://<PLACEHOLDER-bank-api-host>/payments/sepa-credit-transfers
+Authorization: Bearer <PLACEHOLDER-step-up-access-token>
+Content-Type: application/json
+Accept: application/json
+
+{
+  "instructedAmount": {
+    "currency": "EUR",
+    "amount": "1500.00"
+  },
+  "creditorAccount": {
+    "iban": "<PLACEHOLDER-new-payee-iban>"
+  },
+  "creditorName": "<PLACEHOLDER-new-payee-name>",
+  "debtorAccount": {
+    "iban": "<PLACEHOLDER-debtor-iban>"
+  },
+  "remittanceInformationUnstructured": "Invoice payment"
+}
+
+### Expected response: 201 Created
+### {
+###   "paymentId": "<PLACEHOLDER-payment-uuid>",
+###   "transactionStatus": "ACTC",
+###   "debtorAccount": {"iban": "<PLACEHOLDER-debtor-iban>"},
+###   "creditorAccount": {"iban": "<PLACEHOLDER-new-payee-iban>"},
+###   "instructedAmount": {"currency": "EUR", "amount": "1500.00"}
+### }
+###
+### What the RS verified:
+###   1. Token signature is valid
+###   2. acr=urn:openid:params:acr:mfa meets the requirement for this payment endpoint
+###   3. authorization_details.amount matches the payment body amount (dynamic link check)
+###   4. authorization_details.creditorAccount.iban matches the payment body payee (dynamic link check)
+###   5. Token is not in the revocation list
+###   6. Token is not expired

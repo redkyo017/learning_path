@@ -1,0 +1,222 @@
+# Day 27 Lab — IS 7.3 deployment.toml additions for Agent IdP
+
+## Global token exchange grant enablement
+[oauth]
+# List all supported grant types (this is the global declaration).
+# Per-application in Console, each app can opt in to specific grants.
+allowed_grant_types = [
+  "authorization_code",
+  "refresh_token",
+  "client_credentials",
+  "urn:ietf:params:oauth:grant-type:token-exchange"
+]
+
+# Token exchange settings
+[oauth.token_exchange]
+# Enable RFC 8693 token exchange processing
+enable = true
+
+# Max chain depth (optional; prevents runaway delegation chains)
+# Recommended: 3 hops (user → orchestrator → tool → API)
+max_actor_chain_depth = 3
+
+# Introspection cache TTL for revocation propagation
+# Recommended: 300 seconds (5 minutes) for banking compliance
+introspection_cache_ttl_seconds = 300
+
+---
+
+## Per-application actor trust policy configuration
+# (Configure in IS 7.3 Console under Application → OAuth / OpenID Connect → Actor Trust)
+# This is the JSON structure that the Console API accepts.
+
+# Example API call:
+# POST /api/identity/oauth2/actor-trust-policy
+# Content-Type: application/json
+# Authorization: Bearer <admin-token>
+
+{
+  "application_id": "<PLACEHOLDER: application-id>",
+  "actor_trust_policies": [
+    {
+      "actor": "payment_orchestrator",
+      "subject": "group:financial-users",
+      "effect": "Allow",
+      "description": "Trusted agent; approved for regular customer operations"
+    },
+    {
+      "actor": "payment_orchestrator",
+      "subject": "group:admins",
+      "effect": "Deny",
+      "description": "Admins authenticate directly; no agent mediation for high-privilege actions"
+    },
+    {
+      "actor": "risk_scorer",
+      "subject": "group:financial-users",
+      "effect": "Deny",
+      "description": "New agent; awaiting security review before production deployment"
+    },
+    {
+      "actor": "risk_scorer",
+      "subject": "group:admins",
+      "effect": "Deny",
+      "description": "High-privilege group; no agents permitted"
+    },
+    {
+      "actor": "*",
+      "subject": "group:super-admins",
+      "effect": "Deny",
+      "description": "Catch-all: no agents (any actor '*') should exchange super-admin tokens"
+    }
+  ]
+}
+
+---
+
+## Structured audit logging for agent call tracing
+[log.audit]
+# Enable JSON structured audit logging (not plain text)
+# This allows IS 7.3 to emit audit logs as JSON, with `act.sub` as a first-class field
+log_format = "structured"
+
+# Audit log pattern: includes sub, act, scope, jti for agent tracing
+# The log handler should record these fields:
+# - timestamp: when the event occurred
+# - event_type: "token_exchange", "token_issue", "token_revoke", etc.
+# - subject: the user (or organization) being delegated to
+# - actor: the agent (from the actor_token) requesting the delegation
+# - scope: the scope of the issued token
+# - jti: unique token ID for correlation with API audit logs
+# - policy_result: "ALLOW" or "DENY" (if actor trust policy was applied)
+#
+# Example structured log entry:
+# {
+#   "timestamp": "2026-10-01T10:15:30Z",
+#   "event_type": "token_exchange",
+#   "subject_client": "alice_001",
+#   "actor_client": "payment_orchestrator",
+#   "issued_scope": "payments:initiate",
+#   "jti": "550e8400-e29b-41d4-a716-446655440000",
+#   "policy_result": "ALLOW",
+#   "http_status": 200
+# }
+
+---
+
+## Agent DCR registration example (not TOML, but JSON for reference)
+# File: agent_dcr_registration.json
+
+# Agent 1: payment_orchestrator
+# POST /api/identity/oauth2/dcr/v1.1/register
+# Content-Type: application/json
+# Authorization: Basic <PLACEHOLDER: admin-credentials-base64>
+
+{
+  "client_name": "payment_orchestrator",
+  "description": "Orchestrator agent for payment processing workflows",
+  "grant_types": [
+    "urn:ietf:params:oauth:grant-type:token-exchange"
+  ],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks_uri": "https://<PLACEHOLDER: orchestrator-host>:8443/.well-known/jwks.json",
+  "response_types": [],
+  "contacts": ["<PLACEHOLDER: ops-email@bank.com>"]
+}
+
+# IS 7.3 responds with:
+{
+  "client_id": "payment_orchestrator",
+  "client_id_issued_at": 1696104000,
+  "client_secret_expires_at": 0,
+  "grant_types": [
+    "urn:ietf:params:oauth:grant-type:token-exchange"
+  ]
+}
+
+---
+
+# Agent 2: risk_scorer
+# POST /api/identity/oauth2/dcr/v1.1/register
+# Content-Type: application/json
+# Authorization: Basic <PLACEHOLDER: admin-credentials-base64>
+
+{
+  "client_name": "risk_scorer",
+  "description": "Risk assessment tool; specialized agent for fraud detection",
+  "grant_types": [
+    "urn:ietf:params:oauth:grant-type:token-exchange"
+  ],
+  "token_endpoint_auth_method": "private_key_jwt",
+  "jwks_uri": "https://<PLACEHOLDER: risk-scorer-host>:8443/.well-known/jwks.json",
+  "response_types": [],
+  "contacts": ["<PLACEHOLDER: security-team@bank.com>"]
+}
+
+# IS 7.3 responds with:
+{
+  "client_id": "risk_scorer",
+  "client_id_issued_at": 1696104100,
+  "client_secret_expires_at": 0,
+  "grant_types": [
+    "urn:ietf:params:oauth:grant-type:token-exchange"
+  ]
+}
+
+---
+
+## Scope mapping: agent-specific scopes vs. user scopes
+# (Configure in IS 7.3 Console under Application → Scopes)
+
+# User-facing scopes (for customer app, human sessions):
+# - payments:read
+# - payments:write
+# - accounts:read
+# - accounts:write
+
+# Agent-facing scopes (for agent orchestrator and tool agents):
+# - agent:payments:initiate (narrower than payments:write; specific to orchestrator)
+# - agent:payments:read (tools that only read payment info)
+# - agent:accounts:read (tools that read account balances)
+
+# In token exchange request, agent specifies:
+# scope=agent:payments:initiate (not payments:write)
+
+# IS 7.3 validates: agent scope must be subset of user's original scope.
+# If user token has scope=payments:initiate but agent requests agent:payments:initiate,
+# IS 7.3 checks: does payments:initiate (mapped) include agent:payments:initiate (mapped)?
+# Scope mapping in Console allows fine-grained control.
+
+---
+
+## Audit query examples (once structured logs are enabled)
+
+# Query 1: All token exchanges by risk_scorer in the past 24 hours
+# (Compliance officer runs this to audit the risk_scorer agent)
+#
+# SELECT timestamp, subject_client, actor_client, issued_scope, jti, policy_result
+# FROM is73_audit_log
+# WHERE actor_client = "risk_scorer"
+#   AND event_type = "token_exchange"
+#   AND timestamp > now() - interval '24 hours'
+# ORDER BY timestamp DESC
+
+# Query 2: All token exchanges for user alice_001 by any agent
+# (Compliance officer audits a specific user's agent activity)
+#
+# SELECT timestamp, actor_client, issued_scope, jti, policy_result
+# FROM is73_audit_log
+# WHERE subject_client = "alice_001"
+#   AND actor_client IS NOT NULL  -- non-null actor = agent-initiated
+#   AND event_type = "token_exchange"
+#   AND timestamp > now() - interval '7 days'
+# ORDER BY timestamp DESC
+
+# Query 3: All policy denials (unapproved agents attempting exchange)
+# (Security team monitors for policy violation attempts)
+#
+# SELECT timestamp, subject_client, actor_client, policy_result, http_status
+# FROM is73_audit_log
+# WHERE policy_result = "DENY"
+#   AND event_type = "token_exchange"
+#   AND timestamp > now() - interval '1 hour'
+# ORDER BY timestamp DESC
