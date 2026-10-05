@@ -1,0 +1,11 @@
+#!/usr/sbin/nft -f
+# Day 7: TCP MSS clamp on the transit router (namespace tgw). The MSS in each SYN is
+# set from the MTU of the route the packet leaves on.
+table ip clamp
+delete table ip clamp
+table ip clamp {
+  chain mss {
+    type filter hook forward priority -150; policy accept;
+    tcp flags syn tcp option maxseg size set rt mtu
+  }
+}

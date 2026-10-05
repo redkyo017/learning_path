@@ -1,0 +1,18 @@
+# Network Engineering Mastery — the lab box.
+#
+#   cd network_engineering_mastery/labs/netlab
+#   docker compose -p netlab up -d --build
+#   docker compose -p netlab exec netlab bash      # every lab runs from here, in /course
+#   docker compose -p netlab down
+name: netlab
+services:
+  netlab:
+    build: .
+    # privileged: ip netns needs to mount /run/netns and remount /sys per
+    # namespace; nft, tc and conntrack need NET_ADMIN on every namespace.
+    privileged: true
+    init: true
+    hostname: netlab
+    volumes:
+      - ../..:/course          # course root; scripts and journal.md are shared with the host
+    working_dir: /course

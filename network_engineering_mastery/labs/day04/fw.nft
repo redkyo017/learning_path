@@ -1,0 +1,20 @@
+#!/usr/sbin/nft -f
+# Day 4 reference firewall for namespace fw. Inside = 10.4.1.0/24 (eth1),
+# servers = 10.4.2.0/24 (eth2), outside = 198.51.100.0/24 (eth9).
+flush ruleset
+table inet filter {
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    ct state established,related accept
+    ct state invalid counter drop
+    iifname "eth1" oifname "eth2" tcp dport 8080 ct state new accept
+    iifname "eth1" oifname "eth9" ct state new accept
+    icmp type { echo-request, destination-unreachable, time-exceeded } accept
+  }
+}
+table ip nat {
+  chain postrouting {
+    type nat hook postrouting priority 100;
+    oifname "eth9" ip saddr 10.4.1.0/24 masquerade
+  }
+}

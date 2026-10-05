@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (which is git-ignored) and adjust.
+region         = "ap-southeast-1"
+aws_profile    = "sandbox"
+appliance_mode = false

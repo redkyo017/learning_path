@@ -740,3 +740,4 @@ Break-it exercise — what I misconfigured and how I found it: ...
 ```
 
 Writing this forces retrieval practice — the single most effective way to lock in what you learned. Takes 5 minutes. Skip at your own risk.
+> **Next:** go below the constructs to the protocols — see [../network_engineering_mastery/README.md](../network_engineering_mastery/README.md).

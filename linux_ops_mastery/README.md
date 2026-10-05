@@ -114,3 +114,4 @@ The last one is deliberately outside the 21 hours. This path treats Neovim as a
 survival tool for servers you have never seen, and `labs/day07/init.lua` is 22
 plugin-free lines you could retype from memory. Replacing VSCode on your own
 machine is a separate decision with a separate config — keep the two apart.
+> **Next:** Day 6 seen from the wire — see [../network_engineering_mastery/README.md](../network_engineering_mastery/README.md).

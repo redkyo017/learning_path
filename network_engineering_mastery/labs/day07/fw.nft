@@ -1,0 +1,18 @@
+#!/usr/sbin/nft -f
+# Day 7: the on-prem edge firewall (namespace onp). Stateful forward policy.
+#   gre1 = tunnel to the VPC side, lan = servers 192.168.10.0/24, dns = 192.168.20.0/24
+flush ruleset
+table inet filter {
+  chain forward {
+    type filter hook forward priority 0; policy drop;
+    ct state established,related accept
+    ct state invalid drop
+    ip saddr 10.70.0.0/16 ip daddr 192.168.10.10 tcp dport 8080 accept
+    ip saddr 10.70.0.0/16 ip daddr 192.168.20.53 udp dport 53 accept
+    ip saddr 10.70.0.0/16 ip daddr 192.168.20.53 tcp dport 53 accept
+    ip saddr 192.168.20.53 ip daddr 10.70.0.0/16 udp sport 53 accept
+    ip saddr 192.168.20.53 ip daddr 10.70.0.0/16 tcp sport 53 accept
+    icmp type { echo-request, echo-reply, destination-unreachable, time-exceeded } accept
+    counter drop
+  }
+}

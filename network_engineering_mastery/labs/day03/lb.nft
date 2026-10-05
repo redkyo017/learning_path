@@ -1,0 +1,25 @@
+# Day 3: the "lb" namespace is the NLB. Loaded by topo.sh with: ip netns exec lb nft -f lb.nft
+table ip nlb {
+	# Flows to the VIP are rewritten to the backend. This only happens for the FIRST
+	# packet of a tracked flow (a SYN). Later packets use the conntrack entry.
+	chain prerouting {
+		type nat hook prerouting priority -100; policy accept;
+		ip daddr 10.3.9.100 tcp dport 80 dnat to 10.3.2.20:8080
+	}
+
+	# A packet that reaches the lb itself with daddr = VIP was NOT DNATed. For a
+	# non-SYN packet that means its flow entry has expired (nf_conntrack_tcp_loose=0
+	# stops conntrack from adopting mid-stream packets). NLB and NAT GW answer
+	# such packets with an RST. So does this rule.
+	chain input {
+		type filter hook input priority 0; policy accept;
+		ip daddr 10.3.9.100 tcp dport 80 reject with tcp reset
+	}
+
+	# Empty on purpose. The "ALB mode" demo and break.sh fault C add this line:
+	#   nft add rule ip nlb postrouting ip daddr 10.3.2.20 snat to 10.3.2.1
+	# Remove it again with: nft flush chain ip nlb postrouting
+	chain postrouting {
+		type nat hook postrouting priority 100; policy accept;
+	}
+}
