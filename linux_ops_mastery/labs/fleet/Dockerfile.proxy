@@ -15,12 +15,15 @@
 # This does NOT relax the never-add-packages rule. That rule is about `slim`,
 # which is the strip-the-toolbox target for every single day and stays pure
 # busybox forever.
-# Pinned to the exact patch, not the 1.27 minor: seed/nginx.conf uses
-# `resolver local=on`, which needs nginx >= 1.27.3. The 1.27 branch closed at
-# 1.27.5, so this pin is stable and the version risk is gone.
+# Pinned to the exact patch so the image never drifts under the labs.
 FROM nginx:1.27.5-alpine
 
 RUN apk add --no-cache iproute2 nftables
+
+# `nginx` wrapper: rebuilds /etc/nginx/resolver.conf from /etc/resolv.conf on
+# every start and every `nginx -s reload`; seed/nginx.conf includes that file.
+# See nginx-resolver-wrapper.sh for why.
+COPY --chmod=0755 nginx-resolver-wrapper.sh /usr/local/sbin/nginx
 
 # ENTRYPOINT and CMD are inherited from the base image on purpose: nginx's own
 # docker-entrypoint.sh still runs, and seed/nginx.conf is still mounted at

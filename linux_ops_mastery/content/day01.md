@@ -6,8 +6,9 @@
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
-2. Do the Lab: `labs/day01/` — `break.sh` → write `journal.md` → `verify.sh`
-   → then "Strip the toolbox" below.
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day01/README.md`): `break.sh` → write `journal.md`
+   → `verify.sh` → then "Strip the toolbox" below.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
    fit").
@@ -271,6 +272,8 @@ not done with this hour yet.
 
 ## Strip the toolbox
 
+*Plain version: a practice drill. Make the same "deleted but still open" file yourself inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), then find it with only busybox (the tiny toolset in `slim`) `ls` and `grep` — no `lsof`.*
+
 Check first: `command -v lsof` inside `slim`. Whether or not this
 particular Alpine build happens to carry a busybox `lsof` applet, treat
 it as absent and reproduce the identification step by hand instead — the
@@ -301,6 +304,8 @@ this entire day's diagnosis reduces to when every friendlier tool is
 missing; `verify.sh` walks the same `/proc/*/fd/*` entries against `app`.
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. A process creates a 4 GB sparse file (`truncate -s 4G f`, no data
    actually written) inside a directory you then run `df` and `du`

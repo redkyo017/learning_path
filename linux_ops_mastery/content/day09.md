@@ -3,7 +3,8 @@
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
    "The pattern".
-2. Do the Lab: `labs/day09/` — `break.sh` → write `journal.md` → `verify.sh`.
+2. Do the Lab (start with *Start here — plain steps* in `labs/day09/README.md`):
+   `break.sh` → write `journal.md` → `verify.sh`.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
    fit").
@@ -139,6 +140,8 @@ subshell. A stale temp directory causes the second run to fail. Success signal:
 
 ## Exercises
 
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
+
 1. Prove the subshell variable scope rule. Write a script that sets `x=hello`
    in a subshell `(x=world)` and prints `$x` in the parent. Predict the output
    before running. — **Hint:** A subshell is a fork; assignments do not
@@ -173,6 +176,8 @@ subshell. A stale temp directory causes the second run to fail. Success signal:
   test-and-create (`[ -f $lock ] || touch $lock`) is not atomic.
 
 ## Strip step
+
+*Plain version: a practice drill. Redo the loop without `<(...)` (bash-only process substitution, which feeds a command's output to a loop as if it were a file): save the list to a file with `seq`, then read it back with `< file`. Try it in plain `sh` on your Mac (type `dash` for a real one) under `/tmp/lab09/`; no Docker.*
 
 Repeat the lab diagnosis in `sh` (not bash). Note:
 - `<()` process substitution is bash-only; not available in `sh`.

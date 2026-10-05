@@ -7,9 +7,9 @@ FAIL=0
 check() {
   local desc="$1" result="$2"
   if [[ "$result" == "pass" ]]; then
-    echo "  PASS: $desc"; ((PASS++))
+    echo "  PASS: $desc"; PASS=$((PASS+1))
   else
-    echo "  FAIL: $desc"; ((FAIL++))
+    echo "  FAIL: $desc"; FAIL=$((FAIL+1))
   fi
 }
 

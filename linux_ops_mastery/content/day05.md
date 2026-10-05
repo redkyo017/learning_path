@@ -8,7 +8,8 @@ alive with the right identity.
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
-2. Do the Lab: `labs/day05/` — `break.sh` → write `journal.md` → `verify.sh`
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day05/README.md`): `break.sh` → write `journal.md` → `verify.sh`
    → then "Strip the toolbox" below.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
@@ -245,6 +246,8 @@ for **both** incidents in `journal.md` before touching anything.
 
 ## Strip the toolbox
 
+*Plain version: a practice drill. Inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), read your own process's capability bits (the powers a process holds) with just `cat` and `grep`, then decode the hex by hand.*
+
 Repeat the `CapEff` read inside `slim`, where `capsh` does not exist and
 `getcap`/`setcap` are not installed either — only `cat` and busybox
 `grep` are available, exactly the fallback path called out in Derive the
@@ -295,6 +298,8 @@ name list. The point of doing it by hand is that the answer no longer
 depends on that tool being there.
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. A file is mode `0777` and its owning directory is mode `0644`. A
    non-owner, non-group user gets "permission denied" reading it. Explain

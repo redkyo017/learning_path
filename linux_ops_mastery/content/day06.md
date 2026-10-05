@@ -8,7 +8,8 @@ namespace
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
-2. Do the Lab: `labs/day06/` — `break.sh` → write `journal.md` → `verify.sh`
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day06/README.md`): `break.sh` → write `journal.md` → `verify.sh`
    → then "Strip the toolbox" below.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
@@ -242,6 +243,8 @@ touching a fix.
 
 ## Strip the toolbox
 
+*Plain version: a practice drill. Inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), find which port a service is listening on by reading `/proc/net/tcp` with busybox `awk` and decoding the hex by hand — no `ss`.*
+
 In `slim` — busybox `sh`, busybox `awk`, no `ss`, no `netstat` — find what
 `app` is listening on using only `cat` and the hex decode from
 `content/primers/proc-field-reference.md`:
@@ -259,6 +262,8 @@ behind `ss -ltn`'s listening-socket rows, run by hand with nothing but a
 text file and busybox `awk`.
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. Decode this `/proc/net/tcp` line to `ip:port state`: local_address
    `0A00000A:0050`, st `0A`. **Hint:** reverse the address's hex byte

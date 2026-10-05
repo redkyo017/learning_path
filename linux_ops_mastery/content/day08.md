@@ -3,7 +3,8 @@
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
    "The pattern".
-2. Do the Lab: `labs/day08/` — `break.sh` → write `journal.md` → `verify.sh`.
+2. Do the Lab (start with *Start here — plain steps* in `labs/day08/README.md`):
+   `break.sh` → write `journal.md` → `verify.sh`.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
    fit").
@@ -109,6 +110,8 @@ reports success after a permission-denied failure inside `find`. Success signal:
 
 ## Exercises
 
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
+
 1. Run `false | true; echo $?` in the `ws` container. The output is 0. Now run
    `(set -o pipefail; false | true); echo $?`. What changes and why? —
    **Hint:** `PIPESTATUS[@]` shows per-stage exit codes; `pipefail` promotes the
@@ -142,6 +145,8 @@ reports success after a permission-denied failure inside `find`. Success signal:
   this flag.
 
 ## Strip step
+
+*Plain version: a practice drill. Redo the lab's check without bash tricks: in plain `sh` (on a Mac, type `dash` for a real one) there is no `PIPESTATUS`, so run `find` on its own, save its output to a file, check its exit status, and only then run `tar` on that file. It runs on your Mac under `/tmp/lab08/`; no Docker.*
 
 Repeat the lab diagnosis in `sh` (not bash). Note:
 - `PIPESTATUS` is bash-only — `sh` has no arrays. The POSIX alternative is to

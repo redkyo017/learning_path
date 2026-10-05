@@ -7,7 +7,8 @@
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
-2. Do the Lab: `labs/day02/` — `break.sh` → write `journal.md` → `verify.sh`
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day02/README.md`): `break.sh` → write `journal.md` → `verify.sh`
    → then "Strip the toolbox" below.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
@@ -263,6 +264,8 @@ it.
 
 ## Strip the toolbox
 
+*Plain version: a practice drill. Inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), list every process and its state by reading `/proc` with only the shell's `read` and `grep` — no `ps` options, no `pgrep -c`.*
+
 `slim` runs busybox: its `ps` takes no `-o`/`-eo` field selection at
 all (the columns `ps -eo pid,ppid,state,comm` gave us above are simply
 unavailable as flags), there is no `pstree`, and its `pgrep` has
@@ -293,6 +296,8 @@ done
 ```
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. Given `SigCgt: 0000000000014003` from a process's `/proc/PID/status`,
    decode which signals it has installed handlers for. — **Hint:**

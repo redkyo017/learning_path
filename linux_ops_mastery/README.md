@@ -57,6 +57,49 @@ Seven steps, every day. Full reasoning for each is in `STRATEGY.md` under
 6. Fix and prove — repair, then re-read the same file as proof.
 7. Strip the toolbox — repeat the diagnosis in `slim`, busybox only.
 
+## How to approach any day
+
+Each day has up to four kinds of activity. They have different names but
+are simple:
+
+- **Lab** — a script breaks something on purpose; you find out why, write
+  it down, fix it, and a second script checks your fix.
+- **Strip drill** ("Strip the toolbox" / "Strip step") — practice: do the
+  same detection again with only bare tools, so you can still do it on a
+  minimal server.
+- **Exercises** — optional predict-then-check questions. Not tied to the
+  lab. Cover the solution, guess, then read.
+- **Neovim block** — Days 1 and 7 only: editor practice, separate from the
+  incident.
+
+The routine, every day:
+
+1. Read `content/dayNN.md`.
+2. Open `labs/dayNN/README.md` and follow **Start here — plain steps**.
+3. Stuck? Open the hints at the bottom of that README, one at a time.
+4. `SOLUTION.md` last — after your own attempt.
+5. Teardown file before moving on.
+
+### Getting a shell
+
+Run these on your Mac from `linux_ops_mastery/`:
+
+| Where | Command | Used on |
+|---|---|---|
+| `ws` (main shell, has every tool) | `docker compose -p linuxops exec ws bash` | Day 2, Day 7 (and any day you want the full toolset) |
+| `app` (the service being debugged) | `docker compose -p linuxops exec app sh` | Days 1–4, 6, 7 |
+| `slim` (busybox only) | `docker compose -p linuxops exec slim sh` | Strip drills |
+| `db` | `docker compose -p linuxops exec db sh` | Day 6, Day 7 |
+| `proxy` | `docker compose -p linuxops exec proxy sh` | Day 6, Day 7 |
+| `sysd` (real systemd) | `docker compose -p linuxops exec sysd bash` | Day 5 (exists only after the Day 5 overlay bring-up; see `labs/day05/README.md`) |
+| Your Mac | no container | Days 8–10 |
+
+If a container isn't running, bring the fleet up with
+`docker compose -p linuxops -f labs/fleet/docker-compose.yml up -d` from
+`linux_ops_mastery/`.
+
+`exit` leaves a container shell.
+
 ## The arrow-key rule
 
 From Day 2 on, all lab file editing happens in `nvim` inside `ws`. Arrow

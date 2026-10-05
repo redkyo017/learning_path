@@ -71,3 +71,14 @@ post-rotate reload hook for this service — the unlinked-fd failure mode
 recurs on every service that ignores `SIGHUP` and has no reload hook
 wired up, and that config is the actual root cause, not just this
 instance of it.
+
+
+### Day 1 — /var/log full but du shows almost nothing
+**Symptom (verbatim, no interpretation):** writes fail with ENOSPC; `df -h /var/log` → 100%; `du -sh /var/log` → <your number>
+**Resource class:** <your guess>
+**Chain of evidence:**
+1. Claim: /var/log is full. | Proof: `df -h /var/log` -> `
+Filesystem                Size      Used Available Use% Mounted on
+tmpfs                    24.0M     24.0M         0 100% /var/log`
+2. Claim: no visible file explains it. | Proof: `du -sh /var/log` -> `0	/var/log`
+3. Claim: check the deleted (file name only) | Proof: `ls -l /proc/[0-9]*/fd/* 2>/dev/null | grep '(deleted)'` -> `lr-x------    1 root     root            64 Oct  5 17:24 /proc/22/fd/3 -> /var/log/bloat.log (deleted)` 

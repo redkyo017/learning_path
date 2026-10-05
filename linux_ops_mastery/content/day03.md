@@ -6,7 +6,8 @@
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
-2. Do the Lab: `labs/day03/` — `break.sh` → write `journal.md` → `verify.sh`
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day03/README.md`): `break.sh` → write `journal.md` → `verify.sh`
    → then "Strip the toolbox" below.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
@@ -293,6 +294,8 @@ approximate). Run `labs/day03/break.sh`, write the chain in `journal.md`
 
 ## Strip the toolbox
 
+*Plain version: a practice drill. Inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), build a small fake log, count and find its `status=500` line with `grep` and `awk`, then hold a deleted file open and find it with only `ls` and `grep` — no `lsof`.*
+
 Redo the same triage skills — grep/sed/awk on a log fixture, and the
 deleted-fd walk — inside `slim`, which has neither `lsof` nor the `/labs`
 mount `app` and `ws` both get. Build a tiny fixture with nothing but
@@ -349,6 +352,8 @@ with `cp: can't create '/etc/hosts': File exists`. Same command name,
 opposite side of the table — which is why the table lists `cp` twice.
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. Find the one `status=500` line among the 100 000 in the rotated,
    now-unlinked log, and report its `req_id`.

@@ -3,7 +3,8 @@
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
    "The pattern".
-2. Do the Lab: `labs/day10/` — `break.sh` → write `journal.md` → `verify.sh`.
+2. Do the Lab (start with *Start here — plain steps* in `labs/day10/README.md`):
+   `break.sh` → write `journal.md` → `verify.sh`.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident, do them whenever (see `STRATEGY.md`, "Where Exercises
    fit").
@@ -136,6 +137,8 @@ accepts no arguments, passes an empty string to a command. Success signal:
 
 ## Exercises
 
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
+
 1. Write a three-line argument guard that exits with `usage()` if fewer than
    two arguments are given. Test it with zero, one, and two arguments. —
    **Hint:** `$#` holds the argument count; `[[ $# -lt N ]]` tests it. —
@@ -169,6 +172,8 @@ accepts no arguments, passes an empty string to a command. Success signal:
   `exit 1` (or the appropriate non-zero code) from every error path.
 
 ## Strip step
+
+*Plain version: a practice drill. Check a script for bash-only syntax by parsing it with `sh -n` (parse only, nothing runs), then rewrite each bash-only test into its POSIX form. On a Mac `sh` is really bash, so use `dash -n` for a true check. It runs on your Mac; no Docker.*
 
 Run `diagnose.sh` under `sh -n` (syntax check only) and identify any
 bash-only constructs: `[[ ]]`, `(( ))`, `<()`, arrays. Convert each to its

@@ -7,7 +7,8 @@ boundary) — today recombines them, it does not add a fifth.
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts" (the neovim block).
-2. Do the Lab: `labs/day07/` — this is the gauntlet, not a single
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day07/README.md`): this is the gauntlet, not a single
    `break.sh` incident; run `gauntlet.sh {1..5|all}`, write a `journal.md`
    chain and get a `verify.sh` pass for each of the five before reading
    `ANSWERS.md`.
@@ -206,6 +207,8 @@ than guesswork is a judgment only your own `journal.md` entry can answer.
 
 ## Strip the toolbox
 
+*Plain version: there is no separate drill today. Some gauntlet incidents run in `app` or `slim`, which have only the tiny busybox toolset; enter one with `docker compose -p linuxops exec app sh` (or `slim`). The text below is a cheat sheet for working with those limits.*
+
 Three of the five incidents live entirely inside `app` or `slim` — Alpine,
 busybox `ps`/`pgrep`/`grep`/`awk`, no `lsof`, no `ss`. There is no separate
 "now redo it without the tool" step today, because the gauntlet never hands
@@ -230,6 +233,8 @@ cheatsheet's last section; it is what you have if a fix genuinely cannot
 wait for `ws`.
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. Delete every line matching `DEBUG` from a 40,000-line log in one
    command. — **Hint:** one ex command covers the whole file regardless of

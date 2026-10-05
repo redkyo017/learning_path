@@ -7,7 +7,8 @@ the AWS tie-in; 1 h lab, strip the toolbox, and exercises
 **At a glance — how to work through this day:**
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts" (includes the AWS tie-in).
-2. Do the Lab: `labs/day04/` — `break.sh` → write `journal.md` → `verify.sh`
+2. Do the Lab (start with *Start here — plain steps* in
+   `labs/day04/README.md`): `break.sh` → write `journal.md` → `verify.sh`
    → then "Strip the toolbox" below.
 3. Optional, standalone: "Exercises" — conceptual, don't depend on the
    Lab's incident; the budget above bundles them into the same hour as
@@ -280,6 +281,8 @@ evidence dies with it** above for why that distinction matters.
 
 ## Strip the toolbox
 
+*Plain version: a practice drill. Inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), read `/proc/stat` twice, one second apart, and work out CPU busy percent with `read` and `awk` — no `top`, no `vmstat`.*
+
 In `slim` — busybox `sh` and busybox `awk`, no `top`, no `vmstat` — compute a
 1-second CPU utilisation rate from two raw `/proc/stat` samples:
 
@@ -305,6 +308,8 @@ no arrays, no bash-only features, nothing `slim` doesn't ship. The same
 internally; you're just no longer trusting a binary to have run it for you.
 
 ## Exercises
+
+*How to use these: optional, not tied to the lab. Read a question, write down your prediction, then read the hint and solution. Cover the solution first — it is printed right under the question.*
 
 1. From two `/proc/stat` samples taken 1 second apart, compute the busy
    percentage for `cpu0` specifically — the first per-CPU line, not the

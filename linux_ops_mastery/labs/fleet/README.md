@@ -83,8 +83,9 @@ is about `slim` alone.
 
 `proxy` is the one service built rather than pulled, and `Dockerfile.proxy` is
 `nginx:1.27.5-alpine` plus exactly two packages, `iproute2` and `nftables`.
-That base is pinned to the exact patch because `seed/nginx.conf` uses
-`resolver local=on`, which needs nginx >= 1.27.3. Day 6
+It also installs a small `nginx` wrapper (`nginx-resolver-wrapper.sh`) that
+rebuilds nginx's `resolver` line from `/etc/resolv.conf` on every start and
+reload, which Day 6 fault 1 depends on. Day 6
 takes this container's network apart from the inside: fault 2 is
 `ip route del default`, fault 3 is an nftables DROP rule. The stock nginx image
 has no `nft` at all and only busybox's unreliable `ip` applet, so two of the

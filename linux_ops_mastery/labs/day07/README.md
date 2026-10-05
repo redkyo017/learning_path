@@ -16,6 +16,18 @@ No spoilers below. If you want the mechanism behind an incident before you
 have written its chain, you are reading the wrong file — that file is
 `ANSWERS.md`, and it stays closed until all five chains exist.
 
+## Start here — plain steps
+
+1. **Check the fleet first:** on your Mac, in `linux_ops_mastery/`, run `docker compose -p linuxops ps`. Every container should be `Up`. If one is missing, run `docker compose -p linuxops -f labs/fleet/docker-compose.yml up -d`. (The fleet is the lab's Docker containers.) If `proxy` shows as exited, rebuild it with `docker compose -p linuxops -f labs/fleet/docker-compose.yml up -d --build proxy`. Known issue: incident 1 currently does not break anything (its script relies on a trick busybox rejects), so `verify.sh 1` passes with no fix — skip incident 1 and start with 2. Optional: do the Neovim block in `content/day07.md` first; it is a separate skill, not part of the gauntlet.
+2. **Start incident 2 and start your clock:** on your Mac, in `linux_ops_mastery/`, run `bash labs/day07/gauntlet.sh 2` (incident 1 is skipped for now — see step 1). It prints one symptom line and nothing else. Set a 15-minute timer on your phone now. The timer is yours to enforce; nothing stops you at zero.
+3. **Find the shell to work in:** the symptom line names the container. On your Mac, in `linux_ops_mastery/`, enter it with `docker compose -p linuxops exec <name> sh` (use `bash` for `ws`). The *Getting a shell* table in the top-level `README.md` lists every container. Look around in that shell; run `verify.sh` back on your Mac.
+4. **Write the chain in `journal.md` before you fix anything.** Edit it on your Mac, in your editor. Copy the chain template (the claim-and-proof outline) at the top of that file; its Day 1 example shows the style. A fix that works before the chain is written proves nothing.
+5. **Fix it, then check it:** type `exit` first if you are still inside a container. On your Mac, in `linux_ops_mastery/`, run `bash labs/day07/verify.sh 2` and wait for `incident 2: PASS`. Fix each incident fully before the next; each incident assumes the one before it is repaired.
+6. **Repeat for incidents 3, 4 and 5:** on your Mac, in `linux_ops_mastery/` (type `exit` first if you are still inside a container), run `bash labs/day07/gauntlet.sh 3`, then a new 15-minute timer, a shell, a journal chain, a fix, and `bash labs/day07/verify.sh 3`. Same for 4 and 5. If 15 minutes pass with no proof, stop, write down what you know, and note the overrun — then still fix this incident before starting the next.
+7. **Only now open `ANSWERS.md`:** once all four chains are written (passed or not, or once your 90 minutes are spent), type `exit` first if you are still inside a container, then read `labs/day07/ANSWERS.md` and score your chains against it. Then follow `labs/day07/teardown.md`.
+
+No hints today — that is the test. `ANSWERS.md` opens after all four chains (incidents 2–5) are written.
+
 ## What this is
 
 Six days built one truth and one tool at a time. Today has no new truth and
