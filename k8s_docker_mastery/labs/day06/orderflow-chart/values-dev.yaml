@@ -1,0 +1,21 @@
+# Low-resource footprint for local developer loops
+global:
+  environment: dev
+
+orderApi:
+  replicaCount: 1
+  resources:
+    requests: {cpu: 50m, memory: 32Mi}
+    limits: {cpu: 100m, memory: 64Mi}
+
+paymentService:
+  replicaCount: 1
+
+notificationService:
+  replicaCount: 1
+
+hpa:
+  enabled: false
+
+pdb:
+  enabled: false

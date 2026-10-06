@@ -1,0 +1,27 @@
+{{- if .Values.gateway.enabled }}
+# Attaches to the platform-owned Gateway (Day 4). Backends are the chart's own Services.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "orderflow.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" (dict "root" . "component" "edge") | nindent 4 }}
+spec:
+  parentRefs:
+    {{- toYaml .Values.gateway.parentRefs | nindent 4 }}
+  {{- with .Values.gateway.hostnames }}
+  hostnames:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.gateway.paths }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ .path }}
+      backendRefs:
+        - name: {{ include "orderflow.backendName" (dict "root" $ "service" .service) }}
+          port: {{ include "orderflow.backendPort" (dict "root" $ "service" .service) }}
+    {{- end }}
+{{- end }}

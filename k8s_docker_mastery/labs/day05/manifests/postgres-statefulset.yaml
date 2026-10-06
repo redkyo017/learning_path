@@ -1,0 +1,129 @@
+# Postgres for OrderFlow, hardened to pass the `restricted` Pod Security Standard.
+# Image choice: postgres:16-alpine keeps the image small. It has no USER instruction (it starts as root), so
+# runAsNonRoot needs an explicit numeric runAsUser. We use 70, the image's own `postgres` UID/GID (the Debian-based
+# postgres:16 uses 999), so the users and directories baked into the image line up. Other UIDs such as 999 also
+# work, but only because the entrypoint fakes a passwd entry via nss_wrapper and every directory it writes is writable.
+# order-api does NOT use this database (it keeps orders in memory); Postgres is here to teach storage.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-headless
+  namespace: orderflow
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: orderflow
+spec:
+  clusterIP: None            # headless: DNS returns the pod IPs, postgres-0.postgres-headless.orderflow.svc
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: orderflow
+  labels:
+    app: postgres
+    app.kubernetes.io/part-of: orderflow
+spec:
+  serviceName: postgres-headless
+  replicas: 1
+  # OrderedReady (default): pod N+1 starts only after pod N is Ready; scale-down goes in reverse.
+  # Parallel launches/terminates all pods at once, fine for stateless-ish peers, wrong for a primary + replicas.
+  podManagementPolicy: OrderedReady
+  # What happens to the PVCs when the StatefulSet is deleted or scaled down (GA in 1.32).
+  # Retain is the default and the safe choice for a database; Delete makes the PVCs follow the StatefulSet.
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        app.kubernetes.io/part-of: orderflow
+    spec:
+      automountServiceAccountToken: false   # Postgres never talks to the Kubernetes API
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70            # postgres user of postgres:16-alpine
+        runAsGroup: 70
+        fsGroup: 70              # matters on block/CSI volumes (EBS); local-path is hostPath-type and writable because it is 0777
+        seccompProfile:
+          type: RuntimeDefault   # required by `restricted`
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+              name: postgres
+          securityContext:
+            allowPrivilegeEscalation: false   # required by `restricted`
+            readOnlyRootFilesystem: true      # not required by any PSS level; good practice
+            capabilities:
+              drop: ["ALL"]                   # required by `restricted`
+          env:
+            - name: POSTGRES_USER
+              value: orderflow
+            - name: POSTGRES_DB
+              value: orderflow
+            # The password is read from a mounted file, not an env var: env vars show up in
+            # `kubectl describe`-adjacent tooling, crash dumps and child processes.
+            - name: POSTGRES_PASSWORD_FILE
+              value: /run/secrets/pg/password
+            # Subdirectory of the mount: initdb must chmod its data directory to 0700, which it cannot do on a
+            # root-owned mount point; the entrypoint creates the subdirectory as the postgres user. (Fresh block
+            # filesystems also hold a lost+found at the root, which initdb rejects.) (Postgres 18+ images moved PGDATA to /var/lib/postgresql/18/docker
+            # and expect the volume at /var/lib/postgresql; re-check the mount path before bumping the major.)
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: pg-secret
+              mountPath: /run/secrets/pg
+              readOnly: true
+            - name: run                       # unix socket + lock file; the rootfs is read-only
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "orderflow", "-d", "orderflow"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: pg-secret
+          secret:
+            secretName: orderflow-secrets
+            defaultMode: 0440
+            items:
+              - key: POSTGRES_PASSWORD
+                path: password
+        - name: run
+          emptyDir: {}               # node disk, not RAM (use `medium: Memory` for tmpfs, counted against memory limit)
+        - name: tmp
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        # storageClassName omitted -> the cluster's default StorageClass (`standard` on Docker Desktop)
+        resources:
+          requests:
+            storage: 1Gi

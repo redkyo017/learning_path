@@ -1,0 +1,2 @@
+# Deliberately empty: BuildKit prefers <Dockerfile>.dockerignore over the sibling .dockerignore,
+# so this bad build sends the whole directory as context (the "no .dockerignore" anti-pattern).

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orderflow-config
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+data:
+  PORT: "8080"
+  PAYMENT_SERVICE_URL: "http://payment-service:8081"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8082"

@@ -1,0 +1,19 @@
+{{- if and .Values.pdb.enabled .Values.orderApi.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "orderflow.fullname" . }}-order-api-pdb
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" (dict "root" . "component" "order-api") | nindent 4 }}
+spec:
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+  unhealthyPodEvictionPolicy: {{ .Values.pdb.unhealthyPodEvictionPolicy }}
+  selector:
+    matchLabels:
+      {{- include "orderflow.selectorLabels" (dict "root" . "component" "order-api") | nindent 6 }}
+{{- end }}

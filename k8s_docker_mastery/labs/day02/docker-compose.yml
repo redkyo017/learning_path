@@ -1,0 +1,104 @@
+# OrderFlow local stack. Run from the course root (k8s_docker_mastery/):
+#   export COMPOSE_FILE=labs/day02/docker-compose.yml:labs/day02/docker-compose.override.yml
+#   docker compose up -d --build --wait
+# Build contexts and .env are resolved relative to THIS file's directory.
+name: day02            # project name: images become day02-<service>, network/volume names are pinned below
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: orderflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-orderflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_local_only}
+      POSTGRES_DB: ${POSTGRES_DB:-orderflow}
+    volumes:
+      - pgdata:/var/lib/postgresql/data     # named volume replaces the image's anonymous VOLUME
+    networks:
+      - orderflow-net
+    healthcheck:
+      # -h 127.0.0.1 forces TCP. Without it pg_isready uses the unix socket, which the
+      # entrypoint's temporary init-phase server already answers (false "healthy" before
+      # the real server starts). $$ escapes Compose interpolation so the container's own env is used.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+
+  # The three Go services inherit the image's HEALTHCHECK (`/app/server -healthcheck`, defined once in
+  # their Dockerfile, so docker run, Compose and anything else agree). Compose only needs a `healthcheck:`
+  # block to override interval/command; see docker-compose.test.yml for one.
+  payment-service:
+    build:
+      context: ../shared/payment-service
+    container_name: orderflow-payment
+    restart: unless-stopped
+    environment:
+      PORT: "8081"
+    networks:
+      orderflow-net:
+        aliases:
+          - payments.internal      # extra DNS name next to the service name `payment-service`
+
+  notification-service:
+    build:
+      context: ../shared/notification-service
+    container_name: orderflow-notification
+    restart: unless-stopped
+    environment:
+      PORT: "8082"
+    networks:
+      - orderflow-net
+
+  order-api:
+    build:
+      context: ../shared/order-api
+    container_name: orderflow-order-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"      # the only port every environment publishes; loopback only
+    environment:
+      PORT: "8080"
+      PAYMENT_SERVICE_URL: "${PAYMENT_SERVICE_URL:-http://payment-service:8081}"   # overridable from the shell (Step 6)
+      NOTIFICATION_SERVICE_URL: "http://notification-service:8082"
+    networks:
+      - orderflow-net
+    depends_on:                    # order-api does not use Postgres (in-memory store); the gate is illustrative
+      postgres:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      notification-service:
+        condition: service_healthy
+    develop:
+      watch:                       # `docker compose watch`: rebuild + recreate when the Go source changes
+        - action: rebuild          # demo trigger: edit this file and the container is recreated
+          path: ./watch-trigger
+        - action: rebuild
+          path: ../shared/order-api
+          ignore:
+            - "*_test.go"
+            - Dockerfile.bad*
+
+  # Debug sidecar, off by default (profile). Shares order-api's network namespace, so it sees
+  # exactly what order-api sees, and brings the tools the distroless image lacks.
+  netshoot:
+    profiles: ["debug"]
+    image: nicolaka/netshoot
+    network_mode: "service:order-api"
+    command: ["sleep", "infinity"]
+
+networks:
+  orderflow-net:
+    name: orderflow-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1
+
+volumes:
+  pgdata:
+    name: orderflow-pgdata

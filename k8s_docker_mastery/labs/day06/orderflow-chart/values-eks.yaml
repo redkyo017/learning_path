@@ -1,0 +1,60 @@
+# Overlay for Amazon EKS with the AWS Load Balancer Controller. Use on top of the chart defaults:
+#   helm install orderflow labs/day06/orderflow-chart -n orderflow -f labs/day06/orderflow-chart/values-eks.yaml
+# <ACCOUNT_ID> and <REGION> are placeholders: the EKS lab (labs/eks/README.md) substitutes them with sed into a
+# generated copy. Do not commit real account IDs.
+
+# ECR images pushed in the lab. arm64 (Graviton t4g) when built on an Apple Silicon Mac.
+orderApi:
+  image:
+    repository: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/orderflow/order-api
+    tag: v1
+    pullPolicy: IfNotPresent
+  sidecar:
+    image: public.ecr.aws/docker/library/busybox:1.37      # ECR Public mirror: no Docker Hub rate limit from the NAT IP
+
+paymentService:
+  image:
+    repository: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/orderflow/payment-service
+    tag: v1
+    pullPolicy: IfNotPresent
+
+notificationService:
+  image:
+    repository: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/orderflow/notification-service
+    tag: v1
+    pullPolicy: IfNotPresent
+
+postgres:
+  image: public.ecr.aws/docker/library/postgres:16-alpine
+  persistence:
+    size: 5Gi
+    storageClass: ""            # empty = the cluster default (the gp3 class from labs/eks/storageclass-gp3.yaml)
+
+# One route object per cluster edge: the ALB Ingress replaces the Envoy Gateway HTTPRoute.
+gateway:
+  enabled: false
+
+ingress:
+  enabled: true
+  className: alb                # spec.ingressClassName; the kubernetes.io/ingress.class annotation is deprecated
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip          # ALB -> pod IP directly (VPC CNI), no NodePort hop
+    alb.ingress.kubernetes.io/healthcheck-path: /ready # target health = readiness, so a draining pod leaves the ALB
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "10"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'   # HTTPS: add 443 + alb.ingress.kubernetes.io/certificate-arn (ACM)
+  host: ""
+  paths:
+    - path: /orders
+      pathType: Prefix          # no regex, no rewrite: ALB supports Prefix/Exact only
+      service: order-api
+
+# Multi-AZ production shape: spread by zone and refuse to stack both replicas in one AZ.
+# (Needs nodes in at least 2 zones; the lab's 2 nodes land in different AZs. If a pod stays Pending: see Stuck? Hints.)
+topologySpread:
+  enabled: true
+  constraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: DoNotSchedule

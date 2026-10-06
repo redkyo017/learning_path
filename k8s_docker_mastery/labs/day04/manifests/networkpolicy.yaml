@@ -1,0 +1,93 @@
+# NetworkPolicies are additive: the allowed set is the UNION of every policy that selects a pod.
+# 1. Baseline: isolate every pod in orderflow for INGRESS (egress stays open here; see networkpolicy-egress.yaml).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all-ingress
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector: {} # matches ALL pods in the namespace
+  policyTypes:
+    - Ingress
+
+---
+# 2. The edge (Envoy proxy pods) may reach order-api.
+# ONE `from` item with BOTH selectors = AND: pod must carry the proxy label AND live in envoy-gateway-system.
+# (Two separate `- namespaceSelector` / `- podSelector` items would be OR: every pod in that namespace
+#  OR any pod labelled like that in THIS namespace - a classic over-permissive mistake.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-edge-to-order-api
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector:
+    matchLabels:
+      app: order-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system   # where Envoy Gateway runs the proxy pods
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: envoy
+              gateway.envoyproxy.io/owning-gateway-name: edge
+              gateway.envoyproxy.io/owning-gateway-namespace: gateway-infra
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# 3. ONLY order-api may call payment-service.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-api-to-payment
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector:
+    matchLabels:
+      app: payment-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: order-api
+      ports:
+        - protocol: TCP
+          port: 8081
+
+---
+# 4. ONLY order-api may call notification-service (without this, every POST /orders logs a notification failure).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-api-to-notification
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector:
+    matchLabels:
+      app: notification-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: order-api
+      ports:
+        - protocol: TCP
+          port: 8082

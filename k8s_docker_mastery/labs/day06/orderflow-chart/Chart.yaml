@@ -1,0 +1,11 @@
+apiVersion: v2
+name: orderflow
+description: Helm chart for the OrderFlow platform (order-api, payment-service, notification-service, optional Postgres)
+type: application
+version: 0.2.0
+appVersion: "v1"
+kubeVersion: ">=1.33.0-0"   # native sidecars (initContainers + restartPolicy: Always) are GA in 1.33
+maintainers:
+  - name: Platform Engineering
+# No dependencies: Postgres is a small in-chart StatefulSet so the lab is self-contained.
+# A real chart would declare e.g. a postgresql subchart under `dependencies:` and pin it with Chart.lock.

@@ -1,0 +1,10 @@
+OrderFlow {{ .Chart.AppVersion }} installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Services:   {{ include "orderflow.fullname" . }}-order-api, -payment, -notification
+{{- if .Values.postgres.enabled }}
+Database:   {{ include "orderflow.fullname" . }}-postgres-0 (migration Job: {{ include "orderflow.fullname" . }}-db-migration)
+{{- end }}
+{{- if .Values.gateway.enabled }}
+Edge:       HTTPRoute {{ include "orderflow.fullname" . }} -> Gateway {{ (index .Values.gateway.parentRefs 0).namespace }}/{{ (index .Values.gateway.parentRefs 0).name }}
+            curl http://localhost/orders
+{{- end }}

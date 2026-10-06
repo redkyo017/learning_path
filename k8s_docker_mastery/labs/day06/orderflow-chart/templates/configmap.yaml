@@ -1,0 +1,14 @@
+{{- if .Values.orderApi.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  # Not "<fullname>-config": Day 3 already owns a ConfigMap called orderflow-config.
+  name: {{ include "orderflow.fullname" . }}-order-api-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" (dict "root" . "component" "order-api") | nindent 4 }}
+data:
+  PORT: {{ .Values.orderApi.service.port | quote }}
+  PAYMENT_SERVICE_URL: "http://{{ include "orderflow.fullname" . }}-payment:{{ .Values.paymentService.service.port }}"
+  NOTIFICATION_SERVICE_URL: "http://{{ include "orderflow.fullname" . }}-notification:{{ .Values.notificationService.service.port }}"
+{{- end }}

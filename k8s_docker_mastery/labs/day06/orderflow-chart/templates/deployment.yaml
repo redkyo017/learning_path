@@ -1,0 +1,191 @@
+{{- include "orderflow.validateShutdown" . }}
+{{- if .Values.orderApi.enabled }}
+{{- $c := dict "root" . "component" "order-api" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "orderflow.fullname" . }}-order-api
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" $c | nindent 4 }}
+spec:
+  {{- /* HPA owns the replica count when enabled. Rendering replicas here would reset it on every helm upgrade. */}}
+  {{- if not .Values.hpa.enabled }}
+  replicas: {{ .Values.orderApi.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "orderflow.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "orderflow.labels" $c | nindent 8 }}
+      annotations:
+        # envFrom does not restart pods when a ConfigMap changes; a changed checksum does.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.shutdown.terminationGracePeriodSeconds }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "orderflow.podSecurityContext" . | nindent 8 }}
+      {{- include "orderflow.topologySpread" $c | nindent 6 }}
+      initContainers:
+        {{- if or .Values.postgres.enabled .Values.postgres.externalHost }}
+        # Init container: runs to completion before anything else; blocks the pod until Postgres accepts connections.
+        - name: wait-for-postgres
+          image: {{ .Values.postgres.image }}
+          command: ["sh", "-c", "until pg_isready -h {{ include "orderflow.postgresHost" . }} -p 5432 -t 2; do echo 'waiting for postgres'; sleep 2; done"]
+          securityContext:
+            {{- include "orderflow.containerSecurityContext" . | nindent 12 }}
+            runAsUser: 70     # the image's own postgres UID: pg_isready fails ("no attempt") as UID 65532, which has no passwd entry
+            runAsGroup: 70
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 50m, memory: 32Mi}
+        {{- end }}
+        {{- if .Values.orderApi.sidecar.enabled }}
+        # Native sidecar (k8s 1.33 GA): an init container with restartPolicy: Always. It starts before the app, keeps
+        # running next to it (counted in READY, hence 2/2) and is stopped AFTER the app on shutdown.
+        - name: readiness-watcher
+          image: {{ .Values.orderApi.sidecar.image }}
+          restartPolicy: Always
+          command:
+            - sh
+            - -c
+            - |
+              trap 'echo "watcher stopping"; exit 0' TERM
+              last=""
+              while true; do
+                if wget -q -T 2 -O /dev/null http://127.0.0.1:{{ .Values.orderApi.service.port }}/ready 2>/dev/null; then s=ready; else s=not-ready; fi
+                if [ "$s" != "$last" ]; then echo "$(date -u +%H:%M:%S) /ready: ${last:-unknown} -> $s"; last=$s; fi
+                sleep {{ .Values.orderApi.sidecar.pollSeconds }} & wait $!
+              done
+          securityContext:
+            {{- include "orderflow.containerSecurityContext" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.orderApi.sidecar.resources | nindent 12 }}
+        {{- end }}
+      containers:
+        - name: order-api
+          image: "{{ .Values.orderApi.image.repository }}:{{ .Values.orderApi.image.tag }}"
+          imagePullPolicy: {{ .Values.orderApi.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.orderApi.service.port }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ include "orderflow.fullname" . }}-order-api-config
+          env:
+            - name: DRAIN_DELAY_SECONDS
+              value: {{ .Values.shutdown.drainDelaySeconds | quote }}
+            {{- if .Values.orderApi.enableDebugAlloc }}
+            - name: ENABLE_DEBUG_ALLOC
+              value: "1"
+            {{- end }}
+          securityContext:
+            {{- include "orderflow.containerSecurityContext" . | nindent 12 }}
+          {{- include "orderflow.probes" .Values.probes | nindent 10 }}
+          {{- include "orderflow.lifecycle" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.orderApi.resources | nindent 12 }}
+{{- end }}
+{{- if .Values.paymentService.enabled }}
+{{- $c := dict "root" . "component" "payment-service" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "orderflow.fullname" . }}-payment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.paymentService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "orderflow.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "orderflow.labels" $c | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.shutdown.terminationGracePeriodSeconds }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "orderflow.podSecurityContext" . | nindent 8 }}
+      {{- include "orderflow.topologySpread" $c | nindent 6 }}
+      containers:
+        - name: payment-service
+          image: "{{ .Values.paymentService.image.repository }}:{{ .Values.paymentService.image.tag }}"
+          imagePullPolicy: {{ .Values.paymentService.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.paymentService.service.port }}
+              name: http
+          env:
+            - name: PORT
+              value: {{ .Values.paymentService.service.port | quote }}
+            - name: DRAIN_DELAY_SECONDS
+              value: {{ .Values.shutdown.drainDelaySeconds | quote }}
+          securityContext:
+            {{- include "orderflow.containerSecurityContext" . | nindent 12 }}
+          {{- include "orderflow.probes" .Values.probes | nindent 10 }}
+          {{- include "orderflow.lifecycle" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.paymentService.resources | nindent 12 }}
+{{- end }}
+{{- if .Values.notificationService.enabled }}
+{{- $c := dict "root" . "component" "notification-service" }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "orderflow.fullname" . }}-notification
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" $c | nindent 4 }}
+spec:
+  replicas: {{ .Values.notificationService.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "orderflow.selectorLabels" $c | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "orderflow.labels" $c | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.shutdown.terminationGracePeriodSeconds }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "orderflow.podSecurityContext" . | nindent 8 }}
+      {{- include "orderflow.topologySpread" $c | nindent 6 }}
+      containers:
+        - name: notification-service
+          image: "{{ .Values.notificationService.image.repository }}:{{ .Values.notificationService.image.tag }}"
+          imagePullPolicy: {{ .Values.notificationService.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.notificationService.service.port }}
+              name: http
+          env:
+            - name: PORT
+              value: {{ .Values.notificationService.service.port | quote }}
+            - name: DRAIN_DELAY_SECONDS
+              value: {{ .Values.shutdown.drainDelaySeconds | quote }}
+          securityContext:
+            {{- include "orderflow.containerSecurityContext" . | nindent 12 }}
+          {{- include "orderflow.probes" .Values.probes | nindent 10 }}
+          {{- include "orderflow.lifecycle" . | nindent 10 }}
+          resources:
+            {{- toYaml .Values.notificationService.resources | nindent 12 }}
+{{- end }}

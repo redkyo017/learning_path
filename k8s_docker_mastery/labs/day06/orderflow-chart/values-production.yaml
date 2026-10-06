@@ -1,0 +1,32 @@
+# Production-shaped values: replicas, autoscaling, disruption budget, spreading
+global:
+  environment: production
+
+orderApi:
+  replicaCount: 3            # ignored: hpa.enabled=true omits the replicas field (HPA owns it)
+  resources:
+    requests: {cpu: 100m, memory: 64Mi}
+    limits: {cpu: 200m, memory: 128Mi}
+
+paymentService:
+  replicaCount: 3
+
+notificationService:
+  replicaCount: 2
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+pdb:
+  enabled: true
+  maxUnavailable: 1
+
+topologySpread:
+  enabled: true
+  constraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway   # keep ScheduleAnyway on the one-node lab cluster; EKS: zone + DoNotSchedule

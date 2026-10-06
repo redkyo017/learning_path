@@ -1,0 +1,24 @@
+{{- $services := list
+      (dict "on" .Values.orderApi.enabled "component" "order-api" "suffix" "order-api" "cfg" .Values.orderApi)
+      (dict "on" .Values.paymentService.enabled "component" "payment-service" "suffix" "payment" "cfg" .Values.paymentService)
+      (dict "on" .Values.notificationService.enabled "component" "notification-service" "suffix" "notification" "cfg" .Values.notificationService) }}
+{{- range $s := $services }}
+{{- if $s.on }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "orderflow.fullname" $ }}-{{ $s.suffix }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" (dict "root" $ "component" $s.component) | nindent 4 }}
+spec:
+  type: {{ $s.cfg.service.type }}
+  selector:
+    {{- include "orderflow.selectorLabels" (dict "root" $ "component" $s.component) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $s.cfg.service.port }}
+      targetPort: http
+---
+{{- end }}
+{{- end }}

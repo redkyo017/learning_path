@@ -1,0 +1,83 @@
+# Three identities, three levels of access.
+# 1) order-api-sa: a namespaced Role (hand-written, minimal verbs).
+# 2) payment-sa:   no bindings at all (only what every authenticated identity gets).
+# 3) auditor-sa:   a RoleBinding to the built-in ClusterRole `view` (reuse a ClusterRole inside ONE namespace).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: order-api-sa
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+automountServiceAccountToken: false   # SA-level default: pods using this SA get no token unless they opt in
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: payment-sa
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: auditor-sa
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: order-api-role
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+  # resourceNames limits `get` to one named object. A plain `list`/`watch` names no object, so it is not restricted
+  # (it only applies when the client sends fieldSelector=metadata.name=<name>), and it never works with `create`. Never grant `list`/`watch` on secrets: that reads every secret's contents.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["orderflow-secrets"]
+    verbs: ["get"]
+# ANTI-PATTERN (do not use): apiGroups ["*"], resources ["*"], verbs ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: order-api-binding
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+subjects:
+  - kind: ServiceAccount
+    name: order-api-sa
+    namespace: orderflow
+roleRef:
+  kind: Role
+  name: order-api-role
+  apiGroup: rbac.authorization.k8s.io
+---
+# A RoleBinding may reference a ClusterRole: the rules apply ONLY inside the binding's namespace.
+# `view` is read-only on most namespaced objects and deliberately excludes Secrets and Roles/RoleBindings.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auditor-view
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+subjects:
+  - kind: ServiceAccount
+    name: auditor-sa
+    namespace: orderflow
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io

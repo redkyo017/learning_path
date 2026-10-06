@@ -100,3 +100,11 @@ use the local skill.md file as a standard skill
 Ask me questions before answering it.
 
 Continue the xyz path. Read xyz/PROGRESS.md and follow the Next Session Instructions.
+
+I want to master docker and K8s as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 7-days aggreesive practive plan the fast-tracks real results.
+Focus mainly on all main basics and deep diving, best practice and design patterns ...etc. all that we can cover to comprehend and master the theory and practioning of it
+given i'm a sofware engineer who work day by day on backend and API gateway systems where microservices is a backbone...
+now i want to recall and consolidate them systematically cause I only works as experiences and habits. all practicing can leverage locally using docker desktop or my personal AWS account if EKS
+use the local skill.md file as a standard skill
+Ask me questions before answering it.

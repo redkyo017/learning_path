@@ -1,0 +1,12 @@
+# ExternalName = a DNS CNAME, nothing else: no ClusterIP, no kube-proxy rules, no proxying, no port remap.
+# Use it to give an external dependency a stable in-cluster name. Not applied by the main lab flow (optional Step 10).
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-demo
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  type: ExternalName
+  externalName: example.com

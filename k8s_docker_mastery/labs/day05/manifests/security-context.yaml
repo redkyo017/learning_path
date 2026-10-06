@@ -1,0 +1,100 @@
+# order-api with a dedicated ServiceAccount and the full `restricted` hardening.
+# Labels use app=order-api-hardened so the Day 3 Service `order-api` (selector app=order-api) never selects these pods.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api-hardened
+  namespace: orderflow
+  labels:
+    app: order-api-hardened
+    security-tier: hardened
+    app.kubernetes.io/part-of: orderflow
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-api-hardened
+  template:
+    metadata:
+      labels:
+        app: order-api-hardened
+        security-tier: hardened
+        app.kubernetes.io/part-of: orderflow
+    spec:
+      serviceAccountName: order-api-sa
+      automountServiceAccountToken: false     # no API token in the pod; order-api never calls the API server
+      # Numeric UID matching the image's USER 65532, so kubelet can verify runAsNonRoot.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}               # node-disk scratch space (add `medium: Memory` for tmpfs, which counts against the memory limit)
+      containers:
+        - name: order-api
+          image: orderflow/order-api:v1
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+          ports:
+            - containerPort: 8080
+              name: http
+          # Config only. The Secret is NOT injected as env: order-api does not use it, and env-injected secrets leak
+          # through process environments, crash dumps and `kubectl exec ... env`.
+          envFrom:
+            - configMapRef:
+                name: orderflow-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+        # DEBUG-ONLY companion for Step 6. order-api is distroless (no shell), so this busybox container carries the
+        # same hardened securityContext and the same /tmp volume, which lets us poke at a read-only rootfs.
+        # Remove it from a real Deployment.
+        - name: fs-probe
+          image: busybox:1.37
+          command: ["sleep", "86400"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 10m
+              memory: 8Mi
+            limits:
+              cpu: 50m
+              memory: 16Mi

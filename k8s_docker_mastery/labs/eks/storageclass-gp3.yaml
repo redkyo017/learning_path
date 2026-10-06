@@ -1,0 +1,15 @@
+# Default StorageClass for the cluster. Since EKS 1.30 new clusters have no default class (a PVC without storageClassName
+# stays Pending); older clusters default to `gp2` (provisioner kubernetes.io/aws-ebs, served by the CSI driver via migration).
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer   # create the volume in the AZ where the pod lands
+allowVolumeExpansion: true
+reclaimPolicy: Delete                      # lab: the EBS volume disappears with the PVC. Production data: Retain.
+parameters:
+  type: gp3
+  encrypted: "true"

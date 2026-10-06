@@ -1,0 +1,24 @@
+# ==============================================================================
+# ANTI-PATTERN DOCKERFILE (DO NOT USE IN PRODUCTION)
+# Used for Day 1 Lab analysis and contrast
+# ==============================================================================
+
+# ANTI-PATTERN 1: Fat base image with the whole OS and Go toolchain (~1 GB),
+# and a floating tag, so builds are not reproducible.
+FROM golang:latest
+
+# ANTI-PATTERN 2: Copy the whole build context before anything else. Any file
+# change (source, README, .git) invalidates this layer and every layer after it.
+# There is no .dockerignore here, so the context is not trimmed either.
+COPY . /app
+WORKDIR /app
+
+# ANTI-PATTERN 3: Compiler, sources and build cache all stay in the final image.
+# No multi-stage build, no -trimpath/-ldflags="-s -w", so the binary is larger
+# too. (This module has no dependencies, so there is no separate dependency step
+# to cache - with dependencies you would COPY go.mod and download first.)
+RUN go build -o server .
+
+# ANTI-PATTERN 4: Runs as root (UID 0): no USER instruction.
+# ANTI-PATTERN 5: No EXPOSE (port is undocumented) and no HEALTHCHECK.
+CMD ["/app/server"]

@@ -1,0 +1,72 @@
+# Egress default-deny. Applied in two stages by the lab (Step 8):
+#   stage 1: only default-deny-all-egress   -> DNS dies, everything breaks
+#   stage 2: the allow policies below       -> DNS + order-api's two downstream calls work again
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all-egress
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+
+---
+# Every pod may query CoreDNS (UDP and TCP 53) in kube-system. AND of namespace + pod label.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+---
+# order-api may call payment-service and notification-service (the ingress side is allowed in networkpolicy.yaml).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-api-egress
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  podSelector:
+    matchLabels:
+      app: order-api
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: payment-service
+      ports:
+        - protocol: TCP
+          port: 8081
+    - to:
+        - podSelector:
+            matchLabels:
+              app: notification-service
+      ports:
+        - protocol: TCP
+          port: 8082

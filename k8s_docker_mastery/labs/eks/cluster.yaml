@@ -1,0 +1,48 @@
+# EKS cluster for the optional OrderFlow appendix. Run from the course root:
+#   eksctl create cluster -f labs/eks/cluster.yaml
+# Region is literal here (eksctl needs it at create AND delete time). Using another region? Edit it here and
+# export AWS_REGION to the same value in the lab shell.
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: orderflow-eks
+  region: us-east-1
+  # Pick the current default: `aws eks describe-cluster-versions --default-only --region us-east-1`
+  # (see the `clusterVersion` field). "1.36" was current when this appendix was written (Oct 2026); 1.37 became available on 2026-10-01 and is fine too.
+  version: "1.36"
+  tags:
+    purpose: orderflow-course-lab      # shows up on every resource eksctl creates: handy for the leftover check
+
+# No `iam.withOIDC`: this cluster uses EKS Pod Identity. Only turn OIDC on if you do the IRSA exercise.
+
+vpc:
+  nat:
+    gateway: Single                    # ONE NAT gateway (~$0.045/h) instead of the default HighlyAvailable (one per AZ). Lab only.
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: eks-pod-identity-agent       # DaemonSet that serves credentials to pods; must exist before associations work
+  - name: aws-ebs-csi-driver
+    # Pod Identity association created by eksctl for the add-on's controller ServiceAccount (no IRSA, no OIDC provider).
+    podIdentityAssociations:
+      - serviceAccountName: ebs-csi-controller-sa
+        namespace: kube-system
+        permissionPolicyARNs:
+          - arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
+
+managedNodeGroups:
+  - name: ng-arm64
+    instanceType: t4g.medium           # Graviton (arm64): images built on an Apple Silicon Mac run as-is.
+                                       # amd64 instead? use t3.medium and build with `--platform linux/amd64` (labs/eks/README.md Step 3).
+    amiFamily: AmazonLinux2023
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 3
+    volumeSize: 20
+    volumeType: gp3
+    privateNetworking: true            # nodes in private subnets, egress through the NAT gateway
+    labels:
+      role: general

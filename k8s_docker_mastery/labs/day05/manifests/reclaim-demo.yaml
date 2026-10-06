@@ -1,0 +1,76 @@
+# Retain vs Delete reclaim policy, side by side. Cluster-scoped object is named day05-* and removed in Teardown.
+# Same provisioner as the default class (rancher.io/local-path); only reclaimPolicy differs.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: day05-retain
+provisioner: rancher.io/local-path
+reclaimPolicy: Retain
+volumeBindingMode: WaitForFirstConsumer   # PV is created only once a pod is scheduled (so it lands on the right node/zone)
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keep-me
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: day05-retain
+  resources:
+    requests:
+      storage: 64Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lose-me
+  namespace: orderflow
+  labels:
+    app.kubernetes.io/part-of: orderflow
+spec:
+  accessModes: ["ReadWriteOnce"]      # no storageClassName -> default class `standard`, reclaimPolicy Delete
+  resources:
+    requests:
+      storage: 64Mi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: reclaim-writer
+  namespace: orderflow
+  labels:
+    app: reclaim-writer
+    app.kubernetes.io/part-of: orderflow
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: writer
+      image: busybox:1.37
+      command: ["sh", "-c", "echo important-data > /keep/file.txt; echo disposable-data > /lose/file.txt; cat /keep/file.txt /lose/file.txt; sleep 3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: keep
+          mountPath: /keep
+        - name: lose
+          mountPath: /lose
+  volumes:
+    - name: keep
+      persistentVolumeClaim:
+        claimName: keep-me
+    - name: lose
+      persistentVolumeClaim:
+        claimName: lose-me

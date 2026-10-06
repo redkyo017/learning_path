@@ -1,0 +1,21 @@
+# Local developer overrides. Loaded because COMPOSE_FILE lists it explicitly (Compose auto-loads
+# docker-compose.override.yml only when NO -f / COMPOSE_FILE is given AND it sits next to the base file).
+# `ports` lists are combined with the base file: identical entries are de-duplicated, but a differently
+# written entry for the same port (8080:8080 vs 127.0.0.1:8080:8080) is added alongside and conflicts or
+# exposes the LAN. So order-api's 8080 is declared once, in the base file only.
+services:
+  order-api:
+    environment:
+      ENABLE_DEBUG_ALLOC: "1"       # exposes /debug/alloc?mb=N (dev only; never in the base file)
+
+  payment-service:
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  notification-service:
+    ports:
+      - "127.0.0.1:8082:8082"
+
+  postgres:
+    ports:
+      - "127.0.0.1:15432:5432"      # 15432 on the host: 5432 is often taken by a local Postgres

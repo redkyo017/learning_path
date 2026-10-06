@@ -1,0 +1,59 @@
+# Demo for Step 10: the same ConfigMap consumed as env var, as a volume, and through subPath.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config
+  namespace: orderflow
+data:
+  greeting: "hello-v1"
+---
+# immutable: true -> data can never change again (cheaper for the apiserver/kubelet: no watch needed).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-config-frozen
+  namespace: orderflow
+immutable: true
+data:
+  greeting: "frozen-v1"
+---
+# A deliberately naked pod: it is only a probe for the demo, and is deleted afterwards.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cfg-demo
+  namespace: orderflow
+  labels:
+    app: cfg-demo
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: demo
+      image: busybox:1.37
+      command: ["sleep", "3600"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      env:
+        - name: GREETING            # snapshot at container start; never changes
+          valueFrom:
+            configMapKeyRef:
+              name: demo-config
+              key: greeting
+      volumeMounts:
+        - name: cfg                 # whole-directory mount: updated by the kubelet (atomic symlink swap)
+          mountPath: /etc/demo
+        - name: cfg                 # subPath mount: a bind mount of one file; NEVER updated
+          mountPath: /etc/demo-subpath/greeting
+          subPath: greeting
+  volumes:
+    - name: cfg
+      configMap:
+        name: demo-config

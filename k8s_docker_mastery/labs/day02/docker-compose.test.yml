@@ -1,0 +1,50 @@
+# CI / test variant, used INSTEAD of the dev override:
+#   docker compose -f labs/day02/docker-compose.yml -f labs/day02/docker-compose.test.yml up -d --build --wait
+#   docker compose -f ... -f ... --profile test run --rm smoke
+# No host ports (nothing to collide with on a shared CI runner), throwaway database, tight health intervals.
+services:
+  postgres:
+    volumes:
+      - type: tmpfs                   # same target as the base file's named volume, so it replaces it
+        target: /var/lib/postgresql/data
+    healthcheck:
+      interval: 1s
+
+  payment-service:
+    healthcheck:                      # overrides the image HEALTHCHECK (same command, faster polling)
+      test: ["CMD", "/app/server", "-healthcheck"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+      start_period: 1s
+
+  notification-service:
+    healthcheck:
+      test: ["CMD", "/app/server", "-healthcheck"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+      start_period: 1s
+
+  order-api:
+    ports: !reset []                  # drop the base file's published port: tests reach it over the network
+    healthcheck:
+      test: ["CMD", "/app/server", "-healthcheck"]
+      interval: 2s
+      timeout: 2s
+      retries: 5
+      start_period: 1s
+
+  smoke:                              # one-shot test client on the same network
+    profiles: ["test"]
+    image: curlimages/curl
+    networks:
+      - orderflow-net
+    depends_on:
+      order-api:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command:
+      - >
+        curl -sf -X POST http://order-api:8080/orders -H 'Content-Type: application/json'
+        -d '{"item":"smoke","qty":1}' && echo && curl -sf http://order-api:8080/ready && echo

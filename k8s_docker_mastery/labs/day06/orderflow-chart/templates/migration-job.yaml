@@ -1,0 +1,66 @@
+{{- if and .Values.migration.enabled (or .Values.postgres.enabled .Values.postgres.externalHost) }}
+# Schema migration as a Helm hook: runs AFTER the first install (the database must exist) and BEFORE every upgrade
+# (new schema before new code). Helm waits for the Job to complete; a failed Job fails the release operation.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "orderflow.fullname" . }}-db-migration
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orderflow.labels" (dict "root" . "component" "db-migration") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    {{- if .Values.migration.keepJob }}
+    "helm.sh/hook-delete-policy": before-hook-creation
+    {{- else }}
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- end }}
+spec:
+  backoffLimit: 6
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        {{- include "orderflow.labels" (dict "root" . "component" "db-migration") | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext:
+        {{- include "orderflow.postgresPodSecurityContext" . | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ .Values.postgres.image }}
+          env:
+            - name: PGHOST
+              value: {{ include "orderflow.postgresHost" . }}
+            - name: PGUSER
+              value: {{ .Values.postgres.auth.user | quote }}
+            - name: PGDATABASE
+              value: {{ .Values.postgres.auth.database | quote }}
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "orderflow.postgresSecretName" . }}
+                  key: POSTGRES_PASSWORD
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              until pg_isready -t 2; do echo "waiting for postgres"; sleep 2; done
+              echo "applying {{ len .Values.migration.statements }} migration statement(s)"
+              psql -v ON_ERROR_STOP=1 --single-transaction <<'SQL'
+              {{- range .Values.migration.statements }}
+              {{ . }};
+              {{- end }}
+              SQL
+              echo "schema now:"
+              psql -c '\d orders'
+              echo "migration complete"
+          securityContext:
+            {{- include "orderflow.containerSecurityContext" . | nindent 12 }}
+          resources:
+            requests: {cpu: 10m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+{{- end }}

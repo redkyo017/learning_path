@@ -1,0 +1,25 @@
+# DELIBERATELY NON-COMPLIANT workload used to show Pod Security Admission at work. No securityContext at all:
+# runs as the image's user (root for busybox), default capabilities, no seccomp profile.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: legacy-root
+  namespace: orderflow
+  labels:
+    app: legacy-root
+    app.kubernetes.io/part-of: orderflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: legacy-root
+  template:
+    metadata:
+      labels:
+        app: legacy-root
+        app.kubernetes.io/part-of: orderflow
+    spec:
+      containers:
+        - name: legacy
+          image: busybox:1.37
+          command: ["sleep", "3600"]

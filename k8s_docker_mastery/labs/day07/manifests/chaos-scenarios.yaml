@@ -1,0 +1,439 @@
+# Day 7 chaos scenarios. Every object carries `scenario: <name>` (Deployment metadata AND pod template), so both
+#   kubectl apply  -f labs/day07/manifests/chaos-scenarios.yaml -l scenario=<name>
+#   kubectl get pods -n orderflow -l scenario=<name>
+# select exactly what you expect. Apply into namespace orderflow (every object names it).
+#
+# Scenario            | status you will see            | where the proof lives
+# imagepull           | ErrImagePull -> ImagePullBackOff| describe pod: Events
+# crashloop           | Error -> CrashLoopBackOff       | logs --previous (fatal line), exit code 1
+# starterror          | StartError / RunContainerError  | Last State message, exit code 128, EMPTY logs
+# oomkill             | OOMKilled -> CrashLoopBackOff   | Last State: OOMKilled, exit code 137
+# missing-config      | CreateContainerConfigError      | describe pod: Events (key not found)
+# pending             | Pending                         | describe pod: FailedScheduling event
+# dns                 | Running, but calls fail         | order-api logs: context deadline exceeded (Client.Timeout ...)
+# selector            | Running 1/1, Service has no endpoints | gateway answers 503
+# readiness           | Running 0/1, Service has no READY endpoints | Unhealthy events, EndpointSlice ready:false; gateway still answers 200 (Envoy panic routing)
+# readiness-ready     | add one READY pod behind the same Service | gateway traffic moves entirely to it
+#
+# Prerequisite for dns/selector/readiness: the Day 6 release (Services orderflow-payment/-notification) and the
+# Day 4 Gateway `edge`.
+
+# ==============================================================================
+# 1. imagepull - tag does not exist. containerd reports "pull access denied ... may require authorization" for a
+#    missing tag on Docker Hub: Docker Hub answers 401 for unknown repos/tags, so the message is MISLEADING.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-01-imagepull
+  namespace: orderflow
+  labels: {app: chaos-01, scenario: imagepull}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-01}
+  template:
+    metadata:
+      labels: {app: chaos-01, scenario: imagepull}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v99.9.9
+        ports:
+        - containerPort: 8080
+---
+# ==============================================================================
+# 2. crashloop - the app starts, validates PORT, calls log.Fatalf and exits 1. Real CrashLoopBackOff with useful logs.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-02-crashloop
+  namespace: orderflow
+  labels: {app: chaos-02, scenario: crashloop}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-02}
+  template:
+    metadata:
+      labels: {app: chaos-02, scenario: crashloop}
+    spec:
+      containers:
+      - name: payment-service
+        image: orderflow/payment-service:v1
+        env:
+        - name: PORT
+          value: "notanumber"
+        ports:
+        - containerPort: 8081
+---
+# ==============================================================================
+# 3. starterror - the command override points at a binary that is not in the image. The runtime cannot even exec it:
+#    this is NOT a crash of the app. Reason StartError (kubelet may show RunContainerError in the STATUS column),
+#    exit code 128, no logs at all because no process ever ran.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-03-starterror
+  namespace: orderflow
+  labels: {app: chaos-03, scenario: starterror}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-03}
+  template:
+    metadata:
+      labels: {app: chaos-03, scenario: starterror}
+    spec:
+      containers:
+      - name: payment-service
+        image: orderflow/payment-service:v1
+        command: ["/nonexistent-binary", "--run"]
+        ports:
+        - containerPort: 8081
+---
+# ==============================================================================
+# 4. oomkill - order-api with the opt-in /debug/alloc endpoint and a 64Mi limit. The distroless image has no curl and
+#    you cannot kubectl exec into it, so a second container in the same pod (shared network namespace) triggers the
+#    allocation over localhost, every 10 s. 100 MiB > 64 Mi -> the kernel kills the process (exit 137). Because the
+#    sidecar keeps looping, every restart is killed again -> OOMKilled / CrashLoopBackOff.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-04-oomkill
+  namespace: orderflow
+  labels: {app: chaos-04, scenario: oomkill}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-04}
+  template:
+    metadata:
+      labels: {app: chaos-04, scenario: oomkill}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v1
+        env:
+        - name: ENABLE_DEBUG_ALLOC
+          value: "1"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests: {cpu: 10m, memory: 32Mi}
+          limits: {cpu: 100m, memory: 64Mi}
+      - name: memory-hog-trigger
+        image: curlimages/curl:8.11.1
+        command: ["sh", "-c", "while true; do sleep 10; curl -s -m 5 'http://localhost:8080/debug/alloc?mb=100'; echo; done"]
+        resources:
+          requests: {cpu: 5m, memory: 8Mi}
+          limits: {cpu: 50m, memory: 32Mi}
+---
+# ==============================================================================
+# 5. missing-config - the ConfigMap exists but the pod asks for a key that does not (typo LOG_LEVl).
+#    Kubelet cannot build the container's environment -> CreateContainerConfigError. (A missing ConfigMap/Secret
+#    object gives the same status with a different message; `optional: true` would silence it.)
+# ==============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chaos-app-config
+  namespace: orderflow
+  labels: {scenario: missing-config}
+data:
+  LOG_LEVEL: info
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-05-missing-config
+  namespace: orderflow
+  labels: {app: chaos-05, scenario: missing-config}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-05}
+  template:
+    metadata:
+      labels: {app: chaos-05, scenario: missing-config}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v1
+        env:
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: chaos-app-config
+              key: LOG_LEVl
+        ports:
+        - containerPort: 8080
+---
+# ==============================================================================
+# 6. pending - requests that no node can satisfy. The scheduler never binds the pod (NODE <none>).
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-06-pending
+  namespace: orderflow
+  labels: {app: chaos-06, scenario: pending}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-06}
+  template:
+    metadata:
+      labels: {app: chaos-06, scenario: pending}
+    spec:
+      containers:
+      - name: payment-service
+        image: orderflow/payment-service:v1
+        resources:
+          requests: {cpu: "128", memory: 256Gi}
+        ports:
+        - containerPort: 8081
+---
+# ==============================================================================
+# 7. dns - egress default-deny for this scenario's pods WITHOUT a port-53 allowance. The pod is Running and Ready
+#    (probes come from the kubelet on the node, not from a pod, so egress policy does not touch them), but every
+#    downstream call dies at name resolution. A curl sidecar drives POST /orders through localhost (loopback is never
+#    filtered) so order-api logs the failure. Needs the Day 6 release (Services orderflow-payment / -notification).
+#    Fix manifest: dns-fix (below) - applied by the lab, NOT with this scenario.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-07-dns
+  namespace: orderflow
+  labels: {app: chaos-07, scenario: dns}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-07}
+  template:
+    metadata:
+      labels: {app: chaos-07, scenario: dns}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v1
+        env:
+        - name: PAYMENT_SERVICE_URL
+          value: http://orderflow-payment:8081
+        - name: NOTIFICATION_SERVICE_URL
+          value: http://orderflow-notification:8082
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet: {path: /ready, port: 8080}
+          periodSeconds: 5
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 64Mi}
+      - name: order-client
+        image: curlimages/curl:8.11.1
+        command: ["sh", "-c", "while true; do curl -s -m 8 -X POST -d '{\"item\":\"book\",\"qty\":1}' http://localhost:8080/orders; echo; sleep 5; done"]
+        resources:
+          requests: {cpu: 5m, memory: 8Mi}
+          limits: {cpu: 50m, memory: 32Mi}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: chaos-dns-deny-egress
+  namespace: orderflow
+  labels: {scenario: dns}
+spec:
+  podSelector:
+    matchLabels: {scenario: dns}
+  policyTypes: [Egress]      # no egress rules at all: nothing leaves these pods, not even to CoreDNS
+---
+# The fix for scenario 7 (selected with -l scenario=dns-fix): DNS to CoreDNS + the two downstream services.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: chaos-dns-allow-egress
+  namespace: orderflow
+  labels: {scenario: dns-fix}
+spec:
+  podSelector:
+    matchLabels: {scenario: dns}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels: {kubernetes.io/metadata.name: kube-system}
+      podSelector:
+        matchLabels: {k8s-app: kube-dns}
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+  - to:
+    - podSelector:
+        matchLabels: {app: payment-service}
+    ports:
+    - {protocol: TCP, port: 8081}
+  - to:
+    - podSelector:
+        matchLabels: {app: notification-service}
+    ports:
+    - {protocol: TCP, port: 8082}
+---
+# ==============================================================================
+# 8. selector - the pod is healthy (1/1 Running) but the Service selects app: chaos-08-typo, so it has no endpoints.
+#    The HTTPRoute /chaos-selector points at that Service -> the edge gateway answers 503.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-08-selector
+  namespace: orderflow
+  labels: {app: chaos-08, scenario: selector}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-08}
+  template:
+    metadata:
+      labels: {app: chaos-08, scenario: selector}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v1
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet: {path: /ready, port: 8080}
+          periodSeconds: 5
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 64Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-08-selector
+  namespace: orderflow
+  labels: {scenario: selector}
+spec:
+  selector:
+    app: chaos-08-typo          # the pods are labelled app: chaos-08
+  ports:
+  - {port: 8080, targetPort: 8080}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: chaos-08-selector
+  namespace: orderflow
+  labels: {scenario: selector}
+spec:
+  parentRefs:
+  - {name: edge, namespace: gateway-infra}
+  rules:
+  - matches:
+    - path: {type: PathPrefix, value: /chaos-selector}
+    filters:                      # rewrite to /health so a healthy backend answers 200 (the app has no /chaos-selector)
+    - type: URLRewrite
+      urlRewrite:
+        path: {type: ReplaceFullPath, replaceFullPath: /health}
+    backendRefs:
+    - {name: chaos-08-selector, port: 8080}
+---
+# ==============================================================================
+# 9. readiness - selector is right, but the readiness probe checks a path that returns 404, so the pod is Running
+#    0/1 and the Service has NO READY endpoints (in-cluster callers get "connection refused"). Liveness is untouched:
+#    no restarts. Through the gateway the route STILL answers 200: Envoy Gateway hands the not-ready endpoint to Envoy
+#    as non-healthy, and with fewer than 50% healthy hosts Envoy "panics" (fails open) and load-balances across ALL
+#    hosts, ready or not. Step 9c (readiness-ready) adds one ready pod: traffic then goes only to it.
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-09-readiness
+  namespace: orderflow
+  labels: {app: chaos-09, scenario: readiness}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-09}
+  template:
+    metadata:
+      labels: {app: chaos-09, scenario: readiness}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v1
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet: {path: /readyz, port: 8080}     # the app serves /ready, not /readyz
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: {path: /health, port: 8080}
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 64Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chaos-09-readiness
+  namespace: orderflow
+  labels: {scenario: readiness}
+spec:
+  selector:
+    app: chaos-09
+  ports:
+  - {port: 8080, targetPort: 8080}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: chaos-09-readiness
+  namespace: orderflow
+  labels: {scenario: readiness}
+spec:
+  parentRefs:
+  - {name: edge, namespace: gateway-infra}
+  rules:
+  - matches:
+    - path: {type: PathPrefix, value: /chaos-readiness}
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path: {type: ReplaceFullPath, replaceFullPath: /health}
+    backendRefs:
+    - {name: chaos-09-readiness, port: 8080}
+---
+# 9c. readiness-ready - a SECOND Deployment behind the same Service (label app: chaos-09) with a correct probe.
+#     One ready of two endpoints = 50% healthy, not below the panic threshold, so Envoy stops sending to the unready one.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chaos-09c-ready
+  namespace: orderflow
+  labels: {app: chaos-09, scenario: readiness-ready}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: chaos-09, variant: ready}
+  template:
+    metadata:
+      labels: {app: chaos-09, variant: ready, scenario: readiness-ready}
+    spec:
+      containers:
+      - name: order-api
+        image: orderflow/order-api:v1
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet: {path: /ready, port: 8080}
+          periodSeconds: 5
+        resources:
+          requests: {cpu: 10m, memory: 16Mi}
+          limits: {cpu: 100m, memory: 64Mi}

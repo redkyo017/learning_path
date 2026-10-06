@@ -1,0 +1,156 @@
+# Release namespace comes from `helm install -n <ns>` (.Release.Namespace). There is deliberately NO `namespace:` value.
+nameOverride: ""
+fullnameOverride: ""
+
+global:
+  environment: default
+
+imagePullSecrets: []
+
+# ---- Services ---------------------------------------------------------------------------------------
+# Names rendered with release "orderflow":  Deployment/Service  orderflow-order-api | orderflow-payment | orderflow-notification
+# Task 9 / overlays: set <service>.image.repository and <service>.image.tag per service.
+orderApi:
+  enabled: true
+  replicaCount: 2            # ignored (field omitted) when hpa.enabled=true, so Helm does not fight the HPA
+  image:
+    repository: orderflow/order-api
+    tag: v1
+    pullPolicy: IfNotPresent
+  service:
+    port: 8080
+    type: ClusterIP
+  resources:                 # requests must be <= limits, or the API server rejects the Deployment
+    requests:
+      cpu: 100m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  enableDebugAlloc: false    # sets ENABLE_DEBUG_ALLOC=1 -> GET /debug/alloc?mb=N exists (OOM demo only, never in production)
+  # Native sidecar (initContainers entry with restartPolicy: Always). Honest job: it polls the app's own /ready on
+  # localhost and logs every readiness transition, including the 503 "draining" during shutdown.
+  sidecar:
+    enabled: true
+    image: busybox:1.37
+    pollSeconds: 2
+    resources:
+      requests: {cpu: 10m, memory: 8Mi}
+      limits: {cpu: 50m, memory: 16Mi}
+
+paymentService:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: orderflow/payment-service
+    tag: v1
+    pullPolicy: IfNotPresent
+  service:
+    port: 8081
+    type: ClusterIP
+  resources:
+    requests: {cpu: 50m, memory: 32Mi}
+    limits: {cpu: 100m, memory: 64Mi}
+
+notificationService:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: orderflow/notification-service
+    tag: v1
+    pullPolicy: IfNotPresent
+  service:
+    port: 8082
+    type: ClusterIP
+  resources:
+    requests: {cpu: 50m, memory: 32Mi}
+    limits: {cpu: 100m, memory: 64Mi}
+
+# ---- Probes (all three services; port is the named port "http") ---------------------------------------------
+# startup: gives the process time to come up; liveness/readiness are paused until it passes.
+# readiness: /ready, flips to 503 while draining. liveness: /health, process-alive only. Never the same endpoint.
+probes:
+  startup:   {path: /health, periodSeconds: 2, failureThreshold: 30}
+  readiness: {path: /ready,  periodSeconds: 5, failureThreshold: 3}
+  liveness:  {path: /health, periodSeconds: 10, failureThreshold: 3}
+
+# ---- Graceful shutdown (all three services) -----------------------------------------------------------------
+# Sequence on pod deletion: endpoint removal starts AND preStop runs, then SIGTERM, then the app drains, then SIGKILL
+# after terminationGracePeriodSeconds. The chart refuses to render if the grace period is shorter than
+# preStopSleepSeconds + drainDelaySeconds + 20 (the apps' own http.Server.Shutdown timeout).
+shutdown:
+  preStopSleepSeconds: 10        # native lifecycle.preStop.sleep (distroless has no `sleep` binary). 0 = no preStop hook
+  drainDelaySeconds: 0           # app-level alternative: DRAIN_DELAY_SECONDS keeps serving (with /ready=503) after SIGTERM
+  terminationGracePeriodSeconds: 45
+
+# ---- Spreading ------------------------------------------------------------------------------------------------
+topologySpread:
+  enabled: true
+  constraints:                   # labelSelector is injected by the chart (the service's own pods)
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway    # one-node lab cluster; production: topology.kubernetes.io/zone + DoNotSchedule
+
+# ---- Postgres (in-chart StatefulSet; order-api does not actually query it, see README) -----------------------------------
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  externalHost: ""               # used when enabled=false (init container + migration then point at this host)
+  auth:
+    user: orderflow
+    database: orderflow
+    password: lab-only-change-me # placeholder. Real clusters: auth.existingSecret (key POSTGRES_PASSWORD) from a secret manager
+    existingSecret: ""
+  persistence:
+    enabled: true
+    size: 1Gi
+    storageClass: ""             # empty = cluster default
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 256Mi}
+
+# ---- Schema migration: Helm hook Job, runs after install and before every upgrade -------------------------------
+migration:
+  enabled: true                  # needs postgres.enabled=true or postgres.externalHost
+  keepJob: true                  # true: keep the finished Job (logs stay readable); false: hook-succeeded deletes it
+  statements:                    # each is idempotent so the hook can run on every upgrade
+    - >-
+      CREATE TABLE IF NOT EXISTS orders (id text PRIMARY KEY, item text NOT NULL, qty int NOT NULL,
+      status text NOT NULL DEFAULT 'PENDING', created_at timestamptz NOT NULL DEFAULT now())
+    - ALTER TABLE orders ADD COLUMN IF NOT EXISTS note text
+
+# ---- Edge ------------------------------------------------------------------------------------------------------
+# Default: an HTTPRoute attached to the platform's Gateway (Day 4: Gateway "edge" in gateway-infra).
+gateway:
+  enabled: true
+  parentRefs:
+    - name: edge
+      namespace: gateway-infra
+  hostnames: []                  # empty = match any host
+  paths:                         # PathPrefix matches; payment/notification stay internal (no route)
+    - path: /orders
+      service: order-api         # order-api | payment | notification (suffix of the Service name)
+
+# Optional classic Ingress (ingress-nginx was retired in March 2026; an AWS Load Balancer Controller class is the EKS use).
+ingress:
+  enabled: false
+  className: ""                  # e.g. alb. Empty = cluster default IngressClass
+  annotations: {}                # controller-specific, e.g. alb.ingress.kubernetes.io/scheme: internet-facing
+  host: ""                       # empty = no host rule
+  paths:
+    - path: /orders
+      pathType: Prefix           # Prefix | Exact | ImplementationSpecific. No regex rewrite here.
+      service: order-api         # order-api | payment | notification
+
+# ---- Reliability ----------------------------------------------------------------------------------------------
+hpa:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70   # % of the pod's CPU *requests* (all containers, incl. the sidecar)
+
+pdb:
+  enabled: false
+  maxUnavailable: 1              # voluntary disruptions only (drain, eviction); set minAvailable instead to use that form
+  minAvailable: null
+  unhealthyPodEvictionPolicy: AlwaysAllow   # let a drain evict pods that are Running but not Ready
