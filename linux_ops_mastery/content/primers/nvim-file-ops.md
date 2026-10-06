@@ -1,5 +1,7 @@
 # nvim file operations — open, read, write, update, recover
 
+**Practice it:** [`labs/practice/nvimfile/README.md`](../../labs/practice/nvimfile/README.md) — the file side of a session as 12 drills.
+
 `nvim-cheatsheet.md` is the editing grammar: what happens *inside* a buffer.
 This primer is the file's side of the same session — how a file gets into a
 buffer, how the buffer gets back onto disk, what that write does to the
@@ -70,7 +72,7 @@ To watch a live log, stay in the shell: `tail -F` (see the reference).
 | Append a range to a file | `:10,20w >> notes.txt` | |
 | Pipe the buffer to a command | `:w !wc -c` | the file on disk is **not** written |
 | Force past the `readonly` flag | `:w!` | only overrides nvim's flag — the kernel's permission check still applies |
-| Save a root-owned file you opened as a user | `:w !sudo tee % >/dev/null`, then `:e!` | cheatsheet |
+| Save a root-owned file you opened as a user | `:w !sudo tee % >/dev/null`, then at the `W12 ... [O]K, (L)oad File` prompt press `L` (or `:e!`) | cheatsheet |
 
 `:x` versus `:wq` is not trivia. The mtime is what `find -mmin`, `make`,
 config watchers, and "what changed recently?" all read, so `:wq` on a file
@@ -218,7 +220,7 @@ Day 5's permission model, or `:w !sudo tee %` where `sudo` exists.
 What worked in `slim`: `:w`, `:wq`, `:x`, `:q`, `:q!`, `:e!` (reload,
 discarding edits), `:r file` (insert a file below the cursor), and
 `:3,4w part` (write a range to a new file). What did **not**: `:3,4w >> f`
-left the target unchanged; `:sav` is misread as `:s` (`expression missing
+created a file literally named `>> f` (and left the target unchanged); `:sav` is misread as `:s` (`expression missing
 delimiters`); `:set ff=unix` gives `bad option: ff=unix`; `:vimgrep` gives
 `'vimgrep' is not implemented`. No swap file appears while editing, so there
 is no E325 and nothing to recover after a crash. Strip CRLF from the shell

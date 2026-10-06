@@ -1,5 +1,7 @@
 # nvim cheatsheet — the grammar, not a command list
 
+**Practice it:** [`labs/practice/nvim/README.md`](../../labs/practice/nvim/README.md) — the grammar as 20 self-checking drills.
+
 Vim/nvim is a language, not a command palette. Memorizing keystrokes as
 isolated commands doesn't scale; learning the grammar does, because every
 new motion or text object you learn immediately composes with every

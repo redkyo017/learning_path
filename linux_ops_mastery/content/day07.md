@@ -182,12 +182,15 @@ between them — the fastest way to compare a deployed config against a known
 good one without leaving the editor for an external `diff`.
 
 **`:w !sudo tee % >/dev/null` for a file opened read-only.** You edited a
-root-owned file as yourself, `:w` fails with "permission denied," and the
-buffer's changes are still only in memory. `:w !sudo tee % >/dev/null`
-pipes the buffer's content through `sudo tee` back onto the same path (`%`)
-— the buffer itself is unmodified by this, so nvim still reports it as
-"changed," and `:e!` reloads the now-actually-written file from disk to
-clear that flag.
+root-owned file as yourself, nvim sets `readonly`, so `:w` refuses with
+`E45` (not "permission denied"), and the buffer's changes are still only in memory. `:w !sudo tee % >/dev/null`
+pipes the buffer's content through `sudo tee` back onto the same path (`%`).
+Afterwards a `W12 ... (L)oad File` prompt appears because the file changed
+under nvim: press `L` to reload it (or `:e!` if you pressed `O` or Enter).
+
+**Practice it:** the L3 drills 15–20 in [`labs/practice/nvim/README.md`](../labs/practice/nvim/README.md)
+are this block, with a keystroke budget; for the file side (`:w` inode, swap recovery,
+`sudo tee`) do [`labs/practice/nvimfile/README.md`](../labs/practice/nvimfile/README.md).
 
 ## Lab
 
@@ -277,7 +280,9 @@ wait for `ws`.
    a different, privileged process instead. — **Solution sketch:** finish
    editing, then `:w !sudo tee % >/dev/null` to pipe the buffer through
    `sudo tee` back onto the same path, then `:e!` to reload the file nvim
-   now sees on disk and clear the stale "modified" flag.
+   now sees on disk and clear the stale "modified" flag (nvim shows a `W12`
+   prompt after the write: press `L` to load the file, or answer anything and
+   `:e!`).
 
 7. In one `ws` shell, create a config and watch it:
    `mkdir -p /srv/app && printf 'port=80\nworkers=2\n' > /srv/app/app.conf && tail -f /srv/app/app.conf`.

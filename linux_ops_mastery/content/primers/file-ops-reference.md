@@ -1,5 +1,7 @@
 # File operations reference — read, search, write, update
 
+**Practice it:** [`labs/practice/fileops/README.md`](../../labs/practice/fileops/README.md) — the same forms as self-checking drills.
+
 Read this when you know *what* you want to do to a file and need the form
 that works on the box in front of you. It is a lookup table, not a drill
 (Mistake 1): the model it hangs off is Day 1's inode-versus-name split and
@@ -82,8 +84,8 @@ with `cannot create /etc/probe-root: Permission denied` before `echo` runs.
 The same rule is why `sudo echo x > /etc/f` fails for a non-root user — the
 unprivileged shell opens `/etc/f`, not `sudo` — and why the working form puts
 the privileged process on the writing end: `echo x | sudo tee /etc/f >/dev/null`.
-(`ws` ships no `sudo`; the `nobody` case above is the same mechanism with
-nothing borrowed.)
+(`ws` ships `sudo`, but with no `NOPASSWD` rule by default; the `nobody`
+case above is the same mechanism with nothing borrowed.)
 
 ## Update and replace
 

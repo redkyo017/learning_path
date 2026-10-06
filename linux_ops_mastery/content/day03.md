@@ -238,6 +238,10 @@ different names: `create` renames, `copytruncate` writes in place — see
 *Where this shows up in AWS* below. The command subset for all of this, GNU
 and busybox side by side, is `content/primers/file-ops-reference.md`.
 
+**Practice it:** the write table above is the `fileops` workbook's drills 12–14 and 16
+([`labs/practice/fileops/README.md`](../labs/practice/fileops/README.md)); the
+nvim row is `nvimfile` drills 8–9 ([`labs/practice/nvimfile/README.md`](../labs/practice/nvimfile/README.md)).
+
 **The triage trio, the operator subset only:**
 
 - `grep -c` counts matches, `-n` numbers them, `-v` inverts the match,

@@ -71,6 +71,9 @@ are simple:
   lab. Cover the solution, guess, then read.
 - **Neovim block** — Days 1 and 7 only: editor practice, separate from the
   incident.
+- **Practice track** — optional finger drills in `labs/practice/`, seeded and
+  judged by scripts: Day 1 `nvim` 1-6 and `fileops` 1-2, then the rest spread
+  over Days 2-6 and before Day 7 (schedule table in the track README). Overview: `labs/practice/README.md`.
 
 The routine, every day:
 
@@ -151,6 +154,7 @@ Confirms zero running containers, no stray volumes, and no leftover
 | `content/primers/file-ops-reference.md` | Read, search, write, update, copy — GNU and busybox forms side by side, each marked same-inode or new-inode |
 | `content/primers/nvim-cheatsheet.md` | Neovim as a grammar: operator + count + motion/text object |
 | `content/primers/nvim-file-ops.md` | The file side of a Neovim session: opening, writing, what `:w` does to the inode, swap-file recovery |
+| `labs/practice/README.md` | Practice track: three drill workbooks (`fileops`, `nvim`, `nvimfile`), each drill seeded and checked by script, one per primer below |
 | `content/primers/nvim-vscode-setup.md` | **Optional, after Day 7.** Turning Neovim into a VSCode-shaped daily editor on macOS and Linux |
 
 The last one is deliberately outside the 21 hours. This path treats Neovim as a

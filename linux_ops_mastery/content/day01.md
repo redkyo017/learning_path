@@ -270,6 +270,10 @@ ex commands, without your hand moving toward the arrow keys even once.**
 If you catch yourself reaching for an arrow key, that's the tell you're
 not done with this hour yet.
 
+Then do `nvim` drills 1–6 and `fileops` drills 1–2 from the practice track — `bash labs/practice/nvim/setup.sh 1`
+on your Mac, edit inside `ws`, then `bash labs/practice/nvim/check.sh 1`; repeat for
+drills 2–6 (same pattern for `fileops`). Start at [`labs/practice/nvim/README.md`](../labs/practice/nvim/README.md).
+
 ## Strip the toolbox
 
 *Plain version: a practice drill. Make the same "deleted but still open" file yourself inside the bare `slim` container (enter with `docker compose -p linuxops exec slim sh`), then find it with only busybox (the tiny toolset in `slim`) `ls` and `grep` — no `lsof`.*

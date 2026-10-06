@@ -16,7 +16,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       procps psmisc lsof strace file findutils coreutils util-linux \
       iproute2 iputils-ping netcat-openbsd curl ca-certificates openssl \
-      tcpdump nftables less vim neovim git jq acl attr sysstat tree \
+      tcpdump nftables less vim neovim git jq acl attr sysstat tree sudo \
  && rm -rf /var/lib/apt/lists/*
 
 # Layer two is best effort, and it is separate so that one missing package
