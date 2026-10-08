@@ -348,10 +348,10 @@ It is a path stored as text, filled in on each read.
 - **hard link** — Day 1, *Hard links, symlinks, and stat* ([glossary](../GLOSSARY.md))
 - **tmpfs** — Day 1, *Read the file first* ([glossary](../GLOSSARY.md))
 - **overlayfs** — Day 1, *overlayfs: lowerdir, upperdir, merged* ([glossary](../GLOSSARY.md))
-- **bind mount** — Day 1, *Bind mounts*
-- **whiteout** — Day 1, *overlayfs: lowerdir, upperdir, merged*
-- **link count** — Day 1, *Inode versus name* (how many directory entries point at an inode)
-- **df versus du** — Day 1, *df versus du, and why they can disagree in both directions*
+- **bind mount** — Day 1, *Bind mounts* ([glossary](../GLOSSARY.md))
+- **whiteout** — Day 1, *overlayfs: lowerdir, upperdir, merged* ([glossary](../GLOSSARY.md))
+- **link count** — Day 1, *Inode versus name* (how many directory entries point at an inode) ([glossary](../GLOSSARY.md))
+- **df versus du** — Day 1, *df versus du, and why they can disagree in both directions* ([glossary](../GLOSSARY.md))
 
 ## Self-check
 

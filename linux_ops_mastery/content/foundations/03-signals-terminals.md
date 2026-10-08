@@ -341,15 +341,15 @@ It lives only in this shell; exit the shell to discard it.
 
 ## Words you'll meet in the course
 
-- **signal** — Day 2, *Signals an operator must know cold*
-- **SIGKILL** — Day 2, *Stopped means not scheduled*
-- **SIGSTOP** — Day 2, *Stopped means not scheduled*
-- **SIGCHLD** (`CHLD`) — Day 2, *Signals an operator must know cold*
-- **SIGTSTP** — Day 2, *Stopped means not scheduled*
-- **process group** — Day 2, *Process groups, sessions, controlling terminals*
-- **session** — Day 2, *Process groups, sessions, controlling terminals*
-- **controlling terminal** — Day 2, *Process groups, sessions, controlling terminals*
-- **SigCgt** — Day 2, *Read the file first*
+- **signal** — Day 2, *Signals an operator must know cold* ([glossary](../GLOSSARY.md))
+- **SIGKILL** — Day 2, *Stopped means not scheduled* ([glossary](../GLOSSARY.md))
+- **SIGSTOP** — Day 2, *Stopped means not scheduled* ([glossary](../GLOSSARY.md))
+- **SIGCHLD** (`CHLD`) — Day 2, *Signals an operator must know cold* ([glossary](../GLOSSARY.md))
+- **SIGTSTP** — Day 2, *Stopped means not scheduled* ([glossary](../GLOSSARY.md))
+- **process group** — Day 2, *Process groups, sessions, controlling terminals* ([glossary](../GLOSSARY.md))
+- **session** — Day 2, *Process groups, sessions, controlling terminals* ([glossary](../GLOSSARY.md))
+- **controlling terminal** — Day 2, *Process groups, sessions, controlling terminals* ([glossary](../GLOSSARY.md))
+- **SigCgt** — Day 2, *Read the file first* ([glossary](../GLOSSARY.md))
 - **trap** — Day 9, *Breaking it down* ([glossary](../GLOSSARY.md))
 - **subshell** — Day 9, *The underlying truth* ([glossary](../GLOSSARY.md))
 

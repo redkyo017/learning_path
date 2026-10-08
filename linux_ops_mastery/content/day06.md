@@ -163,9 +163,10 @@ itself.
 
 The three-way handshake (`SYN` → `SYN-ACK` → `ACK`) leaves a client
 socket in `SYN_SENT` until the second packet arrives; a socket stuck
-there and never advancing to `ESTABLISHED` means either nothing answered
-(no route, or a silent firewall drop) or a `RST` came back instead (a
-connection actively refused — nothing listening on that address).
+there and never advancing to `ESTABLISHED` means nothing answered (no
+route, or a silent firewall drop). A `RST` coming back instead ends the
+attempt at once — "connection refused", nothing listening on that address
+— so it never leaves a socket sitting in `SYN_SENT`.
 `TIME_WAIT` is the state a closing socket holds for roughly twice the
 maximum segment lifetime specifically so a delayed duplicate packet from
 the old connection cannot be mistaken for part of a new one reusing the

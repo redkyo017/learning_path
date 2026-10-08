@@ -343,14 +343,14 @@ before the proxy. `-i` shows headers; a plain GET changes nothing.
 
 ## Words you'll meet in the course
 
-- **longest matching prefix** — Day 6, *The routing table as a decision procedure*
-- **`nsswitch.conf`** — Day 6, *DNS resolution order, and the `ndots` trap*
+- **longest matching prefix** — Day 6, *The routing table as a decision procedure* ([glossary](../GLOSSARY.md))
+- **`nsswitch.conf`** — Day 6, *DNS resolution order, and the `ndots` trap* ([glossary](../GLOSSARY.md))
 - **`ndots`** — Day 6, *DNS resolution order, and the `ndots` trap* ([glossary](../GLOSSARY.md))
-- **`/etc/resolv.conf`** — Day 6, *DNS resolution order, and the `ndots` trap*
-- **`0.0.0.0`** — Day 6, *Listening on `127.0.0.1` versus `0.0.0.0`*
-- **`/proc/net/tcp`** — Day 6, *Listening on `127.0.0.1` versus `0.0.0.0`*
-- **three-way handshake** — Day 6, *TCP states, the handshake, and port exhaustion*
-- **`SYN_SENT`** — Day 6, *TCP states, the handshake, and port exhaustion*
+- **`/etc/resolv.conf`** — Day 6, *DNS resolution order, and the `ndots` trap* ([glossary](../GLOSSARY.md))
+- **`0.0.0.0`** — Day 6, *Listening on `127.0.0.1` versus `0.0.0.0`* ([glossary](../GLOSSARY.md))
+- **`/proc/net/tcp`** — Day 6, *Listening on `127.0.0.1` versus `0.0.0.0`* ([glossary](../GLOSSARY.md))
+- **three-way handshake** — Day 6, *TCP states, the handshake, and port exhaustion* ([glossary](../GLOSSARY.md))
+- **`SYN_SENT`** — Day 6, *TCP states, the handshake, and port exhaustion* ([glossary](../GLOSSARY.md))
 - **`TIME_WAIT`** — Day 6, *TCP states, the handshake, and port exhaustion* ([glossary](../GLOSSARY.md))
 
 ## Self-check

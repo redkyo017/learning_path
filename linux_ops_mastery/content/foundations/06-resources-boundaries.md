@@ -341,16 +341,16 @@ can score high). `oom_score_adj` is its bias, usually `0`, -1000 to 1000.
 
 ## Words you'll meet in the course
 
-- **load average** — Day 2, *Process states and load average*
+- **load average** — Day 2, *Process states and load average* ([glossary](../GLOSSARY.md))
 - **RSS** — Day 4, *RSS, shared memory, page cache, and `MemAvailable`* ([glossary](../GLOSSARY.md))
 - **page cache** — Day 4, *RSS, shared memory, page cache, and `MemAvailable`* ([glossary](../GLOSSARY.md))
 - **MemAvailable** — Day 4, *RSS, shared memory, page cache, and `MemAvailable`* ([glossary](../GLOSSARY.md))
-- **oom_score_adj** — Day 4, *The OOM killer: score, adjustment, cgroup versus global*
-- **memory.max** — Day 4, *Exceeding `memory.max` does not mean dead — yet*
+- **oom_score_adj** — Day 4, *The OOM killer: score, adjustment, cgroup versus global* ([glossary](../GLOSSARY.md))
+- **memory.max** — Day 4, *Exceeding `memory.max` does not mean dead — yet* ([glossary](../GLOSSARY.md))
 - **quota/period** — Day 4, *CPU quota: `quota/period`, and why 0.20 CPUs throttles one thread* ([glossary](../GLOSSARY.md))
 - **PSI** — Day 4, *PSI: saturation, not utilisation* ([glossary](../GLOSSARY.md))
-- **cgroup namespace** — Day 4, *cgroup v2: hierarchy and delegation*
-- **network namespace** — Day 6, *Listening on `127.0.0.1` versus `0.0.0.0`*
+- **cgroup namespace** — Day 4, *cgroup v2: hierarchy and delegation* ([glossary](../GLOSSARY.md))
+- **network namespace** — Day 6, *Listening on `127.0.0.1` versus `0.0.0.0`* ([glossary](../GLOSSARY.md))
 
 ## Self-check
 

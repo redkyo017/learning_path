@@ -346,15 +346,15 @@ only some. The `echo` tests bit 19 (value 524288): `1` means `ws` holds
 
 ## Words you'll meet in the course
 
-- **effective UID** — Day 5, *Core concepts*
+- **effective UID** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
 - **setuid** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
-- **setgid** — Day 5, *Core concepts*
+- **setgid** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
 - **sticky bit** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
 - **umask** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
 - **capability** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
-- **unit file** — Day 5, *Core concepts*
-- **daemon-reload** — Day 5, *Core concepts*
-- **journalctl** — Day 5, *Core concepts*
+- **unit file** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
+- **daemon-reload** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
+- **journalctl** — Day 5, *Core concepts* ([glossary](../GLOSSARY.md))
 
 ## Self-check
 

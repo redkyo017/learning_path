@@ -346,15 +346,15 @@ lsof -a -d 0-2 -p $$ 2>/dev/null
 ## Words you'll meet in the course
 
 - **file descriptor** — Day 3, *Why this matters* ([glossary](../GLOSSARY.md))
-- **open file description** — Day 3, *Read the file first*
-- **redirection** — Day 3, *Core concepts*
-- **dup2** — Day 3, *Core concepts*
+- **open file description** — Day 3, *Read the file first* ([glossary](../GLOSSARY.md))
+- **redirection** — Day 3, *Core concepts* ([glossary](../GLOSSARY.md))
+- **dup2** — Day 3, *Core concepts* ([glossary](../GLOSSARY.md))
 - **pipefail** — Day 3, *Core concepts* ([glossary](../GLOSSARY.md))
 - **exit code** — Day 8, *The underlying truth* ([glossary](../GLOSSARY.md))
 - **PIPESTATUS** — Day 8, *The underlying truth* ([glossary](../GLOSSARY.md))
 - **subshell** — Day 9, *The underlying truth* ([glossary](../GLOSSARY.md))
-- **argument contract** — Day 10, *Why this matters*
-- **fdinfo** — Day 3, *Read the file first*
+- **argument contract** — Day 10, *Why this matters* ([glossary](../GLOSSARY.md))
+- **fdinfo** — Day 3, *Read the file first* ([glossary](../GLOSSARY.md))
 
 ## Self-check
 

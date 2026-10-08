@@ -343,11 +343,11 @@ header; on a healthy `ws` probably nothing else. A `Z` shows as
 - **zombie** — Day 2, *wait, the reaping contract, and PID 1* ([glossary](../GLOSSARY.md))
 - **reaping** — Day 2, *wait, the reaping contract, and PID 1* ([glossary](../GLOSSARY.md))
 - **PID 1** — Day 2, *wait, the reaping contract, and PID 1* ([glossary](../GLOSSARY.md))
-- **fork** — Day 2, *fork, exec, and the gap between them*
-- **exec** — Day 2, *fork, exec, and the gap between them*
-- **child subreaper** — Day 2, *wait, the reaping contract, and PID 1*
+- **fork** — Day 2, *fork, exec, and the gap between them* ([glossary](../GLOSSARY.md))
+- **exec** — Day 2, *fork, exec, and the gap between them* ([glossary](../GLOSSARY.md))
+- **child subreaper** — Day 2, *wait, the reaping contract, and PID 1* ([glossary](../GLOSSARY.md))
 - **D state** — Day 2, *The "won't die" family, all four members* ([glossary](../GLOSSARY.md))
-- **load average** — Day 2, *Process states and load average*
+- **load average** — Day 2, *Process states and load average* ([glossary](../GLOSSARY.md))
 
 ## Self-check
 

@@ -317,8 +317,8 @@ fourth truth lives (chapter 06).
 - **PID 1** — Day 2, *Core concepts* ([glossary](../GLOSSARY.md))
 - **cgroup** — Day 4, *cgroup v2: hierarchy and delegation* ([glossary](../GLOSSARY.md))
 - **OOM killer** — Day 4, *The OOM killer: score, adjustment, cgroup versus global* ([glossary](../GLOSSARY.md))
-- **system call** — Day 2, *Core concepts* (fork, exec, and the gap between them)
-- **strace** — Day 2, *Core concepts* (`strace -f -p PID`)
+- **system call** — Day 2, *Core concepts* (fork, exec, and the gap between them) ([glossary](../GLOSSARY.md))
+- **strace** — Day 2, *Core concepts* (`strace -f -p PID`) ([glossary](../GLOSSARY.md))
 
 ## Self-check
 

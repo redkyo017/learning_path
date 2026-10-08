@@ -39,7 +39,7 @@ propagates the wrong behavior downstream — potentially to destructive commands
 Key argument-handling tools:
 
 ```bash
-$@          # all positional args, each separately quoted — use this, not $*
+"$@"        # all positional args as separate words (quoted!) — use this, not $*
 $#          # number of positional args
 $1 … $N     # individual args; empty string if unset (without set -u)
 ${1:?msg}   # expand $1 if set and non-empty; otherwise abort with msg
