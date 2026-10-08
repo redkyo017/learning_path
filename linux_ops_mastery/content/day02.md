@@ -5,6 +5,7 @@
 45m lab, 20m strip the toolbox
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 02, 03 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
 2. Do the Lab (start with *Start here — plain steps* in
@@ -46,8 +47,9 @@ table and the right-of-the-last-`)` parsing rule. Today's fields:
 
 `/proc/PID/status` restates the same data, one label per line, plus what
 `stat` does not carry: **State** (spelled out, `R (running)` etc.),
-**PPid**, **Threads**, and four signal bitmasks — `SigPnd`, `SigBlk`,
-`SigIgn`, `SigCgt`. See
+**PPid**, **Threads**, and five signal bitmasks — `ShdPnd` (pending for
+the whole process; where a `kill` lands), `SigPnd` (pending for this one
+thread), `SigBlk`, `SigIgn`, `SigCgt`. See
 `primers/proc-field-reference.md#/proc/PID/status` for the full table
 and the worked `SigCgt` decode; this day reuses that exact procedure
 against `SigIgn`, not `SigCgt`, for reasons the lab makes concrete.
@@ -216,8 +218,8 @@ and no pending signal is acted on, until `SIGCONT` reschedules it.
 stopped task specifically for `SIGKILL`, so `kill -9` on a `T`-stopped
 process removes it immediately with no `SIGCONT` required. Every other
 signal does not get this treatment — including a plain `SIGTERM` at its
-ordinary default (terminate) disposition — it simply joins `SigPnd` in
-`/proc/PID/status` and sits there, un-acted-upon, however "fatal" its
+ordinary default (terminate) disposition — it simply joins `ShdPnd` (the
+process-wide pending set) in `/proc/PID/status` and sits there, un-acted-upon, however "fatal" its
 disposition would otherwise be, until `SIGCONT` lets the process run
 again. The safe operational habit is `SIGCONT` first, always, for
 anything other than `SIGKILL` — you rarely know in advance which
@@ -226,7 +228,9 @@ question entirely.
 
 **Process groups, sessions, controlling terminals.** A session groups
 one or more process groups and, usually, one controlling terminal; a
-process group is the unit a shell sends `^C`/`^Z` to as a whole.
+process group is the unit `^C`/`^Z` reach as a whole. The shell only
+chooses which group is in the foreground; the terminal driver in the
+kernel is what turns the keystroke into `SIGINT`/`SIGTSTP` for that group.
 `nohup` makes a specific signal (`SIGHUP`) ignored and redirects output,
 but the process stays in the same session. `setsid` goes further: it
 starts the process as the leader of a brand-new session with **no**
@@ -331,7 +335,7 @@ done
    "terminate" — a plain `SIGTERM` at its default disposition is not
    covered by it. — **Solution sketch:** `SIGKILL` alone force-wakes a
    stopped task; every other signal, even one whose default disposition
-   is also "terminate" (a plain `SIGTERM`), stays pending in `SigPnd`
+   is also "terminate" (a plain `SIGTERM`), stays pending in `ShdPnd`
    until `SIGCONT` runs the process again. So `kill -9` on a `T`-stopped
    process removes it immediately with no `SIGCONT` needed — the common
    "you must `CONT` before `KILL`" belief is a myth, usually born from

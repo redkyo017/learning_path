@@ -1,6 +1,7 @@
 # Day 08 — Exit Codes Are the Contract
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 04 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
    "The pattern".
 2. Do the Lab (start with *Start here — plain steps* in `labs/day08/README.md`):
@@ -53,7 +54,7 @@ false | true; echo "${PIPESTATUS[@]}"   # prints: 1 0
 |------|----------------|----------------|
 | `set -e` | Exits on a non-zero exit code | Errors in `if`/`while` conditions, `\|\|` chains, `&&` chains, non-last pipeline stages |
 | `set -u` | Exits on use of an unset variable | Variables set to empty string |
-| `set -o pipefail` | Pipeline exit = first non-zero stage's code | Nothing — this is the pipeline fix |
+| `set -o pipefail` | Pipeline exit = last (rightmost) non-zero stage's code | Nothing — this is the pipeline fix |
 | `set -x` | Prints each command before executing (debug mode) | — |
 
 The combination `set -euo pipefail` is the standard header for every ops script.
@@ -115,7 +116,7 @@ reports success after a permission-denied failure inside `find`. Success signal:
 1. Run `false | true; echo $?` in the `ws` container. The output is 0. Now run
    `(set -o pipefail; false | true); echo $?`. What changes and why? —
    **Hint:** `PIPESTATUS[@]` shows per-stage exit codes; `pipefail` promotes the
-   first non-zero stage to the pipeline's overall exit code. —
+   last (rightmost) non-zero stage to the pipeline's overall exit code. —
    **Solution sketch:** Without `pipefail`, `false | true` exits 0 (last stage
    wins). With `pipefail`, it exits 1 because `false` (stage 0) exited 1. The
    pipeline failure is now visible to any caller checking `$?`.

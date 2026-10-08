@@ -1,6 +1,7 @@
 # Day 10 — The Argument Contract + Capstone
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 04 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "The underlying truth" → "Breaking it down" →
    "The pattern".
 2. Do the Lab (start with *Start here — plain steps* in `labs/day10/README.md`):
@@ -15,15 +16,18 @@
 
 ## Why this matters
 
-An ops script takes a PID as its first argument and kills the process. On a
-miscall — no arguments, a typo, a renamed flag — `$1` expands to empty. The
-script passes an empty string to `kill`, which interprets it as `kill 0`
-(send SIGTERM to the entire process group), terminates the calling shell and
-every background job. The engineer's terminal dies. The deployment pipeline's
-parent dies. Nobody is sure why.
+An ops script takes a process name as its first argument and stops it with
+`pkill -f "$1"`. On a miscall — no arguments, a typo, a renamed flag — `$1`
+expands to empty, and the script runs `pkill -f ""`. An empty pattern
+matches every command line, so `pkill` sends SIGTERM to every process the
+user may signal: the calling shell, every background job, the deployment
+pipeline's parent. The engineer's terminal dies. Nobody is sure why.
+(Plain `kill ""` would merely fail with "not a pid" — the danger is a command
+for which empty input means *everything*. Try `pgrep -f "" | wc -l` to see
+it match them all, harmlessly.)
 
 A validated argument contract, checked at entry, would have printed a usage
-message and exited 1 before any `kill` was ever called.
+message and exited 1 before `pkill` was ever called.
 
 ## The underlying truth
 

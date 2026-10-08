@@ -6,6 +6,7 @@ namespace
 1 h the connectivity-ladder lab; 30 m strip the toolbox; 30 m exercises
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 06, 07 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
 2. Do the Lab (start with *Start here — plain steps* in
@@ -149,8 +150,11 @@ ever. A socket bound to `0.0.0.0` accepts connections arriving on any of
 the namespace's interfaces, loopback included. These are not "mostly the
 same with an edge case": a service correctly running and correctly
 healthy on `127.0.0.1` is, from every other network namespace, exactly as
-unreachable as a service that was never started, and a firewall drop and
-a `127.0.0.1` bind produce an identical externally-observed symptom.
+unreachable as a service that was never started: the caller gets an
+immediate "connection refused" (an RST), just as if nothing listened. A
+firewall `DROP` looks different — no answer at all, so the connect hangs
+until timeout — though a `REJECT` rule also answers "refused", so the
+symptom alone cannot tell a reject from a loopback bind.
 `/proc/net/tcp`'s `local_address` field is where this is provable —
 `00000000` accepts from anywhere, `0100007F` accepts from nowhere but
 itself.

@@ -5,6 +5,7 @@ boundary) — today recombines them, it does not add a fifth.
 **Budget:** 3 h — 1.5 h neovim + 1.5 h gauntlet
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Review the whole foundations track first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts" (the neovim block).
 2. Do the Lab (start with *Start here — plain steps* in

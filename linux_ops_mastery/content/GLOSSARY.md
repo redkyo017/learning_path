@@ -39,8 +39,9 @@ them inline. Alphabetical; each entry is one to three sentences.
   connect() failures.
 
 - **FHS**: The Filesystem Hierarchy Standard - the convention behind why /etc holds
-  config, /var holds variable/runtime data, /usr holds installed software, and /tmp is
-  wiped on reboot. Not enforced by the kernel, just widely followed.
+  config, /var holds variable/runtime data, /usr holds installed software, and /tmp holds
+  scratch files that may be removed at any time (many distros clear it on reboot; do not
+  rely on either). Not enforced by the kernel, just widely followed.
 
 - **hard link**: A second directory entry pointing at the same inode as an existing file -
   not a copy, not a shortcut. Deleting one link leaves the data intact until the inode's
@@ -142,8 +143,8 @@ recently executed pipeline. `${PIPESTATUS[0]}` is the first stage's code,
 
 **`set -euo pipefail`** — A four-flag header for reliable bash scripts: `-e`
 aborts on non-zero exit, `-u` aborts on unset variable, `-o pipefail` makes
-the pipeline's exit code the first non-zero stage's code rather than the last
-stage's.
+the pipeline's exit code the last (rightmost) non-zero stage's code rather than
+simply the last stage's.
 
 **subshell** — A child process created by the shell to run a group of commands.
 Constructed by `(cmds)`, `$(cmds)`, or any pipeline stage. Inherits the

@@ -5,6 +5,7 @@
 the AWS tie-in; 1 h lab, strip the toolbox, and exercises
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 06 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts" (includes the AWS tie-in).
 2. Do the Lab (start with *Start here — plain steps* in

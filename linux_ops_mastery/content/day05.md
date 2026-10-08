@@ -6,6 +6,7 @@ alive with the right identity.
 **Budget:** 3 h — 1 h identity and permission model, 1 h systemd, 1 h lab.
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 05 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
 2. Do the Lab (start with *Start here — plain steps* in

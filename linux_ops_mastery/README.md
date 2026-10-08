@@ -29,6 +29,14 @@ The compose project name is fixed at `linuxops`. Day 5 additionally needs
 the `sysd` service brought up via its overlay file — see
 `labs/fleet/README.md` for that step and its Colima/Lima fallback.
 
+## Foundations (start here if rusty)
+
+If the day files feel like they assume vocabulary you no longer have —
+inode, file descriptor, signal, cgroup — read the foundations track
+first: `content/foundations/README.md`. Eight short chapters (about 6 hours,
+read-and-try in `ws`) rebuild the mental model each day builds on, and
+a table there says which chapters to read before each day.
+
 ## The 7-day map
 
 | Day | Truth | Hours | Incident | Content file | Lab dir |

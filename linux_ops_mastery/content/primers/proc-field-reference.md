@@ -63,7 +63,8 @@ or read by hand. This is the file to reach for interactively.
 | RssAnon | Anonymous (heap/stack) mem, kB | Process-owned, not file-backed |
 | RssFile | File-backed resident memory, kB | Mapped libs/files, often reclaimable |
 | SigQ | Queued/max real-time signals for this user | Full queue drops signals silently |
-| SigPnd | Pending-signal mask, hex bitmask | Delivered, not yet handled by this thread |
+| ShdPnd | Process-wide pending-signal mask, hex bitmask | Where a `kill PID` waits — check this one first |
+| SigPnd | Per-thread pending-signal mask, hex bitmask | Only signals aimed at this one thread |
 | SigBlk | Blocked-signal mask, hex bitmask | Signals explicitly masked off |
 | SigIgn | Ignored-signal mask, hex bitmask | Set to SIG_IGN, a silent no-op always |
 | SigCgt | Caught-signal mask, hex bitmask | Has a handler — decode to debug delivery |

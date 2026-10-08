@@ -182,8 +182,8 @@ and does not respond to `kill -TERM`, but also does not match Day 2a's
    state means the scheduler will not run it until `SIGCONT`; `SIGKILL`
    is the one documented exception, not relevant to the `kill -TERM`
    already tried. | Proof:
-   `primers/proc-field-reference.md#/proc/PID/status`'s `SigPnd` field
-   — a repeated `kill -TERM <pid>` shows `SigPnd`'s bit 14 set and
+   `primers/proc-field-reference.md#/proc/PID/status`'s `ShdPnd` field
+   — a repeated `kill -TERM <pid>` shows `ShdPnd`'s bit 14 set and
    staying set, never clearing, while `State` stays `T`.
 
 **Diagnosis:**

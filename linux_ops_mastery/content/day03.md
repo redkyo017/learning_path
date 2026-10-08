@@ -4,6 +4,7 @@
 **Budget:** 3 h — 1.5 h fd table, redirection, and where a write lands, 1.5 h shell triage toolkit
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 04 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
 2. Do the Lab (start with *Start here — plain steps* in

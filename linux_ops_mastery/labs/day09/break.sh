@@ -8,21 +8,28 @@ mkdir -p /tmp/lab09
 
 cat > /tmp/lab09/deploy.sh << 'SCRIPT'
 #!/usr/bin/env bash
-# BROKEN: cleanup trap is registered in the parent shell, but the while
-# loop runs inside a pipeline subshell — Ctrl-C may not trigger cleanup.
+# Deploys to a list of servers, staging files in a temp directory that
+# the cleanup trap is supposed to remove. It leaks one directory per run.
 
-TMPDIR=$(mktemp -d /tmp/lab09/work.XXXXXX)
-echo "Working directory: $TMPDIR"
+WORKDIR=""
 
 cleanup() {
-  echo "cleanup called"
-  rm -rf "$TMPDIR"
+  if [ -n "$WORKDIR" ]; then
+    rm -rf "$WORKDIR"
+    echo "cleanup: removed $WORKDIR"
+  else
+    echo "cleanup: nothing to remove"
+  fi
 }
 trap cleanup EXIT INT TERM
 
-# BUG: the while body runs in a subshell (right side of |)
-seq 1 20 | while read -r server_num; do
-  echo "Deploying to server-${server_num}..."
+printf 'server-%s\n' 1 2 3 4 5 6 7 8 | while read -r server; do
+  if [ -z "$WORKDIR" ]; then
+    WORKDIR=$(mktemp -d /tmp/lab09/work.XXXXXX)
+    echo "staging in $WORKDIR"
+  fi
+  echo "Deploying to $server..."
+  : > "$WORKDIR/$server.done"
   sleep 0.3
 done
 
@@ -32,6 +39,5 @@ SCRIPT
 chmod +x /tmp/lab09/deploy.sh
 
 echo "[day09] Incident injected."
-echo "  Run: bash /tmp/lab09/deploy.sh &"
-echo "  Then: kill -INT \$!"
-echo "  Check whether /tmp/lab09/work.* directories are cleaned up."
+echo "  Run it a few times:  bash /tmp/lab09/deploy.sh"
+echo "  Then count leftovers: ls -d /tmp/lab09/work.*"

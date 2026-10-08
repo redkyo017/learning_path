@@ -4,6 +4,7 @@
 **Budget:** 3 h — 2 h Linux + 1 h neovim
 
 **At a glance — how to work through this day:**
+0. Rusty on the basics? Read foundations ch 00, 01 first — [content/foundations/README.md](foundations/README.md).
 1. Read "Why this matters" → "Read the file first" → "Derive the tool" →
    "Core concepts".
 2. Do the Lab (start with *Start here — plain steps* in
