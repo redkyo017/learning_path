@@ -108,3 +108,18 @@ given i'm a sofware engineer who work day by day on backend and API gateway syst
 now i want to recall and consolidate them systematically cause I only works as experiences and habits. all practicing can leverage locally using docker desktop or my personal AWS account if EKS
 use the local skill.md file as a standard skill
 Ask me questions before answering it.
+
+I want to master economy, monetary and currency system as fast as humanly possible.
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and a 30-days aggreesive practive plan the fast-tracks real results.
+Focus mainly on all main basics and deep diving, best practice and patterns ...etc regarding monetary system (including crypto deep diving) . all that we can cover to comprehend and master the theory and practioning of them so that I can know how they works in the real world and start quantitative trading or investing in all kind that I can, such as: stock, ETFs, crypto....
+given i'm a sofware engineer who have no prior experiences or knowledge about this fields, the 30-days timeline is just my estimation, you can help to decide a reasonable number
+use the local skill.md file as a standard skill
+Ask me questions before answering it.
+I want to start Phase 2 (Systematic investor) of my economy_monetary_mastery course.
+Read these first: economy_monetary_mastery/ROADMAP.md (Phase 2 section = the brief), README.md, PROGRESS.md (my progress and block retros), journal.md, labs/day30/CAPSTONE.md (my IPS draft and capstone result), and ENHANCEMENTS.md (parked Phase 1 polish).
+Skip the traditional learning path - give me the unconventional strategy that the top 1% use, the exact mistakes to avoid that waste 80% of beginners' time, and an aggressive practice plan that fast-tracks real results (you decide a reasonable number of days, ~3-4h/day).
+Focus on: strategic asset allocation across US equities, bonds, gold, VN equities and crypto; rebalancing rules and their costs; currency-hedging policy for a VND-based investor; tax treatment for a Vietnam resident; cash-flow planning and emergency reserves; behavioural guardrails; and turning my Phase 1 IPS into a tested, written allocation + rebalancing policy with a costed implementation plan.
+Constraints carried over from Phase 1: I am a Vietnam resident, so state the legal access routes honestly (Decree 135/2015 restricts individuals holding foreign securities; check what changed since 2026-10) and never give personal financial advice; keep labs self-checking on frozen snapshots in the same style, and reuse labs/common (data, quant, backtest, stats, risk) instead of rewriting it; paper/testnet only; verify every time-sensitive fact and stamp it "as of <month>".
+Put it in economy_monetary_mastery/phase2/ (or propose a better location) and track it in ROADMAP.md and PROGRESS.md.
+use the local skill.md file as a standard skill
+Ask me questions before answering it.
