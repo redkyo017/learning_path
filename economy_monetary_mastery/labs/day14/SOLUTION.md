@@ -1,0 +1,13 @@
+# Lab 14 — Solution notes
+
+## event_window
+For every event date find its integer position in the index with `get_loc`. A date that is not in the index (a holiday or weekend) raises `KeyError`; skip it rather than guessing a neighbouring day. Also skip any event whose window would run off either end of the data (`pos - before < 0` or `pos + after >= len`). For the rest take `values[pos-before : pos+after+1] / values[pos] - 1`, so relative day 0 is exactly 0 and every other day is the cumulative return versus the event day. Build the columns in event order, labelled with the event Timestamp, on an index of `-before..after`. Common mistake: padding short windows with NaN or using `.loc` on a nearby date, which silently includes look-alike events. `test_events_out_of_range_or_missing_are_skipped` passes one event at position 0, one in 2025 (absent) and one valid, and expects only the valid column.
+
+## average_path
+`window.mean(axis=1)`: average across events (columns) for each relative day. Because day 0 is 0 in every column, the average is exactly 0 there, which the test asserts. Common mistake: `mean()` without `axis=1` averages over days and returns one number per event. The test checks the day +1 value against the hand-computed mean of two events.
+
+## dollar_beta
+The slope of a regression of y on x is `cov(y, x) / var(x)`. Use the same `ddof=1` for both (pandas `Series.cov` and `Series.var` default to it). Apply it column by column and return a Series indexed by currency. Common mistake: `np.cov(y, x)[0, 1] / np.var(x)`, which divides a ddof=1 numerator by a ddof=0 denominator and is off by n/(n-1) (about 0.3% at n = 300); the test uses exact multiples of the dollar (1.5 and -0.5), so that error and the `corr` mistake both show up. Correlation is bounded by 1 and cannot return 1.5.
+
+## What the output means
+On the snapshot, all seven 2022 hike decision days are in the DTWEXBGS data. The average broad-dollar path shows the dollar was already about 1.4% higher 20 trading days before the decision than on the decision day, was flat on day 0 to +1, and was about 0.6% lower 20 trading days later, but the standard error of that last number is about 0.8% with only three of seven events positive: noise, not a finding. The story the data tell is "priced in": the dollar rose into the hiking cycle (the broad index peaked on 2022-09-26 about 11% above end-2021) and the decision days themselves did not move it systematically. The dollar betas (daily changes, 2006-2026) say BRL and MXN move about 1.6-1.7 times the broad dollar, KRW about 1.1, and INR and THB about 0.6. Those are averages in calm and stress alike, and the broad index contains the peso (Mexico is about 15% of its weights), so part of each beta is mechanical.

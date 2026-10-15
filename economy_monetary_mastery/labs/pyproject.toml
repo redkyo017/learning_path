@@ -1,0 +1,27 @@
+[project]
+name = "economy-monetary-labs"
+version = "0.1.0"
+description = "Self-checking labs for the economy/monetary/currency mastery course"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+    "requests>=2.31",
+    "yfinance>=0.2.40",
+    "ccxt>=4.3",
+    "vectorbt>=0.26",
+    "alpaca-py>=0.30",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "jupyter>=1.0"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+addopts = "--import-mode=importlib -q"
+norecursedirs = [".*", "fixtures", "data", "__pycache__", ".cache"]
