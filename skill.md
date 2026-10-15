@@ -13,6 +13,10 @@ The learner handles all official VCS: nothing is ever pushed, and the scratch br
 
 **Announce at start:** "I'm using the building-learning-path skill."
 
+**Sub-skill — condensing one book.** When the request is to condense a specific book or PDF into one companion
+file for memory (not a multi-day path), use `skill_book_condense.md` instead; its prompts are in
+`prompt_book_condense.md`.
+
 ---
 
 ## Step 0 — Clarify before speccing
@@ -360,7 +364,7 @@ Rank and recommend which to refresh now.
 ├── content/
 │   ├── GLOSSARY.md             # plain-English terms
 │   ├── day01.md … dayNN.md
-│   └── [primers/]              # optional encoding primers (see encoding-primers-playbook.md)
+│   └── [primers/]              # optional encoding primers (see docs/superpowers/guides/encoding-primers-playbook.md)
 ├── [code/ or labs/]            # applied/engineering paths only
 │   └── dayNN/                  # README.md, SOLUTION.md, *.tf or *.go, teardown
 └── docs/superpowers/
