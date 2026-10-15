@@ -1,6 +1,6 @@
-un---
+---
 name: building-learning-path
-description: Use when asked to build a structured learning path, mastery plan, or "master X as fast as humanly possible" request — covers spec, plan, and content-authoring phases with model gates and path-type classification
+description: Use when asked to build a structured learning path, mastery plan, or "master X as fast as humanly possible" request — covers spec, plan, and content-authoring phases with model gates and path-type classification. Also use to triage, check, update or refresh an existing path (Refresh mode).
 ---
 
 # Building a Learning Path
@@ -17,13 +17,31 @@ The learner handles all official VCS: nothing is ever pushed, and the scratch br
 
 ## Step 0 — Clarify before speccing
 
-Ask the user these questions before writing anything (one round, then proceed):
+Requests arrive in two styles (both in `basic_prompt.md`): the short **v1** prompt ("master [skill]… N-day
+plan… ask me questions") and the slotted **v2** template (outcome, profile, time, environment, source of
+truth, plus "rules for you"). Treat them the same way: **the v2 rules are this skill's defaults**, applied
+to v1 requests too (see §Standing Constraints → Accuracy, Evidence, Honest scope).
 
-1. **Subject & goal:** What do they want to master? What does "done" look like at work or in study?
-2. **Learner profile:** Prior knowledge level, tools they already use, existing repo context.
-3. **Time budget:** Hours/day and total number of days (firm or flexible)?
+**Read `LEARNER_PROFILE.md` (repo root) first** — it is the learner's standing background (role, strong
+skills, gaps, work context, practice environment, preferences). Use it to pre-fill the learner-profile and
+lab-environment slots; ask only about what is missing, marked `(?)`, or plausibly stale for this subject.
+If the answers reveal a new lasting fact, offer to append it to the profile (dated) — don't edit it silently.
+
+Then extract every slot the request already answers, and ask **one round, at most 7 questions, only for
+slots still missing or ambiguous** — each with a suggested default the learner can accept by replying
+"defaults". A fully filled v2 prompt may need only 1–2 questions. Then proceed.
+
+1. **Subject & concrete outcome:** What do they want to master? What must they be able to *do* at the end (at work, in an exam)?
+2. **Learner profile:** Prior knowledge of *this* subject — the general background comes from `LEARNER_PROFILE.md`.
+3. **Time budget:** Hours/day and total days (firm or flexible)? A day count in the request is a guess unless they say it is firm.
 4. **Lab environment:** Cloud account, local Docker, pure text, etc.?
-5. **Path type trigger** (auto-detect from subject, confirm if ambiguous): see §Path Type Classification below.
+5. **Source of truth:** Syllabus, exam spec, or exact product versions to target (e.g. "WSO2 IS 7.3").
+6. **Path type trigger** (auto-detect from subject, confirm if ambiguous): see §Path Type Classification below.
+
+**Reality check before speccing.** If the time budget can't reach the outcome, say so and propose an honest
+duration or a narrower scope — don't silently agree to an impossible plan. If the subject depends on tools,
+versions, exams or APIs that change, check current official sources now (web search) so the spec is built on
+today's facts, not training-cutoff memory.
 
 ---
 
@@ -158,16 +176,25 @@ Required sections:
 <1-3 paragraphs: what mastery looks like, learner profile, why unconventional strategy>
 
 ## Success Criteria
-<Numbered list: what the learner can do without notes by the end>
+<Numbered list: what the learner can do without notes by the end — traceable to the concrete outcome>
 
 ## Constraints & Environment
 <Lab setup, cost limits, toolchain, standing rules (no credentials, no commits, etc.)>
 
+## Target Versions & Sources (as of YYYY-MM-DD)
+<Exact versions / exam spec / syllabus targeted, with links to the official sources checked.
+Pure-science paths: the reference texts instead.>
+
 ## Strategy (the core design decision)
-<The unconventional "top 1%" approach + why alternatives were rejected>
+<The unconventional fast-track approach + why alternatives were rejected. Must name:
+- the load-bearing fundamentals that are NOT skipped, and why
+- the ~20% of concepts/skills that carry most real-world use, in dependency order
+- where the learner should use AI as tutor/checker vs. work without it
+Claims are backed by evidence (learning research, official docs, practitioners) or labelled as judgment.>
 
 ## Curriculum
-<Phase-by-phase outline with day-level granularity and h/day estimates>
+<Phase-by-phase outline with day-level granularity and h/day estimates, plus
+no-notes checkpoints (e.g. end of each week) and a final capstone that matches the concrete outcome>
 
 ## Directory Layout
 <Full target tree, annotated>
@@ -221,7 +248,14 @@ Each day task specifies exactly which files to create and what each file contain
 2. ...
 
 ## Anti-patterns / Common mistakes
-<2–3 bullets>
+<2–3 bullets: the mistake → how you'd notice you're making it → what to do instead>
+
+## Done when
+<A self-check that proves the day is done: a verify script, problems answered without notes,
+or an artifact built — never "read the section">
+
+## Spaced review
+<2–4 quick recall prompts from earlier days (e.g. day N−1, N−3, N−7); omit on Day 1>
 ```
 
 Applied/engineering paths add:
@@ -253,6 +287,50 @@ When a check fails across *every* file it inspects, suspect the check before the
 
 ---
 
+## Refresh mode — updating an existing path (v3 prompt)
+
+Paths go stale: versions ship, flags and APIs get deprecated, exams change, best practice moves on. Refresh
+mode updates a path **in place** — it does not re-run Spec → Plan → Content. Triggered by the v3 prompt in
+`basic_prompt.md`, or any "check / update / refresh the X path" request.
+
+**v3a — Triage (read-only, no edits, no branch).** For each path report: last refresh date
+(`REFRESH_LOG.md` → spec date → last commit touching the path), subject volatility (fast: cloud, AI,
+security, tools; medium: languages, databases, exams; slow: math, physics), and the likely drift since.
+Rank and recommend which to refresh now.
+
+**v3b — Refresh one path:**
+
+1. **Clarify** (≤5 questions with defaults): scope (whole path / days / topics), known changes on the
+   learner's side, whether labs may be re-run locally.
+2. **Baseline:** read the spec's Target Versions & Sources, `REFRESH_LOG.md`, README, and the day index.
+   Older specs without that section: reconstruct it from the content first.
+3. **Research** current official sources for each targeted product/standard/exam: release notes,
+   changelogs, deprecation notices, docs, exam specs, security advisories. Memory is not a source.
+   Parallel research subagents are fine for large paths — one per product or topic area.
+4. **Drift report** (in chat, before editing), each finding with file:line, source link, fix, effort:
+   **WRONG NOW** (incorrect, broken, removed, unsafe) · **OUTDATED** (works but superseded) ·
+   **MISSING** (new and belongs here) · **CHECKED, STILL CORRECT** (coverage evidence).
+5. **Model gate**, then **apply:** create the Phase 0 scratch branch `refresh/<subject>`. WRONG NOW fixes
+   go ahead; OUTDATED/MISSING items that add days, labs, or more than a section need the learner's OK.
+   Every edit to a file that already exists gets a real diff, so per-fix reviews stay cheap.
+6. **Verify:** re-run changed labs where they can run locally; the scope-matching verification rules
+   above apply. Say plainly which labs could not be run.
+7. **Record:** update the spec's Target Versions & Sources (new as-of date) and append to
+   `<subject>/REFRESH_LOG.md`:
+
+       ## YYYY-MM-DD
+       Checked: <scope, versions/sources checked>
+       Changed: <findings fixed, by category>
+       Deferred: <proposed but not applied, and why>
+       Not verified: <labs not re-run>
+
+8. **Teardown** exactly as Phase 0.
+
+**Never touch** the learner's own notes and progress (`PROGRESS.md`, their edits in day files). Don't
+"modernize" content that is still correct — a refresh changes only what the sources show has drifted.
+
+---
+
 ## Standing Constraints (apply to all paths)
 
 | Constraint | Rule |
@@ -261,7 +339,12 @@ When a check fails across *every* file it inspects, suspect the check before the
 | Credentials in files | Never write real secrets, keys, tokens, or account IDs into any file. Use placeholders + fill-in comments. Ship `*.tfvars.example` / `*.env.example`. |
 | Git commands in subagents | Skip all `git status/diff/log` in implementer and reviewer dispatches. |
 | Running real infra | Labs are *written*, not run, during authoring. |
+| Labs repo split | The learner runs labs in a separate repo (see `LEARNER_PROFILE.md` → Practice environment). This repo holds only content, authored lab sources and progress — never `.terraform/`, state files, installed dependencies or lab outputs. When helping during a lab, work in the labs repo; fix the lab *source* here first, then tell the learner what to copy over. Terraform state and `*.tfvars` are never committed in either repo. |
 | Exercises | Always ship hints + solution sketches for self-check. |
+| Accuracy & freshness | Anything that changes (versions, CLI flags, APIs, exam formats, prices) is checked against current official sources; state the version/date targeted and link the source. If unsure, say so — never guess. |
+| Evidence | "Top 1%" / "80%" in a request are figures of speech. Never invent statistics; back advice with evidence or label it as judgment. |
+| Honest scope | Push back when the time budget can't reach the outcome; propose a realistic duration or narrower scope. |
+| Active practice | Every day ends in something done and self-checkable (§Done when), with spaced review of earlier days. |
 | Labs (engineering paths) | Always ship README + SOLUTION.md + teardown checklist. |
 | Authorized testing (security paths) | All offensive labs target only the learner's own account and own deployed workload. State this explicitly in every offensive lab README. |
 
@@ -272,7 +355,8 @@ When a check fails across *every* file it inspects, suspect the check before the
 ```
 <subject>/
 ├── README.md                   # quickstart, phase map, day index, usage
-├── STRATEGY.md                 # unconventional "top 1%" strategy
+├── STRATEGY.md                 # fast-track strategy, kept fundamentals, mistakes, AI-use guidance
+├── REFRESH_LOG.md              # dated refresh entries (created on first refresh)
 ├── content/
 │   ├── GLOSSARY.md             # plain-English terms
 │   ├── day01.md … dayNN.md
@@ -290,7 +374,10 @@ Pure science paths omit `code/` and `labs/`.
 
 ## Quick Checklist
 
-- [ ] Step 0: clarify (subject, learner profile, time budget, lab env, path type)
+New path (v1/v2 prompt) — for a refresh (v3), follow §Refresh mode steps 1–8 instead.
+
+- [ ] Step 0: read LEARNER_PROFILE.md, extract slots from the v1/v2 prompt, ask ≤7 questions with defaults (outcome, profile, time, lab env, source of truth, path type)
+- [ ] Reality check: time budget vs. outcome; check current official sources for changing tools/versions/exams
 - [ ] Phase 0: create the scratch branch (or ask the learner to, if git is unreachable here)
 - [ ] Model gate: spec phase
 - [ ] Classify path type (pure science / applied / hybrid)
@@ -300,6 +387,7 @@ Pure science paths omit `code/` and `labs/`.
 - [ ] Model gate: content phase
 - [ ] Dispatch subagents (no git in dispatches, no real infra)
 - [ ] Verify: all exercises have hints + solutions, all labs have README + SOLUTION + teardown
+- [ ] Verify: every day has "Done when" + (from Day 2) "Spaced review"; spec lists target versions with sources
 - [ ] Verify: no credentials or real secrets in any file
 - [ ] Phase 0 teardown: `reset --soft` → `switch master` → `reset` → `branch -D`, then verify the
       path is untracked on `master` and nothing was pushed
