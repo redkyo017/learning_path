@@ -23,12 +23,12 @@ remaining fifteen.
 
 ## Ecosystem-gap first
 
-The 1.16→1.22 gap is larger than it looks:
+The 1.16→1.26 gap is larger than it looks:
 
 | Area | What changed |
 |---|---|
 | Workspace mode | `go.work` replaces `replace` directives for local multi-module dev |
-| Toolchain directive | `go.mod` can now pin the exact toolchain version (1.21+) |
+| Toolchain directive | `go` line is a mandatory minimum and `toolchain` suggests a newer one (1.21+); `tool` directives replace `tools.go` (1.24) |
 | Generics | Type parameters and constraints arrived in 1.18 |
 | `slices` / `maps` / `cmp` | New stdlib packages in 1.21 replace hand-rolled sort/search idioms |
 | `log/slog` | Structured logging is now in stdlib (1.21); replaces most logrus/zap use |

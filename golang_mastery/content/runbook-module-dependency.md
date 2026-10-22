@@ -23,7 +23,7 @@ go get github.com/foo/bar@v1.2.3
   │
   ├─ if not cached: fetch from GOPROXY (proxy.golang.org)
   │
-  ├─ verify checksum against GONOSUMDB / GONOSUMCHECK rules
+  ├─ verify checksum against GONOSUMDB / GOPRIVATE rules
   │   └─ if not excluded: verify against sum.golang.org
   │
   └─ update go.mod and go.sum
@@ -219,14 +219,21 @@ go mod tidy
 
 ```bash
 # Skip sum database for a specific module (use for private/internal modules)
-GONOSUMCHECK=github.com/mycompany/* go mod tidy
+GONOSUMDB=github.com/mycompany/* go mod tidy
 
 # Or set permanently in go env
-go env -w GONOSUMCHECK=github.com/mycompany/*
+go env -w GONOSUMDB=github.com/mycompany/*
+
+# Usually better: GOPRIVATE covers both GONOPROXY and GONOSUMDB for those paths
+go env -w GOPRIVATE=github.com/mycompany/*
 
 # Skip sum database for ALL modules (never use in production CI)
 GONOSUMDB=* go mod tidy
 ```
+
+(`GONOSUMCHECK` is not a real Go variable; the supported ones are `GOPRIVATE`,
+`GONOPROXY`, and `GONOSUMDB` — see
+[Private modules](https://go.dev/ref/mod#private-module-privacy).)
 
 **Do not use `GONOSUMDB=*` in CI** unless you are in a fully air-gapped environment. It disables all tamper detection.
 
@@ -294,7 +301,7 @@ go env -w GOPRIVATE=github.com/mycompany/*
 
 ```bash
 # Show current go env settings
-go env GOPROXY GONOSUMDB GOPRIVATE GONOSUMCHECK
+go env GOPROXY GONOPROXY GONOSUMDB GOPRIVATE
 
 # Show all required modules
 go list -m all

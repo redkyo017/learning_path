@@ -41,7 +41,7 @@ r.Use(gin.Recovery())
 
 ## The radix trie router
 
-Stdlib `ServeMux` is a map lookup with longest-prefix semantics. Gin uses a compressed radix trie (patricia trie) per HTTP method. This means:
+Since Go 1.22 the stdlib `ServeMux` also supports method matching (`GET /users/{id}`), `{wildcard}` path segments read with `r.PathValue`, and picks the most specific matching pattern when several match ([routing enhancements](https://go.dev/blog/routing-enhancements)). Gin uses a compressed radix trie (patricia trie) per HTTP method. This means:
 
 - Path parameter extraction is built in: `/users/:id` captures `id` without allocation overhead
 - Wildcard routes: `/static/*filepath` captures everything after the prefix
@@ -71,7 +71,7 @@ Performance: for most APIs, the trie vs map difference is irrelevant. The real w
 | Retrieve stored value | `c.Get("key")` | `r.Context().Value("key")` |
 | Stream response | `c.Stream(...)` | Manual `http.Flusher` |
 
-Key detail: `c.Set` / `c.Get` store values in a `map[string]any` on the `gin.Context`, not in `r.Context()`. If you pass `c.Request` to a downstream function that reads from `r.Context()`, values set via `c.Set` will not be there. Use `c.Request.Context()` for propagating values to non-Gin code.
+Key detail: `c.Set` / `c.Get` store values in a `Keys map[any]any` on the `gin.Context` (in v1.12 the signature is `Set(key any, value any)`), not in `r.Context()`. If you pass `c.Request` to a downstream function that reads from `r.Context()`, values set via `c.Set` will not be there. Use `c.Request.Context()` for propagating values to non-Gin code.
 
 ---
 
@@ -192,13 +192,13 @@ r.Use(otelgin.Middleware("my-service"))                 // tracing
 
 ## Returning engineer: what changed since 1.16–1.18
 
-You likely used `github.com/gin-gonic/gin` at v1.7 or earlier. Gin v1.9 (2023) and the current v1.10 line brought several changes worth knowing:
+You likely used `github.com/gin-gonic/gin` at v1.7 or earlier. Gin v1.9 (2023) and the current v1.12 line (v1.12.0, 2026-02-28) brought several changes worth knowing:
 
-- **`binding:"required"` on pointer fields**: behavior around zero values and omitempty was tightened — a struct with `binding:"required"` on an `int` field now correctly rejects zero as valid when the field is absent from JSON, not when it is explicitly zero. This was a longstanding footgun.
+- **`binding:"required"` and zero values**: the validator's [`required`](https://pkg.go.dev/github.com/go-playground/validator/v10#hdr-Required) tag rejects the zero value, so an `int` field fails validation both when absent from the JSON and when explicitly `0` (same for `""` and `false`). To tell "absent" from "explicitly zero", make the field a pointer (`*int`) — `required` then only rejects `nil`. This is a longstanding footgun.
 - **`c.FullPath()`**: returns the registered route pattern (e.g., `/users/:id`), not the resolved path. Useful for metrics labels so you do not create unbounded cardinality by logging `/users/1`, `/users/2`, etc.
 - **`gin.H` is just `map[string]any`**: this was always true but the alias was undocumented. You can use either; `gin.H` is more readable for one-off response bodies.
-- **Removal of `MustBindWith` deprecations**: if your old code used `c.MustBindWith`, replace with `c.ShouldBindWith` plus explicit error handling.
 - **`net/http` 1.22 overlaps Gin's value**: stdlib's new `{wildcard}` and method routing in 1.22 mean simple APIs no longer need Gin just for routing. Gin still wins on binding, validation, and middleware ergonomics.
+- **`encoding/json` is v2-backed in Go 1.27**: the stdlib package is now backed by the v2 implementation, which is stricter by default (it rejects invalid UTF-8 in strings and duplicate object keys — see the [Go 1.27 notes](https://go.dev/doc/go1.27)). That affects what `ShouldBindJSON` accepts. Set `GOEXPERIMENT=nojsonv2` at build time to opt out; the notes say the opt-out is expected to be removed in a future release.
 
 ---
 

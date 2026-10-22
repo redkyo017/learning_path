@@ -101,6 +101,8 @@ func (s *server) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.User,
 
 The server sends many messages; the client reads until EOF. The RPC doesn't complete until the server closes the stream or an error occurs.
 
+A note on the stream parameter types used below: since `protoc-gen-go-grpc` v1.5, names like `pb.LogService_StreamLogsServer` are type aliases of generic types such as `grpc.ServerStreamingServer[pb.LogEvent]` (client streaming uses `grpc.ClientStreamingServer[Req, Res]`, bidi uses `grpc.BidiStreamingServer[Req, Res]`). Your code compiles unchanged; you will just see the generic names in godoc and error messages.
+
 ```go
 func (s *server) StreamLogs(req *pb.LogRequest, stream pb.LogService_StreamLogsServer) error {
     for event := range s.events {
@@ -240,7 +242,7 @@ grpc.NewServer(
 
 Execution order: RecoveryInterceptor → LoggingInterceptor → AuthInterceptor → MetricsInterceptor → handler → MetricsInterceptor → AuthInterceptor → LoggingInterceptor → RecoveryInterceptor.
 
-`ChainUnaryInterceptor` is the preferred API (added in gRPC-Go v1.25). The older pattern of nesting multiple `grpc.UnaryInterceptor` options is deprecated.
+`grpc.UnaryInterceptor` is not deprecated; it simply accepts **one** interceptor. To install several, use `ChainUnaryInterceptor` (added in gRPC-Go v1.25), as above.
 
 There are parallel types for client-side and for streaming:
 - `grpc.UnaryClientInterceptor` — for the gRPC *client*
@@ -324,15 +326,15 @@ Disable reflection in production or gate it behind a build tag — it exposes yo
 
 **2. Calling `grpc.UnaryInterceptor` multiple times**
 
-*Why it matters:* Only the last `grpc.UnaryInterceptor` option takes effect. Silently dropping interceptors causes auth or logging to disappear.
+*Why it matters:* `grpc.NewServer` **panics** if you pass `grpc.UnaryInterceptor` twice ("The unary server interceptor was already set and may not be reset."). The mistake is loud at startup, not a silent drop — but it still blocks you from composing interceptors from separate option lists.
 
 *How to avoid:* Always use `grpc.ChainUnaryInterceptor(a, b, c)` as a single server option. Never stack multiple `grpc.UnaryInterceptor` calls.
 
 **3. Not recovering from panics in interceptors**
 
-*Why it matters:* A panic in a handler crashes the goroutine but in gRPC-Go (before v1.57) it could take down the entire server process depending on recover settings. Even with recovery, an unhandled panic returns `UNKNOWN` to the client, which is unhelpful.
+*Why it matters:* grpc-go has never recovered handler panics for you. A panic in a handler goroutine that nothing recovers crashes the whole server process, taking every in-flight RPC with it.
 
-*How to avoid:* Register a recovery interceptor as the outermost layer that catches panics, logs the stack trace, and returns `INTERNAL`. The `go-grpc-middleware/recovery` package provides this.
+*How to avoid:* Register a recovery interceptor as the outermost layer that catches panics, logs the stack trace, and returns `INTERNAL`. The [`go-grpc-middleware/v2/interceptors/recovery`](https://pkg.go.dev/github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery) package (`github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/recovery`) provides this.
 
 **4. Leaking context values with string keys**
 

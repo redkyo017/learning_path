@@ -9,7 +9,7 @@ Read this before starting the lab. Budget: 30 minutes.
 - Test HTTP handlers in isolation with `httptest.NewRecorder` without starting a real server
 - Mock dependencies via Go interfaces and explain why this is preferable to mock generation tools
 - Understand when `testcontainers-go` is appropriate vs when interface mocking is sufficient
-- Write benchmark tests with correct `b.N` loop and `b.ResetTimer` usage
+- Write benchmark tests with the `for b.Loop()` idiom (and know the older `b.N` / `b.ResetTimer` form)
 - Explain what the `-race` flag detects and why it must be part of your CI pipeline
 
 ---
@@ -202,19 +202,16 @@ func TestUserRepository_Integration(t *testing.T) {
         t.Skip("skipping integration test in short mode")
     }
 
-    ctx := context.Background()
+    ctx := t.Context() // Go 1.24+: cancelled just before cleanup functions run
 
-    pgContainer, err := postgres.RunContainer(ctx,
-        testcontainers.WithImage("postgres:16-alpine"),
+    pgContainer, err := postgres.Run(ctx, "postgres:18-alpine",
         postgres.WithDatabase("testdb"),
         postgres.WithUsername("test"),
         postgres.WithPassword("test"),
-        testcontainers.WithWaitStrategy(
-            wait.ForLog("database system is ready to accept connections"),
-        ),
+        postgres.BasicWaitStrategies(),
     )
+    testcontainers.CleanupContainer(t, pgContainer) // register cleanup BEFORE the err check
     if err != nil { t.Fatal(err) }
-    t.Cleanup(func() { pgContainer.Terminate(ctx) })
 
     dsn, _ := pgContainer.ConnectionString(ctx, "sslmode=disable")
     pool, _ := pgxpool.New(ctx, dsn)
@@ -235,6 +232,8 @@ func TestUserRepository_Integration(t *testing.T) {
 }
 ```
 
+Notes on the current API (see the [Postgres module docs](https://golang.testcontainers.org/modules/postgres/)): `postgres.Run` takes the image as its second argument (it replaced `RunContainer` + `WithImage`). `postgres.BasicWaitStrategies()` is the module's helper for the readiness waits; it covers the "database system is ready to accept connections" log line appearing *twice* (the official image starts a temporary server for initdb, then restarts) plus the 5432 port being listenable. A single `wait.ForLog` fires on the first, temporary instance and your first connection can fail. `testcontainers.CleanupContainer(t, c)` is called before the error check because `Run` can return a non-nil container alongside an error, and the helper tolerates that. Postgres 18 images changed `PGDATA` to a version-specific path and the image `VOLUME` to `/var/lib/postgresql` ([Docker Hub](https://hub.docker.com/_/postgres)), so target volume mounts there if you add one.
+
 Guard integration tests with `testing.Short()` and run them with `go test -run Integration ./...` or in a separate CI stage. Never mix integration tests into the fast unit test loop.
 
 ---
@@ -247,8 +246,7 @@ Benchmarks measure performance. They follow the `BenchmarkXxx(b *testing.B)` con
 func BenchmarkJSONMarshal(b *testing.B) {
     user := User{ID: 1, Name: "Alice", Email: "alice@example.com"}
 
-    b.ResetTimer() // discard setup time from the measurement
-    for i := 0; i < b.N; i++ {
+    for b.Loop() { // Go 1.24+; setup above the loop is excluded automatically
         _, err := json.Marshal(user)
         if err != nil {
             b.Fatal(err)
@@ -257,9 +255,7 @@ func BenchmarkJSONMarshal(b *testing.B) {
 }
 ```
 
-`b.N` is set by the test runner — it increases until the benchmark runs for at least 1 second (by default). Never hardcode a loop count; always use `b.N`.
-
-`b.ResetTimer()` discards time spent in setup (creating test fixtures, opening connections) so the benchmark measures only the code under test.
+`b.Loop()` (Go 1.24) returns true while the runner wants more iterations; it keeps running until the benchmark has run for at least 1 second (by default). Never hardcode a loop count. Setup before the loop and cleanup after it are excluded from timing automatically, so no `b.ResetTimer()` is needed, and the compiler cannot optimize away the call being measured. Go 1.26 fixed `b.Loop` inhibiting inlining, so the [release notes](https://go.dev/doc/go1.26) expect all benchmarks can be converted from the old `b.N` style ([Go 1.24 notes](https://go.dev/doc/go1.24#testing)). In older code you will still see `for i := 0; i < b.N; i++` with a `b.ResetTimer()` call after setup; it works, but is easier to get wrong.
 
 Run with: `go test -bench=. -benchmem ./...`
 
@@ -315,6 +311,8 @@ Add `-race` to your CI `go test` command permanently. A race condition found in 
 
 **`require` vs `assert` from testify**: you likely used `github.com/stretchr/testify` before. The distinction matters now: `require.NoError` calls `t.FailNow()` (stops the test immediately), while `assert.NoError` calls `t.Fail()` (marks failure, continues). Use `require` for preconditions whose failure makes subsequent assertions meaningless.
 
+**Newer testing helpers**: `t.Context()` (Go 1.24) gives a context cancelled just before cleanups run, so prefer it over `context.Background()` in tests. `testing/synctest` (GA in Go 1.25) runs code in a bubble with a fake clock, making time-dependent concurrent tests instant and deterministic. Go 1.27 adds `httptest.NewTestServer`, which builds a test server on an in-memory fake network meant for use with `synctest` ([Go 1.27 notes](https://go.dev/doc/go1.27)).
+
 **Fuzzing is built in** (Go 1.18): `func FuzzXxx(f *testing.F)` with `f.Add(seed)` and `f.Fuzz(func(t *testing.T, data string) {...})`. Not covered in this day but worth knowing — the `go test -fuzz` flag runs the fuzzer continuously against corpus inputs.
 
 ---
@@ -325,7 +323,7 @@ Add `-race` to your CI `go test` command permanently. A race condition found in 
 - For Gin handlers, call `engine.ServeHTTP(recorder, request)` to let Gin populate `gin.Context`
 - Mocking in Go = writing a struct that satisfies an interface — if you need a library, check the interface first
 - `testcontainers-go` for repository layer tests against real Postgres — guard with `testing.Short()`
-- `b.ResetTimer()` discards setup time; `b.N` is the loop count — never hardcode it
+- `for b.Loop() { ... }` is the benchmark loop (Go 1.24); setup before it is excluded automatically — never hardcode a count (legacy: `b.N` + `b.ResetTimer()`)
 - `-race` flag detects concurrent memory access violations — add to CI permanently; not for production binaries
 
 ---
@@ -338,15 +336,14 @@ If you have a `UserRepository` interface, your handler tests should use the in-m
 **2. Benchmarking with setup inside the loop**
 ```go
 // Bad — measures setup + function under test
-for i := 0; i < b.N; i++ {
+for b.Loop() {
     data := buildLargeStruct()  // setup work measured
     process(data)
 }
 
-// Good
+// Good — setup before the loop is not timed
 data := buildLargeStruct()
-b.ResetTimer()
-for i := 0; i < b.N; i++ {
+for b.Loop() {
     process(data)
 }
 ```

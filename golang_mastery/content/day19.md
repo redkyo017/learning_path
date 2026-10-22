@@ -243,14 +243,14 @@ otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
     propagation.Baggage{},      // W3C baggage (optional)
 ))
 
-// Configure a TracerProvider (e.g., OTLP exporter to Jaeger or Tempo)
-// ... omitted: provider setup depends on your backend
+// Configure a TracerProvider with an OTLP exporter — see
+// "Production instrumentation and SDK setup" below.
 ```
 
 ### Creating spans in middleware
 
 ```go
-import "go.opentelemetry.io/otel/semconv/v1.21.0"
+import semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
 
 func TracingMiddleware() gin.HandlerFunc {
     tracer := otel.Tracer("gateway")
@@ -261,8 +261,14 @@ func TracingMiddleware() gin.HandlerFunc {
             propagation.HeaderCarrier(c.Request.Header),
         )
 
-        // Start a new span for this request
-        ctx, span := tracer.Start(ctx, c.FullPath(),
+        // Server span name is "{METHOD} {route}". FullPath() is "" for
+        // unmatched routes, so fall back to just the method.
+        route := c.FullPath()
+        name := c.Request.Method
+        if route != "" {
+            name += " " + route
+        }
+        ctx, span := tracer.Start(ctx, name,
             trace.WithSpanKind(trace.SpanKindServer),
         )
         defer span.End()
@@ -272,16 +278,25 @@ func TracingMiddleware() gin.HandlerFunc {
             semconv.HTTPRequestMethodKey.String(c.Request.Method),
             semconv.URLPath(c.Request.URL.Path),
         )
+        if route != "" {
+            span.SetAttributes(semconv.HTTPRoute(route))
+        }
 
         // Store in context and continue
         c.Request = c.Request.WithContext(ctx)
         c.Next()
 
         // Record response status after handler runs
-        span.SetAttributes(semconv.HTTPResponseStatusCode(c.Writer.Status()))
+        status := c.Writer.Status()
+        span.SetAttributes(semconv.HTTPResponseStatusCode(status))
+        if status >= 500 {
+            span.SetStatus(codes.Error, http.StatusText(status)) // "go.opentelemetry.io/otel/codes"
+        }
     }
 }
 ```
+
+The HTTP attribute names changed in the semantic conventions: `http.method` became `http.request.method`, `http.status_code` became `http.response.status_code`, `http.target` became `url.path`/`url.query`. The new names are stable since semconv v1.23. The import path pins the semconv version, so check [`otel/semconv`](https://pkg.go.dev/go.opentelemetry.io/otel/semconv) for the versions your otel release ships (v1.47.0 includes v1.37.0 through v1.43.0).
 
 ### Propagating trace context to gRPC upstreams
 
@@ -296,10 +311,59 @@ conn, err := grpc.NewClient(addr,
 )
 ```
 
-The `otelgrpc` interceptor automatically:
+The `otelgrpc` stats handler automatically:
 1. Extracts the trace context from the outgoing context
 2. Injects it as gRPC metadata (`traceparent`)
 3. Creates a child span for the gRPC call
+
+The old `otelgrpc` unary/stream interceptors have been removed; only the stats handlers `NewServerHandler` and `NewClientHandler` remain (see the [package docs](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc)). Server side: `grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))`.
+
+### Production instrumentation and SDK setup
+
+The hand-written middleware above is the teaching version. In production, use the ready-made instrumentation:
+
+- `go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin` — `r.Use(otelgin.Middleware("gateway"))` for Gin
+- `go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp` — `otelhttp.NewHandler(mux, "/")` wraps any `http.Handler`; `otelhttp.NewTransport` instruments outbound clients
+
+None of it exports anything until you install a `TracerProvider`. Minimal setup (pattern from the [Go getting-started guide](https://opentelemetry.io/docs/languages/go/getting-started/), with the OTLP exporter swapped in for stdout):
+
+```go
+import (
+    "context"
+
+    "go.opentelemetry.io/otel"
+    "go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc" // or otlptracehttp
+    "go.opentelemetry.io/otel/propagation"
+    "go.opentelemetry.io/otel/sdk/resource"
+    sdktrace "go.opentelemetry.io/otel/sdk/trace"
+    semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+)
+
+func setupTracing(ctx context.Context) (shutdown func(context.Context) error, err error) {
+    exp, err := otlptracegrpc.New(ctx) // endpoint via OTEL_EXPORTER_OTLP_ENDPOINT
+    if err != nil {
+        return nil, err
+    }
+    tp := sdktrace.NewTracerProvider(
+        sdktrace.WithBatcher(exp),
+        sdktrace.WithResource(resource.NewWithAttributes(
+            semconv.SchemaURL,
+            semconv.ServiceName("gateway"),
+        )),
+    )
+    otel.SetTracerProvider(tp)
+    otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+        propagation.TraceContext{}, propagation.Baggage{},
+    ))
+    return tp.Shutdown, nil // call on exit so buffered spans are flushed
+}
+```
+
+Call `shutdown` (with a fresh timeout context) after `srv.Shutdown` returns; the batcher otherwise drops spans still in its buffer.
+
+For trace-correlated logs, the `go.opentelemetry.io/contrib/bridges/otelslog` bridge (pre-1.0) forwards `slog` records to the OTel logs pipeline. Jaeger accepts OTLP natively, so point the OTLP exporter at it — the old Jaeger exporter was removed.
+
+**Exercise:** `phase4_gateway` already requires `go.opentelemetry.io/otel`; wiring `setupTracing` and `otelgin` into `cmd/gateway/main.go` is left to you.
 
 ---
 
@@ -375,8 +439,9 @@ func (h *HealthChecker) Readyz(c *gin.Context) {
 | Area | Change | Version |
 |---|---|---|
 | Structured logging | `slog` added to the standard library — replaces logrus/zap for new code | Go 1.21 |
-| OpenTelemetry | OTel Go SDK reached stable (1.0) — safe to adopt in production | otel v1.0 (Oct 2021) |
-| Prometheus | `prometheus/client_golang` v1.12+ uses a new `NewRegistry` model; `MustRegister` still works | v1.12 (2022) |
+| OpenTelemetry | Traces and metrics are stable — safe in production. Logs: the v1.47.0 release notes (Oct 2026) call the Logs API/SDK stable for the first time, while the opentelemetry.io Go page still lists logs as release candidate — check both | otel v1.0 (2021); logs v1.47.0 |
+| Prometheus | `prometheus/client_golang` v1.25.0 requires Go 1.26 (supports only the two latest Go versions) | v1.25.0 (Oct 2026) |
+| Structured logging | `slog.NewMultiHandler` fans one record out to several handlers (e.g. JSON to stdout plus the OTel bridge) | Go 1.26 |
 | W3C TraceContext | Became the dominant standard — replace Zipkin `b3` headers for new services | ~2020 onwards |
 | `expvar` / `pprof` | `net/http/pprof` still present — now often alongside `promhttp.Handler()` | unchanged |
 

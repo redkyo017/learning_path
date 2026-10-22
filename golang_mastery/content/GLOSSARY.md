@@ -95,11 +95,21 @@ one costs ~8 KB of stack (which grows dynamically). The critical rule: every
 goroutine you launch must have a defined exit condition, usually a `ctx.Done()`
 select case — otherwise it is a goroutine leak.
 
+**loop variable (per-iteration semantics)**
+Since Go 1.22, each iteration of a `for` loop gets its own copy of the loop
+variable, so closures and goroutines capture the right value without an
+`item := item` copy. This is keyed to the **`go` line in the module's
+`go.mod`** (1.22 or later), not to the installed toolchain
+([Go 1.22 notes](https://go.dev/doc/go1.22)). `go fix` (rewritten in Go 1.26
+around modernizers, [notes](https://go.dev/doc/go1.26)) can remove the
+now-redundant copies.
+
 **goroutine leak**
 A goroutine that runs forever because it is waiting for something that will
 never arrive. Symptoms: memory grows continuously; pprof shows ever-increasing
 goroutine count. Fix: all goroutines must select on `ctx.Done()`. See
-`content/runbook-goroutine-leak.md`.
+`content/runbook-goroutine-leak.md`. Go 1.27 adds a GC-based `goroutineleak`
+profile (`/debug/pprof/goroutineleak`) that reports some leaks automatically.
 
 **select**
 A statement that waits on multiple channel operations simultaneously, choosing
@@ -144,14 +154,18 @@ toolchain sets `chmod 555` to prevent accidental edits. `go clean -modcache`
 clears it.
 
 **toolchain directive**
-A `go.mod` directive (Go 1.21+) that names the exact Go toolchain version the
-module was developed with: `toolchain go1.22.4`. Distinct from the `go`
-directive, which sets the minimum required version. With `GOTOOLCHAIN=auto`,
-Go 1.21+ will download the declared toolchain if your installed version is older.
+A `go.mod` directive (Go 1.21+) that names a *suggested* Go toolchain, e.g.
+`toolchain go1.27.3`. It is used only when it is newer than the local `go`
+binary — it is not "the exact version the module was developed with". Distinct
+from the `go` directive, which sets the minimum required version. With
+`GOTOOLCHAIN=auto`, Go 1.21+ downloads the newer toolchain when your installed
+version is older than the `go` or `toolchain` line. Since Go 1.25 the `go`
+command no longer adds a `toolchain` line when it bumps the `go` line
+([Go toolchains](https://go.dev/doc/toolchain), [Go 1.25 notes](https://go.dev/doc/go1.25)).
 
 ---
 
-## Modern stdlib (Go 1.18–1.22)
+## Modern stdlib (Go 1.18+)
 
 **cmp package**
 A stdlib package (Go 1.21) providing ordered comparison utilities. `cmp.Compare`
@@ -161,8 +175,8 @@ verbose `sort.Slice` closures.
 **maps package**
 A stdlib package (Go 1.21) with generic map helpers: `maps.Clone`, `maps.Copy`,
 `maps.Delete`, `maps.DeleteFunc`, `maps.Equal`. `maps.Keys` and `maps.Values`
-returning `iter.Seq` were added in Go 1.23 — on Go 1.22, collect keys with a
-plain range loop then `slices.Sort`.
+returning `iter.Seq` were added in Go 1.23; the usual idiom for sorted keys is
+`slices.Sorted(maps.Keys(m))`.
 
 **slices package**
 A stdlib package (Go 1.21) with generic slice utilities: `slices.Sort`,
@@ -233,10 +247,12 @@ runs before and/or after the inner handler. In Gin, middleware is a
 chain; `c.Abort()` short-circuits it.
 
 **ServeMux**
-The stdlib HTTP router. It stores a map of URL pattern strings to handlers and
-dispatches requests by longest-prefix match. Limitations: no path parameters,
-no method-based dispatch, linear lookup for large route tables. These
-limitations are why Gin's radix-trie router exists.
+The stdlib HTTP router. Since Go 1.22 its patterns may include a method and
+wildcards (`GET /users/{id}`, `{path...}`, `{$}`), values are read with
+`r.PathValue`, and the most specific matching pattern wins
+([routing enhancements](https://go.dev/blog/routing-enhancements)). It still has
+no regex/constrained parameters, route groups, or middleware-chaining helpers,
+which is what routers like Chi and Gin add.
 
 ---
 

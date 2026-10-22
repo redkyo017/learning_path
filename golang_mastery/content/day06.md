@@ -91,19 +91,28 @@ func logging(next http.Handler) http.Handler {
 
 ---
 
-## ServeMux and its limitations
+## ServeMux (Go 1.22+) and what third-party routers still add
 
-`http.DefaultServeMux` (and `http.NewServeMux()`) is Go's built-in router. It matches by longest path prefix. It works for simple APIs but has real limitations you need to know before reaching for a third-party router:
+`http.DefaultServeMux` (and `http.NewServeMux()`) is Go's built-in router. Since Go 1.22 its patterns can include an HTTP method and wildcards, and when several patterns match, the **most specific** one wins (not simply the longest prefix) ([Routing Enhancements for Go 1.22](https://go.dev/blog/routing-enhancements)):
 
-| Feature | stdlib ServeMux | Third-party (Chi, Gin) |
+```go
+mux := http.NewServeMux()
+mux.HandleFunc("GET /users/{id}", getUser)         // r.PathValue("id")
+mux.HandleFunc("POST /users", createUser)
+mux.HandleFunc("GET /files/{path...}", serveFile)  // {name...} matches the rest of the path
+mux.HandleFunc("GET /{$}", home)                   // {$} matches only "/" exactly
+```
+
+| Feature | stdlib ServeMux (1.22+) | Third-party (Chi, Gin) |
 |---|---|---|
-| Path parameters (`/users/:id`) | Not supported | Supported |
-| Method-based routing (`GET` vs `POST`) | Not supported | Supported |
-| Regex routes | Not supported | Supported |
-| Trailing-slash redirect | Automatic | Configurable |
-| Performance (trie vs map) | O(n) scan | O(log n) trie |
+| Path parameters | `{id}`, `{path...}`, exact-root `{$}`; read with `r.PathValue` | `:id` / `{id}`, `*splat` |
+| Method-based routing (`GET` vs `POST`) | Supported (`"GET /users/{id}"`; also answers 405 with `Allow`) | Supported |
+| Conflict resolution | Most specific pattern wins; ambiguous registrations panic at startup | Router-specific |
+| Regex / constrained params (`{id:[0-9]+}`) | Not supported — validate in the handler | Supported (Chi); varies |
+| Route groups / sub-routers | Not built in (use `http.StripPrefix` + nested muxes) | Supported |
+| Middleware chaining helpers (`Use`, per-group stacks) | Not built in — wrap handlers manually | Supported |
 
-Go 1.22 (released February 2024) significantly upgraded `http.ServeMux` — this is your biggest gap.
+The remaining third-party advantages are regex/constraint matching, route groups, and middleware-chaining helpers; basic REST routing no longer needs a dependency.
 
 ---
 
@@ -164,6 +173,23 @@ Always set `ReadHeaderTimeout` explicitly — `ReadTimeout` alone does not prote
 
 ---
 
+## encoding/json in Go 1.27
+
+Most handlers decode and encode JSON, so this change reaches you without any code edit. In Go 1.27 `encoding/json` is **implemented on top of `encoding/json/v2`**. The v1 API and its documented behavior are preserved, but v2's stricter, more interoperable defaults show through: invalid UTF-8 in JSON strings and duplicate member names within an object are now rejected, and error message text may differ. Unmarshaling is significantly faster; marshaling is at parity ([Go 1.27 notes](https://go.dev/doc/go1.27)).
+
+- If you hit a compatibility problem, build with `GOEXPERIMENT=nojsonv2` to restore the old implementation (the notes say this opt-out is expected to be removed in a future release).
+- Tests that assert exact `json` error strings may need updating.
+- Since Go 1.24 the `omitzero` struct tag option omits a field whose value is zero (using its `IsZero() bool` method if present) — unlike `omitempty`, it works for `time.Time` ([Go 1.24 notes](https://go.dev/doc/go1.24)):
+
+```go
+type Event struct {
+    Name      string    `json:"name"`
+    StartedAt time.Time `json:"started_at,omitzero"`
+}
+```
+
+---
+
 ## Returning engineer: what changed since 1.16–1.18
 
 **Go 1.22 (February 2024)** is the biggest change to `net/http` in years:
@@ -171,6 +197,10 @@ Always set `ReadHeaderTimeout` explicitly — `ReadTimeout` alone does not prote
 - `http.ServeMux` now supports **method routing** and **path wildcards**: `GET /users/{id}` is valid stdlib routing syntax
 - Path parameters are extracted via `r.PathValue("id")` — no third-party router needed for simple APIs
 - Trailing slash matching semantics changed — existing code that relied on redirect behavior may need review
+
+**Go 1.25**: `net/http.CrossOriginProtection` rejects non-safe cross-origin browser requests using Fetch metadata (`Sec-Fetch-Site`) — CSRF protection without tokens or cookies ([Go 1.25 notes](https://go.dev/doc/go1.25)).
+
+**Go 1.26**: `httputil.ReverseProxy.Director` is deprecated in favor of `Rewrite` ([Go 1.26 notes](https://go.dev/doc/go1.26)).
 
 **Go 1.20**: `http.ResponseController` was added — a concrete type wrapping `ResponseWriter` that provides `Flush()`, `Hijack()`, and deadline control, replacing the ugly type-assertion pattern:
 

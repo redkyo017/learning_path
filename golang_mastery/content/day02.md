@@ -272,6 +272,14 @@ for instantiation, meaning the compiler may share the same machine code for
 multiple instantiations of a generic function (particularly for pointer types).
 They are not always zero-overhead. For hot paths, benchmark before committing.
 
+**Generic methods (Go 1.27):** until 1.27 a method could not declare its own type
+parameters — only the receiver type's. Go 1.27 lifts that: a method declaration
+may declare its own type parameters (e.g. `math/rand/v2` now has
+`(*Rand) N[Int intType](Int) Int`). The limit that remains: methods of
+*interfaces* may not declare type parameters, and an interface method cannot be
+implemented by a generic method
+([Go 1.27 notes](https://go.dev/doc/go1.27#language)).
+
 ---
 
 ## Key concepts to memorize

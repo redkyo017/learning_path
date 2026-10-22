@@ -54,23 +54,26 @@ if err != nil {
 
 ```bash
 # Plaintext (no TLS)
-grpcurl -plaintext localhost:9090 list
+grpcurl -plaintext localhost:50051 list
 # Expected output:
 # users.UserService
+# grpc.reflection.v1.ServerReflection
 # grpc.reflection.v1alpha.ServerReflection
 
 # With TLS
-grpcurl localhost:9090 list
+grpcurl localhost:50051 list
 
 # With TLS but skip certificate verification (dev only)
-grpcurl -insecure localhost:9090 list
+grpcurl -insecure localhost:50051 list
 ```
+
+`reflection.Register` in current grpc-go serves both `grpc.reflection.v1` and `grpc.reflection.v1alpha`, so both appear in the list.
 
 ### Describe a service or method
 
 ```bash
 # List methods on a service
-grpcurl -plaintext localhost:9090 describe users.UserService
+grpcurl -plaintext localhost:50051 describe users.UserService
 # Expected output:
 # users.UserService is a service:
 # service UserService {
@@ -79,7 +82,7 @@ grpcurl -plaintext localhost:9090 describe users.UserService
 # }
 
 # Describe the request message shape
-grpcurl -plaintext localhost:9090 describe users.GetUserRequest
+grpcurl -plaintext localhost:50051 describe users.GetUserRequest
 # Expected output:
 # users.GetUserRequest is a message:
 # message GetUserRequest {
@@ -93,13 +96,13 @@ grpcurl -plaintext localhost:9090 describe users.GetUserRequest
 # Plaintext, no auth
 grpcurl -plaintext \
   -d '{"id": "u_123"}' \
-  localhost:9090 users.UserService/GetUser
+  localhost:50051 users.UserService/GetUser
 
 # With Authorization header (JWT)
 grpcurl -plaintext \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -d '{"id": "u_123"}' \
-  localhost:9090 users.UserService/GetUser
+  localhost:50051 users.UserService/GetUser
 
 # Expected success output:
 # {
@@ -123,7 +126,7 @@ grpcurl \
   -proto users/v1/users.proto \
   -H "Authorization: Bearer $JWT_TOKEN" \
   -d '{"id": "u_123"}' \
-  localhost:9090 users.UserService/GetUser
+  localhost:50051 users.UserService/GetUser
 ```
 
 ---
@@ -136,16 +139,16 @@ gRPC over AWS ALB requires specific configuration. HTTP/1.1 ALBs will silently b
 
 | Check | Correct value | How to verify |
 |---|---|---|
-| Target group protocol | HTTP with protocol version **gRPC** or **HTTP/2** | AWS console → Target Group → Attributes |
+| Target group protocol | HTTP with protocol version **gRPC** (HTTP/2 passes gRPC through but has no gRPC health checks) | AWS console → Target Group → Attributes |
 | Listener | HTTPS (port 443) with TLS certificate | ALB listener rules |
-| Target group health check | gRPC health check (`/grpc.health.v1.Health/Check`) or HTTP returning 200 | Target Group → Health check settings |
+| Target group health check | With version gRPC: path `/grpc.health.v1.Health/Check`, success codes `0` (ALB default is `/AWS.ALB/healthcheck` and `12`) | Target Group → Health check settings |
 | Client connection | Must use TLS when going through ALB | `grpcurl` with `-insecure` to test |
 
 ### Symptom: `UNAVAILABLE` behind ALB but works direct
 
 The ALB is likely using HTTP/1.1 to forward to your service. HTTP/1.1 does not support gRPC's HTTP/2 framing.
 
-Fix: set the target group's **Protocol version** to `HTTP2` or `gRPC`.
+Fix: set the target group's **Protocol version** to `gRPC`.
 
 ```bash
 # Check if ALB is downgrading to HTTP/1.1
@@ -191,15 +194,13 @@ date -d @1753056000 # Linux
 
 ### Metadata key format
 
-gRPC metadata keys are case-insensitive but the authorization header must be lowercase in the Go gRPC library:
+gRPC metadata keys are case-insensitive, and the Go library normalises them for you: [`metadata.Pairs`](https://pkg.go.dev/google.golang.org/grpc/metadata#Pairs) and `MD.Get` lowercase keys automatically, so `metadata.Pairs("Authorization", ...)` and `md.Get("Authorization")` both work against the lowercase `authorization` key.
 
 ```go
-// WRONG — some clients send this and it fails
-md := metadata.Pairs("Authorization", "Bearer "+token)
-
-// CORRECT — lowercase key
 md := metadata.Pairs("authorization", "Bearer "+token)
 ```
+
+Case problems usually come from the *value* (`Bearer` vs `bearer` scheme prefix) or from code that builds `metadata.MD` by hand as a map literal, which does not lowercase.
 
 ### Test with explicit metadata via grpcurl
 
@@ -208,7 +209,7 @@ md := metadata.Pairs("authorization", "Bearer "+token)
 grpcurl -plaintext \
   -H "authorization: Bearer $JWT_TOKEN" \
   -d '{"id": "u_123"}' \
-  localhost:9090 users.UserService/GetUser
+  localhost:50051 users.UserService/GetUser
 ```
 
 ### Common auth interceptor log messages and causes
@@ -231,7 +232,7 @@ When reflection is disabled:
 
 ```bash
 # This will fail:
-grpcurl -plaintext localhost:9090 list
+grpcurl -plaintext localhost:50051 list
 # Error: Failed to list services: server does not support the reflection API
 
 # Use proto files instead:
@@ -240,7 +241,7 @@ grpcurl \
   -proto users/v1/users.proto \
   -H "authorization: Bearer $JWT_TOKEN" \
   -d '{"id": "u_123"}' \
-  prod-service:9090 users.UserService/GetUser
+  prod-service:50051 users.UserService/GetUser
 ```
 
 Keep a copy of the production service's proto files in a known location (e.g., a `contracts/` directory or a Buf Schema Registry). This allows `grpcurl` debugging without enabling reflection.
@@ -248,9 +249,9 @@ Keep a copy of the production service's proto files in a known location (e.g., a
 ### Check if reflection is enabled
 
 ```bash
-grpcurl -plaintext localhost:9090 grpc.reflection.v1alpha.ServerReflection/ServerReflectionInfo
-# If reflection is enabled: empty response (no methods listed for the reflection service itself)
-# If disabled: "Failed to dial target host"
+grpcurl -plaintext localhost:50051 list
+# If reflection is enabled: the service names are printed
+# If disabled: "Failed to list services: server does not support the reflection API"
 ```
 
 ---

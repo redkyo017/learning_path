@@ -123,6 +123,20 @@ func (rl *RateLimiter) cleanup() {
 
 Memory cleanup is mandatory. Without it, a gateway that has served millions of distinct IPs over days will accumulate millions of `*rate.Limiter` entries in memory.
 
+### Key on the real client IP: configure trusted proxies
+
+If you key limiters on `c.ClientIP()` in Gin, the key is only as trustworthy as Gin's proxy configuration. By default Gin [trusts all proxies](https://gin-gonic.com/en/docs/server-config/trusted-proxies/) (the docs call this not safe), so `ClientIP()` believes a client-supplied `X-Forwarded-For`. An attacker then rotates that header per request and gets a fresh bucket every time — the limiter does nothing.
+
+```go
+r := gin.New()
+// Directly internet-facing: trust no proxy, ClientIP() returns the socket address.
+r.SetTrustedProxies(nil)
+// Behind an ALB / load balancer: trust only its CIDRs.
+// r.SetTrustedProxies([]string{"10.0.0.0/16"})
+```
+
+With trusted proxies set, Gin parses the `X-Forwarded-For` chain and keeps only the entries added by those proxies; from untrusted sources the forwarding headers are ignored.
+
 ---
 
 ## Circuit breaker state machine
@@ -216,7 +230,7 @@ func (cb *CircuitBreaker) RecordFailure() {
 }
 ```
 
-In production, use a well-tested library such as `github.com/sony/gobreaker` rather than rolling your own. The implementation above illustrates the state machine — production code needs atomic counters, configurable policies (consecutive failures vs error rate), and metrics.
+In production, use a well-tested library such as [`github.com/sony/gobreaker/v2`](https://pkg.go.dev/github.com/sony/gobreaker/v2) rather than rolling your own. The implementation above illustrates the state machine — production code needs atomic counters, configurable policies (consecutive failures vs error rate), and metrics.
 
 ---
 
@@ -299,6 +313,16 @@ Client → [JWT] → Gateway → [validate] → forward user_id + roles → Upst
 
 This avoids each upstream duplicating key distribution, validation logic, and clock-skew handling.
 
+### Edge trust model
+
+"Upstreams trust the gateway's verdict" only holds if three things are true:
+
+1. **The gateway deletes any client-supplied identity headers first.** Remove `X-User-ID` and `X-User-Roles` from the inbound request (or never copy them), then set them from the verified claims. Otherwise a client simply sends `X-User-Roles: admin`.
+2. **Upstreams accept traffic only from the gateway.** Enforce it with mTLS or network policy / security groups. If an upstream is reachable directly, the gateway's verdict is irrelevant.
+3. **Identity headers are set in `Rewrite` (`pr.Out.Header.Set(...)`), never in `Director`.** The proxy strips hop-by-hop headers after `Director` runs, so a client can name your identity header in `Connection` and make it vanish (see Day 17).
+
+For key distribution, fetch the issuer's JWKS and select the verification key by the token's `kid` header; this lets the auth service rotate keys without redeploying the gateway.
+
 ### Validation in middleware
 
 ```go
@@ -323,12 +347,11 @@ func JWTMiddleware(publicKey *rsa.PublicKey) gin.HandlerFunc {
 
         claims := &GatewayClaims{}
         token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
-            // Enforce RS256 — reject HS256 (the "alg:none" attack vector)
-            if _, ok := t.Method.(*jwt.SigningMethodRSA); !ok {
-                return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-            }
             return publicKey, nil
         },
+            // Pin the algorithm: prevents algorithm confusion (an attacker
+            // presenting an HS256 token signed with the RSA public key as the secret)
+            jwt.WithValidMethods([]string{"RS256"}),
             jwt.WithExpirationRequired(),
             jwt.WithIssuedAt(),
             jwt.WithIssuer("https://auth.example.com"),
@@ -367,6 +390,8 @@ ctx = metadata.AppendToOutgoingContext(ctx, "x-user-id", userID)
 
 RS256 is preferred for gateways because the gateway only needs the public key. The private key never leaves the auth service.
 
+Pin the accepted algorithm with [`jwt.WithValidMethods`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#WithValidMethods). This prevents *algorithm confusion* (HS/RS key confusion): if the verifier accepts HS256, an attacker can sign a token using your public key as the HMAC secret. `alg:none` is a separate attack; golang-jwt v5 already rejects it unless you pass `jwt.UnsafeAllowNoneSignatureType`.
+
 ---
 
 ## Production deployment checklist
@@ -383,6 +408,7 @@ Before deploying a gateway to production, verify:
 ### Request handling
 
 - [ ] Rate limiting enabled per client (IP or API key)
+- [ ] Gin `SetTrustedProxies(nil)` (or the LB's CIDRs) so `ClientIP()` can't be spoofed via `X-Forwarded-For`
 - [ ] Request ID injected and forwarded (`X-Request-ID`)
 - [ ] JWT validation in middleware (not per-handler)
 - [ ] Authorization header not logged (PII + secret)
@@ -400,12 +426,13 @@ Before deploying a gateway to production, verify:
 
 - [ ] Graceful shutdown wired to `SIGTERM`
 - [ ] Kubernetes `terminationGracePeriodSeconds` ≥ your Shutdown timeout
-- [ ] `GOMAXPROCS` not set to 1 in containers (or use `automaxprocs`)
+- [ ] `GOMAXPROCS` left unset (Go 1.25+ honors the container CPU limit by default; setting it manually or via `automaxprocs` disables that)
 - [ ] `pprof` endpoint enabled on a non-public port
 
 ### Security
 
-- [ ] JWT signing algorithm explicitly enforced (RS256, not `alg:none`)
+- [ ] JWT signing algorithm explicitly enforced (`jwt.WithValidMethods([]string{"RS256"})`)
+- [ ] Identity headers cleared from inbound requests, set in `Rewrite`; upstreams reachable only from the gateway
 - [ ] Public key loaded from config or secrets manager (not hardcoded)
 - [ ] Upstream URLs from config (not hardcoded)
 - [ ] TLS enabled for all upstream connections in production
@@ -419,8 +446,8 @@ Before deploying a gateway to production, verify:
 | `os/signal` | `signal.NotifyContext` — cleaner shutdown pattern; returns a context canceled on signal | Go 1.16 |
 | JWT libraries | `github.com/golang-jwt/jwt/v5` replaced `dgrijalva/jwt-go` (unmaintained) | v5 (2023) |
 | `sync` | `sync.Map` performance improvements; still prefer `sync.Mutex` + `map` for write-heavy workloads | Go 1.19 |
-| `automaxprocs` | `go.uber.org/automaxprocs` — reads container CPU quota and sets GOMAXPROCS correctly | stable ~2020 |
-| Circuit breakers | `gobreaker` v2 API; `go-resilience` ecosystem matured | 2022–2023 |
+| `GOMAXPROCS` | Container-aware by default on Linux (cgroup CPU limit) and updated at runtime — `automaxprocs` no longer needed; setting `GOMAXPROCS` manually disables this ([release notes](https://go.dev/doc/go1.25)) | Go 1.25 |
+| Circuit breakers | `github.com/sony/gobreaker/v2` is generic: `gobreaker.NewCircuitBreaker[T](gobreaker.Settings{...})` and `cb.Execute(func() (T, error))` (v2.4.0 on [pkg.go.dev](https://pkg.go.dev/github.com/sony/gobreaker/v2)) | v2 |
 
 `signal.NotifyContext` (Go 1.16 — just barely outside your window) simplifies shutdown:
 
@@ -440,7 +467,7 @@ defer stop()
 - `srv.Shutdown`: stops accepting new connections, waits for in-flight requests. `srv.Close`: drops everything immediately
 - JWT: validate at the gateway edge (once), forward claims as headers/metadata to upstreams
 - RS256 = asymmetric, public key only needed at gateway. HS256 = shared secret
-- GOMAXPROCS defaults to the host's CPU count — in containers, set it to the CPU quota or use `automaxprocs`
+- Since Go 1.25, GOMAXPROCS defaults to the container's cgroup CPU limit (Linux) and tracks changes — don't set it manually or add `automaxprocs`
 
 ---
 
@@ -452,7 +479,7 @@ defer stop()
 
 3. **Not handling `http.ErrServerClosed` after calling `Shutdown`.** After `srv.Shutdown()` is called, `srv.ListenAndServe()` returns `http.ErrServerClosed`. This is expected and must not be treated as an error.
 
-4. **Accepting `alg:none` in JWT validation.** Some JWT libraries (especially older versions) allow tokens with `alg: none` — no signature — to pass validation. Always explicitly validate the signing method.
+4. **Not pinning the JWT signing algorithm.** Accepting whatever `alg` the token claims enables algorithm confusion (HS256 signed with your RSA public key) and, in libraries that permit it, `alg: none`. Always pass `jwt.WithValidMethods`.
 
 5. **Setting `terminationGracePeriodSeconds` shorter than the Shutdown timeout.** If Kubernetes kills the process after 5 seconds but your `Shutdown` waits up to 30 seconds, Kubernetes wins with a `SIGKILL`. The graceful drain never completes. Always make `terminationGracePeriodSeconds` ≥ shutdown timeout + a 5-second buffer.
 

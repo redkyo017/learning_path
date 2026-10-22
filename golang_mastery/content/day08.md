@@ -151,6 +151,16 @@ func generateToken(userID, role string, secret []byte) (string, error) {
 
 ### Validate and extract (in middleware)
 ```go
+// secret must come from the environment with NO fallback value, and be at least
+// 32 bytes for HS256 (RFC 7518 section 3.2). Fail startup instead of defaulting.
+func CheckSecret() ([]byte, error) {
+    secret := []byte(os.Getenv("JWT_SECRET"))
+    if len(secret) < 32 {
+        return nil, errors.New("JWT_SECRET must be set and at least 32 bytes")
+    }
+    return secret, nil
+}
+
 func JWTMiddleware(secret []byte) gin.HandlerFunc {
     return func(c *gin.Context) {
         authHeader := c.GetHeader("Authorization")
@@ -162,11 +172,11 @@ func JWTMiddleware(secret []byte) gin.HandlerFunc {
 
         claims := &Claims{}
         token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
-            if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-                return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-            }
             return secret, nil
-        })
+        },
+            jwt.WithValidMethods([]string{"HS256"}),
+            jwt.WithExpirationRequired(),
+        )
         if err != nil || !token.Valid {
             c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
             return
@@ -179,7 +189,15 @@ func JWTMiddleware(secret []byte) gin.HandlerFunc {
 }
 ```
 
-Critical: always verify the signing method in the `keyFunc`. Without this check, an attacker can craft a token with `"alg": "none"` that bypasses signature verification.
+Critical: pin the accepted algorithm with [`jwt.WithValidMethods`](https://pkg.go.dev/github.com/golang-jwt/jwt/v5#WithValidMethods). The old "`alg: none`" attack is mostly handled by the library: golang-jwt v5 only accepts `none` when the key is the explicit sentinel `jwt.UnsafeAllowNoneSignatureType`. The real risk is *algorithm confusion* — the token header chooses the algorithm, so without a pin an attacker may steer verification toward a different family (for example HS256 against a key you meant for RS256). A type check like `t.Method.(*jwt.SigningMethodHMAC)` is not enough either, because it also accepts HS384 and HS512. `WithValidMethods([]string{"HS256"})` states exactly what you issue, and `WithExpirationRequired()` rejects tokens that carry no `exp` at all.
+
+Keep the signing secret out of source: read `JWT_SECRET` from the environment, never ship a fallback default, and refuse to start if it is shorter than 32 bytes (HS256 needs a key at least as long as the hash output, [RFC 7518 section 3.2](https://www.rfc-editor.org/rfc/rfc7518#section-3.2)). A default like `"secret"` in code is a published key.
+
+### Around the token: passwords, issuer, audience, expiry
+
+- **Password hashing at login.** The login endpoint that issues tokens must store passwords hashed with a slow, salted algorithm: `bcrypt` from `golang.org/x/crypto/bcrypt` (`GenerateFromPassword` / `CompareHashAndPassword`) or argon2id, as recommended by the [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). Never SHA-256 a password, and never store it in plain text.
+- **Issuer and audience.** Set `iss` and `aud` when issuing, and verify them with `jwt.WithIssuer("my-service")` and `jwt.WithAudience("my-api")` as extra parse options, so a token minted for another service is rejected.
+- **Short expiries.** The 24-hour token above is a convenience for the lab. In production use minutes for access tokens and a separate refresh mechanism, because a stateless JWT cannot be revoked before it expires.
 
 ### Downstream access
 ```go
@@ -223,7 +241,9 @@ func RateLimiter(r rate.Limit, burst int) gin.HandlerFunc {
 r.Use(RateLimiter(10, 20))
 ```
 
-Per-user rate limiting requires a map of limiters keyed by user ID or IP address — add a `sync.Mutex` or use `sync.Map`, and add TTL-based eviction to prevent memory leaks.
+Per-user rate limiting requires a map of limiters keyed by user ID or IP address — guard a `map[string]*entry` (limiter plus last-seen time) with a `sync.Mutex`, and add TTL-based eviction to prevent memory leaks.
+
+If you key on `c.ClientIP()`, configure trusted proxies. Gin [trusts all proxies by default](https://gin-gonic.com/en/docs/server-config/trusted-proxies/), so a client can send a forged `X-Forwarded-For` header and get a fresh bucket on every request. Call `r.SetTrustedProxies(nil)` when no proxy sits in front of the app (as the lab's `main.go` does), or list your real proxy addresses.
 
 ---
 
@@ -265,7 +285,7 @@ What Recovery hides: panics in your business logic that indicate data corruption
 - Code before `c.Next()` = entry path (pre-processing); code after `c.Next()` = exit path (post-processing)
 - `c.Abort()` prevents deeper handlers from running, but does NOT skip exit-path code in already-entered handlers
 - Always pair `c.Abort()` with a response write — naked `Abort()` leaves the client hanging
-- JWT: always validate the signing algorithm in the `keyFunc` — the "alg: none" attack is real
+- JWT: pin the algorithm with `jwt.WithValidMethods([]string{"HS256"})` — the real attack is algorithm confusion; require `exp`; secret from env, at least 32 bytes, no default
 - Token bucket smooths bursts; fixed window does not — prefer token bucket for production rate limiting
 - Recovery middleware prevents crashes but must not hide bugs — log every panic with a stack trace
 
@@ -283,24 +303,21 @@ c.Next()  // deeper handlers may write again — double-write
 ```
 After writing a response, either call `c.Abort()` or `return`. Writing and then continuing the chain leads to headers-already-sent panics or garbled responses.
 
-**3. Skipping the algorithm check in JWT validation**
+**3. Not pinning the algorithm in JWT validation**
 ```go
-// DANGEROUS — "alg: none" attack
+// RISKY — the token header picks the algorithm (algorithm confusion)
 token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
     return secret, nil
 })
 
-// SAFE — verify HMAC
+// SAFE — pin the method and require exp
 token, err := jwt.ParseWithClaims(tokenStr, claims, func(t *jwt.Token) (any, error) {
-    if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-        return nil, fmt.Errorf("unexpected alg %v", t.Header["alg"])
-    }
     return secret, nil
-})
+}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
 ```
 
 **4. One global rate limiter for all users**
-A global limiter means a single heavy user can exhaust the budget for everyone. Implement per-user or per-IP limiters with `sync.Map[string]*rate.Limiter` and TTL eviction.
+A global limiter means a single heavy user can exhaust the budget for everyone. Implement per-user or per-IP limiters with a `map[string]*entry` guarded by a `sync.Mutex` (`sync.Map` is not generic, so it would need type assertions) and TTL eviction. Remember `SetTrustedProxies` if the key is the client IP.
 
 **5. Swallowing panic details in Recovery**
 `gin.Recovery()` logs the panic to stderr but does not include the stack trace in the response or a structured log system. Always use `gin.CustomRecovery` and emit the full stack trace to your log aggregator (Datadog, Loki, CloudWatch).

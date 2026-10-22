@@ -78,6 +78,8 @@ Is the total response data known upfront and small enough to fit in a single mes
 
 ### Server streaming: complete lifecycle
 
+Since `protoc-gen-go-grpc` v1.5, the generated `pb.X_YServer` stream names (such as `pb.EventService_StreamEventsServer` below) are aliases of generic types like `grpc.ServerStreamingServer[T]` and, for bidi, `grpc.BidiStreamingServer[Req, Res]`; your handler signatures keep working unchanged.
+
 ```go
 func (s *server) StreamEvents(req *pb.EventRequest, stream pb.EventService_StreamEventsServer) error {
     // 1. Validate request
@@ -295,7 +297,7 @@ func (s *server) StreamEvents(req *pb.Req, stream pb.Svc_StreamEventsServer) err
 ## Returning engineer: what changed since 1.16–1.18
 
 - **`errgroup` is now the idiomatic concurrency harness.** In the 1.16 era, multi-goroutine streaming handlers were often written with raw channels and WaitGroups. `golang.org/x/sync/errgroup` with `errgroup.WithContext` is the modern idiom — it cancels the context when any goroutine returns an error, which is exactly the semantics streaming handlers need.
-- **Flow control and buffer sizes are configurable.** `grpc.WithInitialWindowSize` and `grpc.WithInitialConnWindowSize` let you tune the HTTP/2 flow-control window. In high-throughput streaming, the default 64KB window is a common bottleneck. This was not prominently documented pre-1.20.
+- **Flow-control windows are sized dynamically — usually leave them alone.** grpc-go estimates the bandwidth-delay product (BDP) and grows the HTTP/2 flow-control windows automatically, so the old advice "the 64KB default window is the bottleneck, raise it" no longer applies by default. Setting `grpc.WithInitialWindowSize` / `grpc.WithInitialConnWindowSize` (client) or `grpc.InitialWindowSize` / `grpc.InitialConnWindowSize` (server) **disables** that dynamic estimation and pins the window you chose, so only set them after measuring. Newer tuning options may exist; check the [grpc-go release notes](https://github.com/grpc/grpc-go/releases) rather than relying on this list.
 - **gRPC-Go added `grpc.MaxCallRecvMsgSize` / `grpc.MaxCallSendMsgSize` with better defaults.** The default max message size is 4MB receive. If you're streaming large payloads per message (not per stream), you may hit this. Prefer smaller messages and more of them for streaming.
 - **Context propagation and `grpc.SetHeader` / `grpc.SendHeader`** are stable but the timing rules are stricter in newer versions — metadata headers must be sent before the first message. If you send headers after `Send()`, you'll see a logged warning.
 

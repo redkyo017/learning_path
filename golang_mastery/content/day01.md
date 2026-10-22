@@ -50,7 +50,7 @@ code from earlier phases without publishing anything to a registry.
 A `go.work` file has three possible directives:
 
 ```
-go 1.22
+go 1.26.0
 
 use (
     ./phase1_cli
@@ -83,23 +83,30 @@ both and regenerate locally).
 
 ## The toolchain directive (Go 1.21+)
 
-Before 1.21, `go 1.22` in a `go.mod` declared the minimum Go version you
-required of the *user's toolchain*. It did not specify which toolchain to
-*download*. Since 1.21, there is a new `toolchain` directive:
+Before 1.21, the `go` line in a `go.mod` (e.g. `go 1.22`) was only advisory:
+an older toolchain would still try to build the module and merely mention the
+version if compilation failed. Since 1.21 it is a *mandatory minimum* — a `go`
+command older than the `go` line refuses to build (or, with `GOTOOLCHAIN=auto`,
+fetches a newer toolchain). There is also a `toolchain` directive
+([Go Toolchains](https://go.dev/doc/toolchain)):
 
 ```
 module github.com/yourname/golang-mastery/phase1-cli
 
-go 1.22
+go 1.26.0
 
-toolchain go1.22.4
+toolchain go1.27.3
 ```
 
-The `toolchain` directive names the exact toolchain version the module was
-*developed with*. If a user's installed `go` binary is older, Go 1.21+ can
-automatically download and use the declared toolchain version (using GOTOOLCHAIN
-env var behavior). The `go` directive remains the *minimum*; the `toolchain`
-directive is the *preferred* — they are different concepts.
+The `toolchain` directive is a *suggested* toolchain: it is used only when it is
+newer than the `go` binary you ran. If a user's installed `go` is older than the
+`go` line or the `toolchain` line, Go 1.21+ automatically downloads and uses the
+newer toolchain (per the `GOTOOLCHAIN` env var). It is *not* "the exact version
+the module was developed with". The `go` directive is the *minimum*; the
+`toolchain` directive is the *suggestion* — they are different concepts. Since
+Go 1.25 the `go` command no longer adds a `toolchain` line when it bumps the
+`go` line ([Go 1.25 notes](https://go.dev/doc/go1.25)), so you will often see
+modules with only a `go` line.
 
 Three GOTOOLCHAIN values to know:
 
@@ -107,11 +114,27 @@ Three GOTOOLCHAIN values to know:
 |---|---|
 | `local` | Never download; use whatever `go` is in PATH |
 | `auto` (default since 1.21) | Download if the module requires a newer toolchain |
-| `go1.22.4` | Pin to exactly this version |
+| `go1.27.3` | Pin to exactly this version |
 
-In practice: set `toolchain` in `go.mod` to the version you built and tested
-with. Your CI should have `GOTOOLCHAIN=local` and install the exact version you
-specified so it never silently upgrades.
+In practice: set the `go` line to the lowest version your code really needs
+and add a `toolchain` line only if you want to nudge people to a specific newer
+release. Your CI should have `GOTOOLCHAIN=local` and install the exact version
+you intend to test with so it never silently upgrades.
+
+---
+
+## What changed since Go 1.22
+
+A quick map of the releases since the baseline this course used to assume:
+
+- **Go 1.23** — range-over-func iterators and the `iter` package ([notes](https://go.dev/doc/go1.23)); see Day 3.
+- **Go 1.24** — `tool` directives in `go.mod` ([notes](https://go.dev/doc/go1.24#tools)); `testing.B.Loop` and `T.Context`; `omitzero` JSON tag.
+- **Go 1.25** — `testing/synctest` GA, `sync.WaitGroup.Go`, container-aware `GOMAXPROCS`, `runtime/trace.FlightRecorder` ([notes](https://go.dev/doc/go1.25)).
+- **Go 1.26** — `errors.AsType`, a rewritten `go fix` with modernizers, Green Tea GC on by default, `ReverseProxy.Director` deprecated in favour of `Rewrite` ([notes](https://go.dev/doc/go1.26)).
+- **Go 1.27** — `encoding/json` backed by `encoding/json/v2`, the `goroutineleak` profile GA, generic methods ([notes](https://go.dev/doc/go1.27)).
+
+Go 1.22 itself (per-iteration loop variables, `range` over integers, the new
+`ServeMux`) is the baseline everything above builds on, and is end-of-life.
 
 ---
 
@@ -170,24 +193,27 @@ did overlapping things. Now they are strictly separated:
 The critical rule: **never use `go get` to install tools globally**. Use
 `go install` with a full module path and explicit version. The reason: `go get`
 without a module context modifies a `go.mod` file, and running it globally
-(outside a module) has been removed as of Go 1.17.
+(outside a module) was deprecated in Go 1.17 (it printed a warning), and Go 1.18
+made `go get` only manage dependencies — it no longer builds or installs
+binaries ([Go 1.18 notes](https://go.dev/doc/go1.18)).
 
-For tool management in a team project, the standard pattern is a `tools.go` file:
+For tool management in a team project, since Go 1.24 the standard mechanism is
+the `tool` directive in `go.mod`
+([Go 1.24 notes](https://go.dev/doc/go1.24#tools)):
 
-```go
-//go:build tools
-
-package tools
-
-import (
-    _ "github.com/golangci/golangci-lint/cmd/golangci-lint"
-    _ "golang.org/x/tools/cmd/goimports"
-)
+```bash
+go get -tool golang.org/x/tools/cmd/stringer@v0.30.0   # records a tool line in go.mod
+go tool stringer -help                                 # run it, version pinned by go.mod
+go install tool                                        # optional: install all module tools into GOBIN
 ```
 
-This is a blank-import-only file with a `tools` build tag (so it never compiles
-into your binary) that anchors tool versions in `go.mod`. You then use
-`go install` to install them.
+`go.mod` then contains `tool golang.org/x/tools/cmd/stringer`, and the version
+is tracked in the normal `require` graph — no extra file needed.
+
+*Legacy note:* before 1.24 the workaround was a `tools.go` file with a `tools`
+build tag and blank imports (`_ "golang.org/x/tools/cmd/goimports"`) that
+anchored tool versions in `go.mod`. You will still meet it in older repos; new
+code should use `tool` directives.
 
 ---
 
@@ -273,8 +299,8 @@ a module (and modifies `go.mod` inside one). Use `go install
 github.com/some/tool@latest` for anything you want in your `$PATH`.
 
 **The `toolchain` directive is new since 1.21:** If you see a `go.mod` with both
-`go 1.22` and `toolchain go1.22.4`, do not be confused — they are different
-things. You did not have this in 1.16–1.18.
+`go 1.26.0` and `toolchain go1.27.3`, do not be confused — they are different
+things (minimum vs suggested toolchain). You did not have this in 1.16–1.18.
 
 **`//go:build` vs `// +build`:** You almost certainly wrote `// +build` in your
 pre-management era code. Any file you write now should use only `//go:build`.
@@ -292,7 +318,7 @@ pain.
 
 - `go.work` is gitignored; `go.mod` is committed — they solve different problems
 - `use ./phase1_cli` in `go.work` overrides the published version of that module
-- `go` in `go.mod` = minimum required Go version; `toolchain` = preferred build toolchain
+- `go` in `go.mod` = minimum required Go version; `toolchain` = suggested toolchain, used only if newer than the local one
 - `//go:build` uses normal boolean operators (`&&`, `||`, `!`); `// +build` uses comma/space
 - `go install` installs binaries; `go get` manages `go.mod` dependencies
 - `internal/` visibility is enforced by the compiler, not just convention
@@ -339,8 +365,10 @@ package with the outside world, it must live outside `internal/`.
    `go build ./phase2_rest/...` from the workspace root. Which version of
    `phase1_cli` does `phase2_rest` see — the one in the module cache or the
    local directory? Why?
-2. A `go.mod` has `go 1.22` and `toolchain go1.22.4`. A developer has Go 1.21
+2. A `go.mod` has `go 1.26.0` and `toolchain go1.27.3`. A developer has Go 1.25
    installed and `GOTOOLCHAIN=auto`. What happens when they run `go build`?
+   (Hint: the local `go` is older than the `go` line; which toolchain does it
+   switch to, and what changes with `GOTOOLCHAIN=local`?)
 3. You find a file in a codebase with both `//go:build linux` and
    `// +build linux`. Is this a problem? What does `go vet` say, and what does
    `gofmt` do?

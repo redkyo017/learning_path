@@ -44,7 +44,7 @@ clean up and return.
 ## The goroutine scheduler: M:N model
 
 Go uses an M:N scheduler: M goroutines are multiplexed onto N OS threads, where
-N is controlled by `GOMAXPROCS` (default: number of logical CPUs).
+N is controlled by `GOMAXPROCS` (default: number of logical CPUs, or the container's CPU limit on Linux since Go 1.25 — see below).
 
 Three types of entities:
 
@@ -68,12 +68,21 @@ another M can take the P and keep running other goroutines. The original M
 is "parked" waiting for the syscall to complete.
 
 **GOMAXPROCS in practice:**
-- Default is `runtime.NumCPU()` — correct for CPU-bound work
+- Default is `runtime.NumCPU()` — correct for CPU-bound work. Since Go 1.25 on
+  Linux the default also respects the cgroup CPU bandwidth limit (the Kubernetes
+  "CPU limit", not the request) when it is lower than the logical CPU count, and
+  the runtime updates it periodically if the CPU count or limit changes
+  ([Go 1.25 notes](https://go.dev/doc/go1.25)).
+- Setting `GOMAXPROCS` manually (env var or `runtime.GOMAXPROCS`) turns that
+  behavior off, as does `go.uber.org/automaxprocs`, which is no longer needed on
+  1.25+. `runtime.SetDefaultGOMAXPROCS` restores the runtime default.
 - For I/O-heavy services, the default is also correct; the scheduler handles it
-- Set `GOMAXPROCS=1` in tests when debugging race conditions (removes true
-  parallelism, makes ordering deterministic)
-- Never set `GOMAXPROCS` lower than 1 or higher than `runtime.NumCPU()` in
-  production without a benchmark proving it helps
+- `GOMAXPROCS=1` in tests removes true parallelism, which can make some races
+  easier to reproduce — but it does **not** make ordering deterministic:
+  goroutines still interleave at blocking points and preemption points. Use
+  `-race` and `testing/synctest` (below) instead of relying on it.
+- Do not set `GOMAXPROCS` manually in production without a benchmark proving it
+  helps — you would be opting out of the container-aware default
 
 ---
 
@@ -107,6 +116,48 @@ func TestMyFunc(t *testing.T) {
 
 **At runtime:** Expose `GET /debug/pprof/goroutine` via `net/http/pprof` and
 look for goroutines stuck in the same blocking call site at growing counts.
+
+### Newer leak tools
+
+**`goroutineleak` profile (Go 1.27).** The runtime can now report goroutines that
+are blocked forever on a channel, `sync.Mutex`, `sync.Cond`, etc. It is a new
+profile type in `runtime/pprof`, also served at
+`/debug/pprof/goroutineleak` by `net/http/pprof`. It was a
+`GOEXPERIMENT=goroutineleakprofile` in Go 1.26 and is generally available in
+1.27 ([Go 1.27 notes](https://go.dev/doc/go1.27),
+[Go 1.26 notes](https://go.dev/doc/go1.26)). It builds on GC reachability, so
+it **cannot** see leaks where the blocking primitive is reachable from a global
+variable or from the locals of a runnable goroutine — a clean report is not a
+proof of no leaks.
+
+```bash
+curl -s 'localhost:6060/debug/pprof/goroutineleak?debug=1'
+```
+
+**`testing/synctest` (GA in Go 1.25).** `synctest.Test` runs a test function in
+an isolated "bubble" where `time` uses a fake clock that jumps forward
+instantly once every goroutine in the bubble is blocked, and `synctest.Wait`
+blocks until all goroutines in the bubble are durably blocked
+([Go 1.25 notes](https://go.dev/doc/go1.25),
+[package docs](https://pkg.go.dev/testing/synctest)). That makes concurrency
+tests deterministic and fast without real sleeps:
+
+```go
+func TestRetryBackoff(t *testing.T) {
+    synctest.Test(t, func(t *testing.T) {
+        done := make(chan struct{})
+        go func() { retryWithBackoff(); close(done) }() // sleeps 1s, 2s, 4s...
+        synctest.Wait() // goroutine is now blocked in time.Sleep
+        time.Sleep(7 * time.Second) // fake time: returns immediately in real time
+        synctest.Wait()
+        select {
+        case <-done:
+        default:
+            t.Fatal("retryWithBackoff did not finish")
+        }
+    })
+}
+```
 
 **The classic leak pattern:**
 
@@ -243,6 +294,14 @@ cause := context.Cause(ctx)
 for the errgroup pattern (Day 5) and anywhere you need to surface the real
 reason for cancellation through a context.
 
+Two more context helpers (Go 1.21): `context.WithoutCancel(parent)` returns a
+context that keeps the parent's values but is never canceled — the right tool
+for background work that must outlive a request — and
+`context.AfterFunc(ctx, f)` runs `f` in its own goroutine once `ctx` is done.
+In tests (Go 1.24), `t.Context()` returns a context that is canceled just
+before the test's cleanup functions run, so goroutines started by the test can
+be stopped without a hand-rolled `WithCancel`.
+
 ---
 
 ## sync package: Mutex, RWMutex, atomic, WaitGroup, Once
@@ -325,6 +384,19 @@ Critical rules:
 - Always `defer wg.Done()` at the top of the goroutine, before any early returns
 - `wg.Wait()` can only be called once the final `Add` has completed
 
+Since Go 1.25, `wg.Go(func() { ... })` does the `Add(1)` / `go` / `defer Done()`
+bookkeeping for you, which removes the whole class of misplaced-`Add` bugs; `go
+vet`'s new `waitgroup` analyzer reports misplaced `Add` calls
+([Go 1.25 notes](https://go.dev/doc/go1.25)):
+
+```go
+var wg sync.WaitGroup
+for _, item := range items {
+    wg.Go(func() { process(item) })
+}
+wg.Wait()
+```
+
 ### Once
 
 `sync.Once` executes a function exactly once, regardless of how many goroutines
@@ -377,9 +449,13 @@ for _, item := range items {
 }
 ```
 
-The fix was `item := item` inside the loop. In Go 1.22, each loop iteration
-creates a new variable, so the capture is correct by default. If you have
-`item := item` in your old code, it still works — it's just a no-op now.
+The fix was `item := item` inside the loop. Since Go 1.22, each loop iteration
+creates a new variable, so the capture is correct by default — but only when the
+**module's `go` line** in `go.mod` is 1.22 or later; the toolchain version alone
+does not change it ([Go 1.22 notes](https://go.dev/doc/go1.22)). If you have
+`item := item` in your old code, it still works — it's just a no-op now, and
+`go fix` (rewritten in Go 1.26 around modernizers,
+[notes](https://go.dev/doc/go1.26)) can strip these copies for you.
 
 **`sync.Map` is for rare specific cases.** You may have heard "use `sync.Map`
 for concurrent maps." In practice, a `map` + `sync.RWMutex` is the right choice
@@ -391,7 +467,7 @@ scenarios, it's slower than a mutex.
 
 ## Key concepts to memorize
 
-- M goroutines on N OS threads; N = GOMAXPROCS = `runtime.NumCPU()` by default
+- M goroutines on N OS threads; N = GOMAXPROCS = `runtime.NumCPU()` by default (container CPU limit on Linux since Go 1.25, unless set manually)
 - P (Processor) is the scheduler unit; M must hold a P to run; work-stealing keeps CPUs busy
 - Every goroutine needs an exit condition — context cancellation is the standard mechanism
 - `defer cancel()` is required for all context types, even timeout/deadline contexts

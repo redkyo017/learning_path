@@ -36,10 +36,10 @@ If you find yourself unable to test business logic without a real database, the 
 | Feature | database/sql + lib/pq | pgx (native) |
 |---|---|---|
 | Connection pooling | Built into database/sql | `pgxpool` — richer configuration |
-| Named parameters | Not supported (positional `$1`) | Not supported either (use sqlc or pgx named args via pgconn) |
+| Named parameters | Not supported (positional `$1`) | Supported: [`pgx.NamedArgs`](https://pkg.go.dev/github.com/jackc/pgx/v5#NamedArgs) (`@name`) and `pgx.StrictNamedArgs` (v5) |
 | COPY protocol (bulk insert) | Not supported | Supported via `pgx.Conn.CopyFrom` |
 | PostgreSQL array types | Manual serialization | Native `pgtype` support |
-| PostgreSQL JSONB | Manual | Native `pgtype.JSONB` |
+| PostgreSQL JSON/JSONB | Manual | Scans directly into Go values, `[]byte` or structs via the v5 [`JSONCodec`/`JSONBCodec`](https://pkg.go.dev/github.com/jackc/pgx/v5/pgtype) (`pgtype.JSONB` was pgx v4) |
 | Listen/Notify | Not supported | Supported |
 | Prepared statements | Supported | Supported with automatic caching |
 | Batch queries | Not supported | Supported via `pgx.Batch` |
@@ -50,7 +50,7 @@ If you find yourself unable to test business logic without a real database, the 
 
 **When to use `pgx` natively**: when you are committed to PostgreSQL, need bulk inserts (COPY), need JSONB/arrays, or want finer error typing. Most new Go+Postgres services use `pgxpool` directly.
 
-**`sqlc` is the synthesis**: generates type-safe Go from SQL queries, supports both `database/sql` and `pgx`. If you are starting fresh in 2024, the recommended stack is `pgxpool` + `sqlc`. This eliminates the ORM vs hand-written SQL debate.
+**`sqlc` is the synthesis**: generates type-safe Go from SQL queries, supports both `database/sql` and `pgx`. If you are starting fresh, the recommended stack is `pgxpool` + `sqlc`. This eliminates the ORM vs hand-written SQL debate.
 
 ---
 
@@ -63,7 +63,7 @@ A connection pool reuses database connections across requests. The critical insi
 | Setting | What it controls | Zero value behavior | Production recommendation |
 |---|---|---|---|
 | `MaxOpenConns` | Maximum concurrent connections to the database | Unlimited — exhausts Postgres `max_connections` | Set to `(max_connections / number_of_app_instances) * 0.8` |
-| `MaxIdleConns` | Connections kept open in the idle pool | `= MaxOpenConns` (pre-Go 1.2 had limit of 1) | `MaxOpenConns / 2` or `10` — idle connections hold server resources |
+| `MaxIdleConns` | Connections kept open in the idle pool | Default max idle is 2 ([docs](https://pkg.go.dev/database/sql#DB.SetMaxIdleConns)) — too low under load, so connections churn | `MaxOpenConns / 2` or `10` — idle connections hold server resources |
 | `ConnMaxLifetime` | Maximum age of a connection before recycling | Unlimited — misses credential rotations, TCP silent drops | `30m` to `1h` — recycle before firewall idle timeouts (typically 10-20 min) |
 | `ConnMaxIdleTime` | Maximum time a connection can sit idle in the pool | Unlimited — idle connections consume Postgres slots | `5m` to `10m` |
 
@@ -100,6 +100,10 @@ pool, err := pgxpool.NewWithConfig(context.Background(), config)
 `MaxOpenConns = 0` means unlimited. A traffic spike spins up thousands of goroutines, each opening a new connection. Postgres has a hard `max_connections` limit (default 100). When that limit is hit, new connections fail with "FATAL: sorry, too many clients already". The service falls over completely. Without `MaxOpenConns`, your connection pool provides no back-pressure.
 
 `ConnMaxLifetime = 0` means connections live forever. Cloud environments (RDS, Cloud SQL) rotate credentials, rotate certificates, and have firewalls that drop TCP connections silent after 10-15 minutes of inactivity. A connection that was opened 30 minutes ago may be dead — the pool does not know until the next query fails. Setting `ConnMaxLifetime` to 30 minutes ensures connections are recycled before the firewall kills them.
+
+### SQL injection
+
+Always pass values as `$n` placeholders (`WHERE id = $1`) and never build SQL with `fmt.Sprintf` or string concatenation of user input. Identifiers (table and column names, `ORDER BY` columns) cannot be parameterized: quote them with `pgx.Identifier{"users", col}.Sanitize()` or check them against a fixed allowlist before use.
 
 ---
 
@@ -268,7 +272,7 @@ Migrations are code. They must be:
 
 ## Returning engineer: what changed since 1.16–1.18
 
-**`pgx/v5` (2022) changed the API significantly from v4**: if your old code used `pgx/v4`, the v5 migration requires updating imports from `github.com/jackc/pgx/v4` to `v5`, and the `pgtype` API was completely rewritten. The `Scan` interface changed — custom types no longer implement `pgtype.BinaryDecoder`/`pgtype.TextDecoder`; they implement `pgtype.Scanner`. Plan a migration if you have custom pgtype wrappers.
+**`pgx/v5` (2022) changed the API significantly from v4**: if your old code used `pgx/v4`, the v5 migration requires updating imports from `github.com/jackc/pgx/v4` to `v5`, and the `pgtype` API was completely rewritten. The `Scan` interface changed — custom types no longer implement `pgtype.BinaryDecoder`/`pgtype.TextDecoder`; there is no `pgtype.Scanner` interface in v5. Implement `database/sql`'s `sql.Scanner` / `driver.Valuer`, which pgx supports, or pgtype's per-type interfaces (for example `pgtype.Int64Scanner`). Plan a migration if you have custom pgtype wrappers.
 
 **`sqlc` emerged as the preferred query approach**: in 2018-2019, the dominant options were GORM (full ORM) or `sqlx` (light enhancement to `database/sql`). By 2022-2024, `sqlc` (generates type-safe Go from `.sql` files) became the go-to for teams that want SQL control without manual scanning boilerplate. The repository pattern pairs well with `sqlc` — `sqlc` generates the implementation, you define the interface.
 

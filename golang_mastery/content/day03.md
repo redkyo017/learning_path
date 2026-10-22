@@ -152,7 +152,7 @@ maps.Copy(dst, extra)  // dst is now {"a":1, "b":99, "c":3}
 // Delete by predicate — remove all pairs where f returns true
 maps.DeleteFunc(dst, func(k string, v int) bool { return v > 2 })
 
-// Key iteration — plain range loop (Go 1.22 compatible)
+// Key iteration — plain range loop
 for k := range src {
     fmt.Println(k)
 }
@@ -164,21 +164,66 @@ maps.Equal(src, dst)
 Common pattern: get sorted keys of a map (maps deliberately have no order):
 
 ```go
-// Go 1.22: collect keys manually, then sort
-keys := make([]string, 0, len(src))
-for k := range src {
-    keys = append(keys, k)
-}
-slices.Sort(keys)
-for _, k := range keys {
+// maps.Keys returns an iterator (Go 1.23); slices.Sorted collects and sorts it
+for _, k := range slices.Sorted(maps.Keys(src)) {
     fmt.Printf("%s: %d\n", k, src[k])
 }
-// Note: maps.Keys / maps.Values returning iter.Seq were added in Go 1.23.
-// On Go 1.22, use a plain range loop to collect keys.
 ```
+
+(The pre-1.23 version — append keys to a slice in a `for k := range` loop, then
+`slices.Sort` — still works but is no longer necessary.)
 
 ---
 
+## Iterators and range-over-func
+
+Go 1.23 added **range-over-func**: a `for ... range` loop can iterate over a
+function of type `func(yield func(V) bool)` (or the `K, V` / zero-value variants)
+([Go 1.23 notes](https://go.dev/doc/go1.23),
+[Range Over Function Types](https://go.dev/blog/range-functions)). The `iter`
+package names the two common shapes: `iter.Seq[V]` and `iter.Seq2[K, V]`.
+
+The stdlib now returns iterators where it used to allocate slices:
+
+| Package | Iterator helpers |
+|---|---|
+| `slices` | `All`, `Values`, `Backward`, `Chunk`; consumers `Collect`, `AppendSeq`, `Sorted`, `SortedFunc` |
+| `maps` | `All`, `Keys`, `Values`; consumers `Collect`, `Insert` |
+| `strings` / `bytes` (Go 1.24, [notes](https://go.dev/doc/go1.24)) | `Lines`, `SplitSeq`, `SplitAfterSeq`, `FieldsSeq`, `FieldsFuncSeq` |
+
+Writing your own is just a function that calls `yield` until it returns false:
+
+```go
+import "iter"
+
+// Evens yields the even numbers in [0, n).
+func Evens(n int) iter.Seq[int] {
+    return func(yield func(int) bool) {
+        for i := 0; i < n; i += 2 {
+            if !yield(i) {
+                return // the loop body did break/return: stop producing
+            }
+        }
+    }
+}
+
+for v := range Evens(10) {
+    fmt.Println(v) // 0 2 4 6 8
+}
+
+squares := slices.Collect(func(yield func(int) bool) {
+    for v := range Evens(10) {
+        if !yield(v * v) {
+            return
+        }
+    }
+})
+```
+
+Rule of thumb: return a slice when callers usually want the whole thing; return
+an `iter.Seq` when the data is large, lazy, or callers often stop early.
+
+---
 ## The cmp package
 
 `cmp` provides two functions that compose with everything:
@@ -264,8 +309,13 @@ logger.Info("db query",
 | `slog.LevelError` | 8 | Errors requiring attention |
 
 Set minimum level via `HandlerOptions.Level`. Logs below the minimum are
-**discarded before attribute evaluation** — this is important: key-value
-arguments are not evaluated if the level is filtered out.
+dropped by the handler before it formats or writes anything. Note that Go
+still **evaluates the call arguments** at the call site — `logger.Debug("x", "v", expensive())`
+runs `expensive()` even when Debug is filtered out; only the handler's
+formatting/output work is skipped. For expensive values, implement
+[`slog.LogValuer`](https://pkg.go.dev/log/slog#LogValuer) (its `LogValue` method
+runs only if the record is actually handled), or guard the call with
+`if logger.Enabled(ctx, slog.LevelDebug) { ... }`.
 
 ### Logger with context
 
@@ -342,6 +392,25 @@ if errors.As(err, &re) {
 `errors.As` unwraps the chain until it finds a value assignable to the target
 pointer type. Use this when you need the structured data out of a wrapped error.
 
+### errors.AsType — generic As (Go 1.26)
+
+Go 1.26 added `errors.AsType[T]`, a type-safe, generic version of `errors.As`
+that needs no pre-declared target variable
+([Go 1.26 notes](https://go.dev/doc/go1.26),
+[docs](https://pkg.go.dev/errors#AsType)):
+
+```go
+if re, ok := errors.AsType[*ResourceError](err); ok {
+    fmt.Println("failed resource ID:", re.ID)
+}
+```
+
+Go 1.27's `go vet` printf check also reports `fmt.Errorf("...: %w", p)` when `p`
+has type `*E` and `E` itself implements `error` — wrapping a pointer there
+causes spurious failures in `errors.Is` / type assertions
+([Go 1.27 notes](https://go.dev/doc/go1.27)). (`ResourceError` above is fine:
+only `*ResourceError` implements `error`.)
+
 ### errors.Unwrap — one level at a time
 
 ```go
@@ -370,7 +439,7 @@ err := errors.Join(err1, err2, err3)
 | `sort.Search(n, func(i int) bool { ... })` | `slices.BinarySearch(s, target)` | `slices` |
 | Manual dedup loop | `slices.Sort(s); slices.Compact(s)` | `slices` |
 | `make([]T, len(src)); copy(dst, src)` | `slices.Clone(src)` | `slices` |
-| `for k := range m {}` to get keys | collect manually + `slices.Sort` (Go 1.22); `maps.Keys` + `slices.Collect` requires Go 1.23 | `slices` |
+| `for k := range m {}` to get keys | `slices.Sorted(maps.Keys(m))` (`maps.Keys` returns an iterator since Go 1.23) | `slices` |
 | `if err == ErrNotFound` | `errors.Is(err, ErrNotFound)` | `errors` |
 | `err.(*MyError)` type assertion | `errors.As(err, &target)` | `errors` |
 | `log.Printf("msg key=%v", val)` | `slog.Info("msg", "key", val)` | `log/slog` |

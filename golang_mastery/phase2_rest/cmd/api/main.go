@@ -17,11 +17,19 @@ import (
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	if err := middleware.CheckSecret(); err != nil {
+		slog.Error("config", "err", err)
+		os.Exit(1)
+	}
 
 	repo := repository.NewMemoryTaskRepository()
 	h := handler.NewTaskHandler(repo)
 
 	r := gin.New()
+	// Gin trusts every proxy by default, so c.ClientIP() would honour a
+	// client-supplied X-Forwarded-For and the per-IP rate limit could be
+	// bypassed. Trust none here; behind a load balancer, list its CIDRs.
+	r.SetTrustedProxies(nil)
 	r.Use(gin.Recovery(), middleware.GinLogger(), middleware.RateLimit(100))
 	r.GET("/healthz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
 	r.GET("/readyz", func(c *gin.Context) { c.JSON(200, gin.H{"status": "ok"}) })
@@ -33,7 +41,14 @@ func main() {
 	v1.GET("/tasks/:id", h.Get)
 	v1.PATCH("/tasks/:id/complete", h.Complete)
 
-	srv := &http.Server{Addr: ":8080", Handler: r}
+	srv := &http.Server{
+		Addr:              ":8080",
+		Handler:           r,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
 
 	go func() {
 		slog.Info("listening", "addr", srv.Addr)

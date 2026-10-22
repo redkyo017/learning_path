@@ -4,14 +4,15 @@ services:
     ports:
       - "8080:8080"
     environment:
-      JWT_SECRET: local-dev-secret
+      # Local dev only. HS256 needs >= 32 bytes; the API refuses to start otherwise.
+      JWT_SECRET: local-dev-only-secret-0123456789abcdef
       DATABASE_URL: postgres://dev:dev@postgres:5432/tasks?sslmode=disable
     depends_on:
       postgres:
         condition: service_healthy
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: dev
       POSTGRES_PASSWORD: dev

@@ -29,7 +29,8 @@ A multi-stage build separates the build environment from the runtime environment
 
 ```dockerfile
 # ── Stage 1: builder ──────────────────────────────────────────────────────────
-FROM golang:1.23-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder
+ARG TARGETOS TARGETARCH
 
 WORKDIR /app
 
@@ -42,14 +43,14 @@ RUN go mod download
 COPY . .
 
 # Build a statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
     -ldflags="-w -s" \
     -trimpath \
     -o /app/server \
     ./cmd/server
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian13:nonroot
 
 # Copy only the binary
 COPY --from=builder /app/server /server
@@ -77,7 +78,7 @@ If you copy all source files before `go mod download`, every source change busts
 | Flag | Effect |
 |---|---|
 | `CGO_ENABLED=0` | Disables C bindings — produces a fully static binary that runs in distroless/scratch |
-| `GOOS=linux GOARCH=amd64` | Cross-compile for the target platform |
+| `GOOS=$TARGETOS GOARCH=$TARGETARCH` | Cross-compile for the target platform; BuildKit fills these from `--platform`, while the builder stage runs natively thanks to `--platform=$BUILDPLATFORM` |
 | `-ldflags="-w -s"` | Strip DWARF debug info (`-w`) and symbol table (`-s`) — reduces binary size 30-40% |
 | `-trimpath` | Removes local build path from stack traces — prevents leaking developer machine paths in logs |
 
@@ -97,11 +98,11 @@ Both are small base images. The choice is a trade-off between debuggability and 
 | Attack surface | Busybox + musl + your binary | Your binary only |
 | CVE exposure | Periodic alpine CVEs | Near-zero (no OS packages) |
 | Use case | When you need `exec` into the container | Production services with static Go binaries |
-| Variant for debugging | — | `gcr.io/distroless/static-debian12:debug` (has busybox) |
+| Variant for debugging | — | `gcr.io/distroless/static-debian13:debug-nonroot` (has busybox) |
 
-For Go services with `CGO_ENABLED=0`, `gcr.io/distroless/static-debian12:nonroot` is the production standard. The `:nonroot` variant runs as uid `65532` automatically — no `USER` instruction needed and no root-to-non-root ownership issues.
+For Go services with `CGO_ENABLED=0`, `gcr.io/distroless/static-debian13:nonroot` is the production standard ([distroless](https://github.com/GoogleContainerTools/distroless)). The `:nonroot` variant runs as uid `65532` automatically — no `USER` instruction needed and no root-to-non-root ownership issues.
 
-Use `distroless/static-debian12:debug` during incident investigation — it includes `busybox` for shell access — then switch back to `:nonroot` after.
+Use `distroless/static-debian13:debug-nonroot` during incident investigation — it includes `busybox` for shell access — then switch back to `:nonroot` after.
 
 ---
 
@@ -121,6 +122,7 @@ import (
     "errors"
     "log/slog"
     "net/http"
+    "os"
     "os/signal"
     "syscall"
     "time"
@@ -142,16 +144,22 @@ func main() {
     ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
     defer stop()
 
-    // Start server in a goroutine
+    // Start server in a goroutine; report a startup/serve failure back to main
+    serveErr := make(chan error, 1)
     go func() {
         slog.Info("server starting", "addr", srv.Addr)
         if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-            slog.Error("server failed", "error", err)
+            serveErr <- err
         }
     }()
 
-    // Block until signal received (ctx cancelled)
-    <-ctx.Done()
+    // Block until a signal arrives OR the server fails (e.g. port already in use)
+    select {
+    case err := <-serveErr:
+        slog.Error("server failed", "error", err)
+        os.Exit(1) // nothing to drain; do not wait for a signal that may never come
+    case <-ctx.Done():
+    }
     stop() // release signal resources immediately
     slog.Info("shutdown signal received, draining connections")
 
@@ -182,13 +190,33 @@ SIGTERM sent
      │         └ new connections rejected
      │         └ in-flight requests continue
      │
-     ├─ 25s : shutdownCtx times out → Shutdown returns ErrShutdownTimeout
-     │         (you should log this as a warning)
+     ├─ 25s : shutdownCtx times out → Shutdown returns context.DeadlineExceeded
+     │         (there is no special timeout error: `Shutdown` returns the context's error; log it as a warning)
      │
      └─ 30s : Kubernetes sends SIGKILL → process killed
 ```
 
-Always set the `Shutdown` context timeout to 5 seconds less than `terminationGracePeriodSeconds`. This gives the process a chance to log and clean up before being killed.
+Always set the `Shutdown` context timeout to 5 seconds less than `terminationGracePeriodSeconds`. This gives the process a chance to log and clean up before being killed. On timeout, [`Shutdown`](https://pkg.go.dev/net/http#Server.Shutdown) returns the context's error (`context.DeadlineExceeded`), and any connections still open are left running until the process exits; call `srv.Close()` if you want to force them shut.
+
+### Shutdown in a load-balanced world
+
+The sequence above is not enough behind a load balancer or Kubernetes Service. Removing a pod from the endpoints is asynchronous: for a moment after SIGTERM, traffic can still be routed to you, and requests arriving after `Shutdown` closed the listener get connection errors. Two common mitigations:
+
+1. On SIGTERM, first flip an atomic "shutting down" flag so `/readyz` returns 503, sleep a few seconds (longer than the readiness probe period plus propagation delay), and only then call `srv.Shutdown`. Alternatively, put a `preStop` hook with a short `sleep` in the pod spec. Budget this delay inside `terminationGracePeriodSeconds`.
+2. Remember what `Shutdown` does not wait for: hijacked connections, including WebSockets. Register cleanup with `srv.RegisterOnShutdown(func() { ... })` (it runs in its own goroutine) to tell those connections to close, and track them yourself if you need to wait.
+
+```go
+var shuttingDown atomic.Bool // sync/atomic
+
+// in /readyz: if shuttingDown.Load() { c.Status(http.StatusServiceUnavailable); return }
+
+<-ctx.Done()
+shuttingDown.Store(true)
+time.Sleep(5 * time.Second) // let the load balancer notice the failing /readyz
+err := srv.Shutdown(shutdownCtx)
+```
+
+Since Go 1.26, `signal.NotifyContext` cancels its context with a cause that says which signal arrived, so `context.Cause(ctx)` can tell you whether it was SIGTERM or SIGINT ([Go 1.26 notes](https://go.dev/doc/go1.26)).
 
 ---
 
@@ -203,7 +231,7 @@ Kubernetes (and ECS) use health checks to decide when to route traffic to a pod 
 | What to check | Is the process not deadlocked? Is memory not OOM? | Is the DB connection pool healthy? Is the cache warmed? |
 | What NOT to check | Database connectivity | Internal process health only |
 | Response on degraded dependency | 200 (process is fine) | 503 (not ready to serve) |
-| Startup probe | Separate `/startupz` or use readiness with `failureThreshold` | Same `/readyz`, higher `failureThreshold` |
+| Slow startup | Use a Kubernetes `startupProbe` (liveness is disabled until it succeeds) | A higher readiness `failureThreshold` only delays traffic; it does not stop liveness from killing the container |
 
 ```go
 // /healthz — always returns 200 unless the process is stuck
@@ -226,6 +254,8 @@ r.GET("/readyz", func(c *gin.Context) {
     c.JSON(http.StatusOK, gin.H{"status": "ready"})
 })
 ```
+
+For slow-starting services, configure a `startupProbe` rather than stretching the readiness threshold: liveness and readiness probes do not run until the startup probe succeeds, so a slow boot is not mistaken for a deadlock ([probe docs](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/)).
 
 ### Why liveness must not check the database
 
@@ -329,7 +359,7 @@ For more complex config, `github.com/caarlos0/env` or `github.com/kelseyhightowe
 
 **`//go:embed` for static assets** (Go 1.16): if your service serves static files or OpenAPI specs, embed them in the binary with `//go:embed static/*`. No runtime filesystem reads, no missing files in containers. This works with `distroless` because there is no filesystem to read from anyway.
 
-**Multi-arch builds**: Apple Silicon (ARM64) development vs AMD64 production is now standard. Add `--platform=linux/amd64` to your builder stage or use `docker buildx build --platform linux/amd64,linux/arm64` for multi-arch images. Without this, building on an M-series Mac produces ARM binaries that will not run in your x86 cluster.
+**Multi-arch builds**: Apple Silicon (ARM64) development vs AMD64 production is now standard. Use the `FROM --platform=$BUILDPLATFORM` builder with `ARG TARGETOS TARGETARCH` shown above, then `docker buildx build --platform linux/amd64,linux/arm64 .` ([multi-platform docs](https://docs.docker.com/build/building/multi-platform/)). Go cross-compiles natively on the build host, so no emulated compile is needed on an M-series Mac, and the image for each target is correct. Without a target platform, a plain `docker build` on an M-series Mac produces an ARM image that will not run in your x86 cluster. Also note that official `golang` images set `GOTOOLCHAIN=local`, so a `go.mod` requiring a newer Go than the image provides fails the build; use a current tag such as `golang:1.27-alpine` ([Docker Hub](https://hub.docker.com/_/golang)).
 
 ---
 
@@ -365,8 +395,8 @@ err := srv.Shutdown(shutdownCtx)
 **3. Using `os.Exit` in the signal handler**
 `os.Exit` does not run deferred functions. If your DB pool close, metric flush, or log sync is in a `defer`, calling `os.Exit` bypasses it. Use structured shutdown (return from `main`) rather than `os.Exit`.
 
-**4. Building on Apple Silicon without `--platform linux/amd64`**
-The Docker builder will use the native architecture by default. A binary built on ARM64 silently copies into the image but panics or is not found when deployed to an x86 node. Always specify `FROM --platform=linux/amd64 golang:1.23-alpine AS builder` or use `docker buildx`.
+**4. Building on Apple Silicon without a target platform**
+The Docker builder will use the native architecture by default. A binary built on ARM64 silently copies into the image but panics or is not found when deployed to an x86 node. Use `FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS builder` with `ARG TARGETOS TARGETARCH`, and pass `docker buildx build --platform linux/amd64` (or both architectures).
 
 **5. Routing health checks through auth middleware**
 If `/readyz` requires a `Bearer` token, Kubernetes cannot call it. If `/readyz` counts against the rate limiter, it can trigger false positive 503s. Register health endpoints before adding auth and rate limit middleware to the router.

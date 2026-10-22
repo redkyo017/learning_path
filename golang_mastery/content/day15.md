@@ -223,7 +223,21 @@ grpc-health-probe -addr=localhost:50051 -service=payments.v1.PaymentService
 # status: SERVING
 ```
 
-`grpc-health-probe` is a standalone binary used in ECS health checks (covered in Day 16).
+`grpc-health-probe` is a standalone binary used in ECS health checks (covered in Day 16). The `Health` service also has a `List` RPC (added to `health.Server` in grpc-go v1.73.0) that returns the status of all registered services.
+
+Neither the load balancer nor `grpc-health-probe` sends credentials, so an auth interceptor must let `/grpc.health.v1.Health/` (and `/grpc.reflection.` if you use grpcurl) through, as the lab's `interceptor/auth.go` does.
+
+### Draining on shutdown
+
+On SIGTERM, flip health to NOT_SERVING **before** you stop the server:
+
+```go
+// signal received
+healthSrv.Shutdown()   // all services -> NOT_SERVING, ignores later SetServingStatus calls
+s.GracefulStop()       // then finish in-flight RPCs and close
+```
+
+`health.Server.Shutdown()` sets every service to `NOT_SERVING` and ignores further status changes (`Resume()` undoes it). The point is ordering: the load balancer's next health check sees NOT_SERVING and stops sending new requests to this task, while `GracefulStop()` lets in-flight RPCs finish. Calling `GracefulStop()` alone leaves a window where the balancer still routes new calls to a task that is closing. This is what the lab's `cmd/server/main.go` does.
 
 ---
 
@@ -274,7 +288,7 @@ func MetricsInterceptor(
 }
 ```
 
-In practice, use `go-grpc-prometheus` or `grpc-ecosystem/go-grpc-middleware/providers/prometheus` — they implement all three metrics with correct label handling and streaming support. Write the above once from scratch to understand the shape, then use the library.
+In practice, use `github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus` (go-grpc-middleware v2; the older standalone `go-grpc-prometheus` repository is archived) — it implements all three metrics with correct label handling and streaming support. Write the above once from scratch to understand the shape, then use the library.
 
 ### Exposing the metrics endpoint
 
@@ -285,6 +299,25 @@ go func() {
     http.ListenAndServe(":9090", nil)
 }()
 ```
+
+### OpenTelemetry for gRPC
+
+For traces (and the OTel RPC metrics) use the [`otelgrpc`](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc) package from opentelemetry-go-contrib. It plugs in as a gRPC **stats handler**, not an interceptor:
+
+```go
+import "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+
+// server
+s := grpc.NewServer(grpc.StatsHandler(otelgrpc.NewServerHandler()))
+
+// client
+conn, err := grpc.NewClient(addr,
+    grpc.WithTransportCredentials(insecure.NewCredentials()),
+    grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+)
+```
+
+The old `otelgrpc` interceptor helpers were replaced by stats handlers (the package docs mark `InterceptorFilter` as "Deprecated: Use stats handlers instead"), so stats handlers are the API to use. Trace context propagates through gRPC metadata automatically once the global propagator is set. Stats handlers also see streams and transport-level events, which is why they replaced the unary/stream interceptor pair.
 
 ---
 
@@ -333,7 +366,7 @@ Log `status.Code(err)` not `err.Error()`. The code is structured and queryable i
 
 - **`slog` is the standard library structured logger (Go 1.21).** The `log` package and `log.Printf` are now legacy for server code. `slog` has structured attributes, levelled output, and JSON handlers — use it in all interceptors.
 - **gRPC service config retry is production-ready.** In the 1.16 era, retry was experimental or required manual implementation. The `retryPolicy` service config field is now stable and the preferred approach.
-- **`grpc.Dial` is deprecated in favour of `grpc.NewClient`.** The semantic difference: `grpc.Dial` began connecting immediately; `grpc.NewClient` is lazy (connects on first use). Most production code should use `grpc.NewClient`.
+- **`grpc.Dial` is deprecated in favour of `grpc.NewClient`.** The semantic difference: `grpc.Dial` began connecting immediately; `grpc.NewClient` is lazy (connects on first use). Most production code should use `grpc.NewClient`. Per its [docs](https://pkg.go.dev/google.golang.org/grpc#NewClient), `NewClient` defaults to the `dns` resolver (`Dial` used `passthrough`), does no I/O until the first RPC (the channel starts idle), and ignores `WithBlock`, `WithTimeout` and `FailOnNonTempDialError`.
 - **`grpc-ecosystem/go-grpc-middleware/v2` is the 2024 standard for interceptor libraries.** v1 is still widely used but the v2 rewrite has better composition, streaming support, and uses the modern gRPC interceptor types. If you're starting a new service, use v2.
 - **`grpc_health_v1` is built into the `google.golang.org/grpc/health` package.** In the 1.16 era it sometimes required a separate proto compilation step. It ships with the gRPC module now.
 - **`context/slog` zero-allocation logging path.** `slog.LogAttrs` avoids allocations compared to `slog.With(...).Info(...)`. In a high-throughput interceptor, this matters.
@@ -356,7 +389,7 @@ Log `status.Code(err)` not `err.Error()`. The code is structured and queryable i
 
 **1. Creating a new timeout context in every handler instead of forwarding the incoming context**
 
-*Why it matters:* `context.WithTimeout(ctx, 5*time.Second)` inside a handler caps the downstream call at 5 seconds even if the incoming deadline is 100ms. The service might succeed from its own perspective while the client has already timed out and moved on. Worse, 5 seconds of wasted work accumulates under load.
+*Why it matters:* A child context never outlives its parent ([`context.WithDeadline`](https://pkg.go.dev/context#WithDeadline): if the parent's deadline is earlier, the child inherits it), so `context.WithTimeout(ctx, 5*time.Second)` under an incoming 100ms deadline still expires at 100ms — the earlier deadline wins. The real problem is the opposite: the extra timeout adds nothing, and building the context from `context.Background()` instead of `ctx` would detach the call from the client's deadline and cancellation, so the service keeps working (up to 5s per call) after the client has timed out and moved on. That wasted work accumulates under load.
 
 *How to avoid:* Pass `ctx` directly to all downstream calls. Only shorten a deadline (with `context.WithTimeout`) when you have a specific SLA reason to do so — and document it.
 

@@ -34,6 +34,9 @@ func main() {
 	cb := gw_middleware.NewCircuitBreaker(5, 30*time.Second)
 
 	r := gin.New()
+	// Gin trusts every proxy by default; per-IP rate limiting would then key on
+	// a client-supplied X-Forwarded-For. Trust none; behind an ALB, list its CIDRs.
+	r.SetTrustedProxies(nil)
 	r.Use(
 		gin.Recovery(),
 		gw_middleware.Logger(),

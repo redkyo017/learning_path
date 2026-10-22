@@ -14,7 +14,6 @@ import (
 // This is a study artifact to make goroutine leaks visible.
 func LeakyWorker(items []string, process func(string)) {
 	for _, item := range items {
-		item := item // capture loop variable (required pre-Go 1.22)
 		go func() {
 			for {
 				process(item)
@@ -28,7 +27,6 @@ func LeakyWorker(items []string, process func(string)) {
 // BoundedWorker is the fixed version: every goroutine exits when ctx is done.
 func BoundedWorker(ctx context.Context, items []string, process func(string)) {
 	for _, item := range items {
-		item := item
 		go func() {
 			for {
 				select {
@@ -153,7 +151,6 @@ func BoundedPool[T any](
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(maxWorkers)
 	for _, item := range items {
-		item := item
 		g.Go(func() error {
 			return process(ctx, item)
 		})

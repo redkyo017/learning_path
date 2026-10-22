@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -10,13 +11,17 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(getEnvOrDefault("JWT_SECRET", "dev-secret-change-in-prod"))
+// jwtSecret reads the HS256 key from the environment. There is deliberately
+// no fallback: a silent default secret is a production incident waiting to happen.
+func jwtSecret() []byte { return []byte(os.Getenv("JWT_SECRET")) }
 
-func getEnvOrDefault(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
+// CheckSecret fails fast at startup if JWT_SECRET is unset or shorter than
+// 32 bytes (RFC 7518 §3.2: HS256 keys must be at least 256 bits).
+func CheckSecret() error {
+	if len(jwtSecret()) < 32 {
+		return errors.New("JWT_SECRET must be set and at least 32 bytes")
 	}
-	return def
+	return nil
 }
 
 type Claims struct {
@@ -34,7 +39,7 @@ func GenerateToken(userID string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(jwtSecret())
 }
 
 // Auth validates the Bearer token in Authorization header and attaches
@@ -48,12 +53,11 @@ func Auth() gin.HandlerFunc {
 		}
 		raw := strings.TrimPrefix(header, "Bearer ")
 		var claims Claims
+		// WithValidMethods pins the algorithm: a token signed with any other
+		// alg (algorithm-confusion attack) is rejected before the key is used.
 		token, err := jwt.ParseWithClaims(raw, &claims, func(t *jwt.Token) (any, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
-			return jwtSecret, nil
-		})
+			return jwtSecret(), nil
+		}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithExpirationRequired())
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return

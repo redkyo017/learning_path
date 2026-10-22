@@ -7,6 +7,9 @@ import (
 )
 
 func main() {
+	if err := middleware.CheckSecret(); err != nil {
+		panic(err)
+	}
 	token, err := middleware.GenerateToken("user1")
 	if err != nil {
 		panic(err)

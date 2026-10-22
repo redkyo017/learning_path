@@ -325,7 +325,7 @@ for v := range ch {  // blocks forever if ch is never closed
 If the producer never calls `close(ch)`, the consumer blocks forever. Every
 channel used with `range` must be closed by its producer.
 
-### Mistake 5: Starting goroutines in a loop without capturing the loop variable (pre-1.22)
+### Mistake 5: Starting goroutines in a loop without capturing the loop variable (module `go` line below 1.22)
 
 ```go
 // BUG in Go < 1.22:
@@ -343,7 +343,7 @@ for _, item := range items {
     }()
 }
 
-// Go 1.22+: loop variable is per-iteration; no fix needed
+// Module go line >= 1.22: loop variable is per-iteration; no fix needed
 ```
 
 ---
@@ -356,8 +356,13 @@ If you have code that uses a semaphore channel alongside errgroup, simplify it.
 
 **The loop variable capture fix (Go 1.22):** You will have muscle memory for
 `item := item` inside loops. In Go 1.22+, this is a no-op — loop variables are
-per-iteration. In code that must support older Go versions, keep it. In 1.22+
-code, remove it to reduce noise.
+per-iteration — provided the **module's `go` line** is 1.22 or later (the
+installed toolchain version alone does not change the semantics; see the
+[Go 1.22 notes](https://go.dev/doc/go1.22)). In modules that must still declare
+an older `go` line, keep the copy. Otherwise remove it to reduce noise; the
+modernizers in `go fix` (rewritten in Go 1.26,
+[notes](https://go.dev/doc/go1.26)) can strip these copies automatically. The
+Phase 1 code in this course no longer contains them.
 
 **`errgroup.WithContext` returns a cancellable context tied to the group.** If
 you use `errgroup.Group{}` directly (without `WithContext`), the group has no

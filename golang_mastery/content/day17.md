@@ -9,7 +9,7 @@ Read this before starting the lab. Budget: 30 minutes.
 - Explain how `httputil.ReverseProxy` implements `http.Handler` and trace request flow from client to upstream
 - Configure `http.Transport` connection pool settings for production load and understand why defaults cause problems
 - Design a clean upstream registry interface with separation from routing logic
-- Implement path-based routing and request rewriting via the `Director` function
+- Implement path-based routing and request rewriting via the `Rewrite` hook (and know why `Director` is deprecated)
 - Handle proxy-layer errors gracefully with `ErrorHandler` without leaking upstream details
 
 ---
@@ -21,7 +21,7 @@ Read this before starting the lab. Budget: 30 minutes.
 That's it. When `ServeHTTP` is called, `httputil.ReverseProxy` does four things:
 
 1. Copies the incoming `*http.Request`
-2. Calls `Director` to mutate the copy (set the target scheme, host, path)
+2. Calls `Rewrite` with the inbound request and a fresh outbound copy (set the target scheme, host, path)
 3. Calls `Transport.RoundTrip` to make the outbound call
 4. Copies the upstream response back to the `http.ResponseWriter`
 
@@ -35,8 +35,12 @@ The key fields you will configure:
 
 ```go
 type ReverseProxy struct {
-    // Director mutates the cloned request before it is sent upstream.
-    // Mandatory: set Scheme, Host, and Path at minimum.
+    // Rewrite turns the inbound request into the outbound one (Go 1.20+).
+    // Mandatory (or the deprecated Director): at minimum, choose the target.
+    Rewrite func(*httputil.ProxyRequest)
+
+    // Director is the legacy hook — deprecated in Go 1.26 as insecure.
+    // Mutually exclusive with Rewrite. See the box below.
     Director func(*http.Request)
 
     // Transport is used to make outbound requests.
@@ -67,7 +71,8 @@ Incoming request
 ReverseProxy.ServeHTTP
       │
       ├─ clone request
-      ├─ call Director(cloned)        ← you set scheme/host/path here
+      ├─ strip hop-by-hop + client X-Forwarded-* headers
+      ├─ call Rewrite(pr)             ← you set scheme/host/path here
       ├─ call Transport.RoundTrip     ← outbound HTTP call
       │       │
       │       ├── success → call ModifyResponse (optional)
@@ -175,7 +180,7 @@ func NewGatewayHandler(reg Registry) http.Handler {
             return
         }
         proxy := &httputil.ReverseProxy{
-            Director:     buildDirector(upstream.URL()),
+            Rewrite:      buildRewrite(upstream.URL()),
             Transport:    newTransport(),
             ErrorHandler: buildErrorHandler(upstream.Name()),
         }
@@ -189,52 +194,35 @@ In practice, cache the `ReverseProxy` instances per upstream rather than constru
 
 ---
 
-## The `Director` function
+## The `Rewrite` hook
 
-`Director` is your request rewriting hook. It receives a copy of the original request and mutates it before the outbound call. The mutation must at minimum set `URL.Scheme` and `URL.Host`.
+`Rewrite` is your request rewriting hook ([Go 1.20](https://pkg.go.dev/net/http/httputil#ReverseProxy), the only non-deprecated option since [Go 1.26](https://go.dev/doc/go1.26)). It receives a `*httputil.ProxyRequest` with two requests: `pr.In` (the unmodified inbound request — treat as read-only) and `pr.Out` (the outbound request you mutate). Before `Rewrite` runs, the proxy has already removed hop-by-hop headers and the client's `X-Forwarded-*` headers from `pr.Out`.
 
 ```go
-func buildDirector(target *url.URL) func(*http.Request) {
-    return func(req *http.Request) {
-        // Set the target scheme and host
-        req.URL.Scheme = target.Scheme
-        req.URL.Host = target.Host
+func buildRewrite(target *url.URL) func(*httputil.ProxyRequest) {
+    return func(pr *httputil.ProxyRequest) {
+        // Route to the target's scheme, host and base path; joins target.Path
+        // with the incoming path and rewrites the outbound Host header.
+        pr.SetURL(target)
 
-        // Join the target prefix path with the incoming path
-        req.URL.Path = singleJoiningSlash(target.Path, req.URL.Path)
+        // Set X-Forwarded-For/-Host/-Proto from the real client connection.
+        pr.SetXForwarded()
 
-        // Set Host header to the upstream host (not the gateway's hostname)
-        req.Host = target.Host
-
-        // Add X-Forwarded-For (httputil does this, but be explicit)
-        if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-            prior, ok := req.Header["X-Forwarded-For"]
-            if ok {
-                clientIP = strings.Join(prior, ", ") + ", " + clientIP
-            }
-            req.Header.Set("X-Forwarded-For", clientIP)
-        }
+        // Headers the gateway adds go on pr.Out.
+        pr.Out.Header.Set("X-Gateway", "phase4-gateway")
     }
-}
-
-func singleJoiningSlash(a, b string) string {
-    aSlash := strings.HasSuffix(a, "/")
-    bSlash := strings.HasPrefix(b, "/")
-    switch {
-    case aSlash && bSlash:
-        return a + b[1:]
-    case !aSlash && !bSlash:
-        return a + "/" + b
-    }
-    return a + b
 }
 ```
 
-### What NOT to do in Director
+Two helpers do the work you would otherwise hand-write: `SetURL` handles scheme, host, path joining and `Host`; `SetXForwarded` sets `X-Forwarded-For` (client IP, appended to any existing value), `X-Forwarded-Host` and `X-Forwarded-Proto`. Do not append to `X-Forwarded-For` yourself — it double-appends, and because `Rewrite` already dropped the client-sent value, there is nothing to preserve.
 
-- Do not read `req.Body` — it may be nil after cloning and you'll break streaming uploads
-- Do not set `req.RequestURI` — it is set automatically and must be empty for client requests
-- Do not mutate `req.Header` after Director returns (a race with the Transport goroutine)
+### What NOT to do in Rewrite
+
+- Do not read `pr.In.Body` — it is the live inbound body and you will break streaming uploads
+- Do not mutate `pr.In` — it is the original request, shared with the caller
+- Do not touch the `ProxyRequest` or its contents after `Rewrite` returns
+
+> **Legacy: why `Director` was deprecated (Go 1.26).** `Director` mutates the outbound request, and the proxy removes hop-by-hop headers *after* it returns. A malicious client can list a header your `Director` added in its `Connection` header, and the proxy strips it as hop-by-hop — silently removing, say, your identity header. `httputil.NewSingleHostReverseProxy` is built on `Director` and also keeps client-sent `X-Forwarded-*` headers, so a client can spoof its IP. The [Go 1.26 release notes](https://go.dev/doc/go1.26) call `Director` "fundamentally unsafe"; the [`ReverseProxy` docs](https://pkg.go.dev/net/http/httputil#ReverseProxy) say to use `Rewrite`. You will still meet `Director` in older code — migrate it.
 
 ---
 
@@ -275,27 +263,19 @@ func buildErrorHandler(upstreamName string) func(http.ResponseWriter, *http.Requ
 | `net/http` routing | Method-based routing in stdlib mux (`GET /path`, `POST /path`) | Go 1.22 |
 | `net/http` routing | Wildcard path segments (`/users/{id}`) in stdlib mux | Go 1.22 |
 | Structured logging | `slog` added to standard library | Go 1.21 |
-| `httputil.ReverseProxy` | `Rewrite` field added as a cleaner alternative to `Director+ModifyResponse` | Go 1.20 |
+| `httputil.ReverseProxy` | `Rewrite` field added (safe replacement for `Director`) | Go 1.20 |
+| `httputil.ReverseProxy` | `Director` deprecated as insecure; `NewSingleHostReverseProxy` (not itself deprecated) is documented as using `Director` and keeping client `X-Forwarded-*` — build `ReverseProxy{Rewrite: ...}` instead | Go 1.26 |
 | `net/http` | `http.ResponseController` for per-request deadline and flush control | Go 1.20 |
 
-The `Rewrite` field (Go 1.20) is worth knowing. It replaces `Director` with a function that receives a `ProxyRequest` value exposing both the incoming and outbound requests:
-
-```go
-proxy.Rewrite = func(pr *httputil.ProxyRequest) {
-    pr.SetURL(target)          // sets scheme + host
-    pr.SetXForwarded()         // sets X-Forwarded-For/Host/Proto
-    pr.Out.Header.Set("X-Request-ID", requestID)
-}
-```
-
-`Rewrite` and `Director` are mutually exclusive — set one or the other.
+`Rewrite` and `Director` are mutually exclusive — set one or the other. Use `Rewrite` (see above).
 
 ---
 
 ## Key concepts to memorize
 
 - `ReverseProxy` is an `http.Handler` — it fits into any middleware chain
-- `Director` mutates the outbound request; `ModifyResponse` mutates the inbound response
+- `Rewrite` mutates the outbound request (`pr.Out`); `ModifyResponse` mutates the inbound response. `Director` is deprecated
+- Headers the gateway sets belong in `Rewrite` (`pr.Out`), never `Director` — a client can strip them via `Connection`
 - `ErrorHandler` is called when the Transport fails (connection refused, timeout) — not when the upstream returns a 4xx/5xx
 - `MaxIdleConnsPerHost` defaults to 2; for a gateway this must be much higher
 - Always share a single `Transport` per upstream — it holds the connection pool
@@ -307,9 +287,9 @@ proxy.Rewrite = func(pr *httputil.ProxyRequest) {
 
 1. **Creating a new `http.Transport` per request.** The connection pool lives on the Transport. Creating one per request means zero connection reuse — every request pays the TCP + TLS handshake cost.
 
-2. **Forgetting to set `req.Host` in Director.** Without it, the `Host` header sent to the upstream is the gateway's hostname. Many upstreams reject requests with the wrong `Host`.
+2. **Building the outbound URL by hand and forgetting the `Host` header.** `pr.SetURL` sets it for you; without it, the `Host` header sent to the upstream is the gateway's hostname. Many upstreams reject requests with the wrong `Host`.
 
-3. **Calling `r.Body.Read()` in Director.** Director receives a shallow copy of the request. The Body is shared with the original caller. Reading it here will corrupt streaming uploads.
+3. **Calling `pr.In.Body.Read()` in Rewrite.** The Body is shared with the original caller. Reading it here will corrupt streaming uploads.
 
 4. **Using `ErrorHandler` to mask all 5xx responses.** `ErrorHandler` only fires on transport-level errors. A 503 from the upstream still flows through `ModifyResponse`. If you want to rewrite upstream 5xx responses, use `ModifyResponse`.
 

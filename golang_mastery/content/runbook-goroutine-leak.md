@@ -50,6 +50,8 @@ go tool pprof -base g1.pprof g2.pprof
 
 **Leaking service**: goroutine count grows monotonically over time regardless of whether request rate is constant.
 
+**Newer tools:** Go 1.27 ships a GC-based `goroutineleak` profile (`/debug/pprof/goroutineleak`) that reports goroutines blocked forever on unreachable primitives; it cannot see leaks reachable from globals ([Go 1.27 notes](https://go.dev/doc/go1.27)). For deterministic leak/timeout tests, use `testing/synctest` (GA in Go 1.25, [notes](https://go.dev/doc/go1.25)). Details in Day 4.
+
 ---
 
 ## Step 2: Read the goroutine stack trace
@@ -214,19 +216,22 @@ func handleRequest(w http.ResponseWriter, r *http.Request) {
     w.Write([]byte("accepted"))
 }
 
-// FIX: pass the request context (or a server-level context)
+// FIX: detach from the request's cancellation, but bound the lifetime explicitly
 func handleRequest(w http.ResponseWriter, r *http.Request) {
-    ctx := r.Context()
+    ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), 30*time.Second)
     go func() {
+        defer cancel()
         result, err := slowOperationWithContext(ctx)
         if err != nil {
-            return // context canceled — client disconnected
+            return // timed out or failed
         }
         cache.Set(key, result)
     }()
     w.Write([]byte("accepted"))
 }
 ```
+
+Do **not** pass `r.Context()` itself to a goroutine that should outlive the handler: that context is canceled when `ServeHTTP` returns ([`Request.Context`](https://pkg.go.dev/net/http#Request.Context)), so the background work would silently stop right after the response is written. `context.WithoutCancel` (Go 1.21, [docs](https://pkg.go.dev/context#WithoutCancel)) keeps the request's values (trace IDs, etc.) but drops its cancellation, and the `WithTimeout` wrapper gives the goroutine its own bounded lifetime. If the work should instead stop when the client goes away, keep it inside the handler (or an `errgroup`) rather than detaching it.
 
 ---
 

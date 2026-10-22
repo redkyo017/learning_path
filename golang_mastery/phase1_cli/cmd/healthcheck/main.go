@@ -71,7 +71,6 @@ func main() {
 	g.SetLimit(*workers)
 
 	for _, url := range urls {
-		url := url
 		g.Go(func() error {
 			r := checkURL(ctx, client, url)
 			mu.Lock()

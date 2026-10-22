@@ -1,15 +1,15 @@
 # Go Mastery
 
 A 20-day, 5–6 h/day path that takes a returning senior Go engineer from
-1.16-era instincts to production-ready Go 1.22+ fluency. Every day builds a
+1.16-era instincts to production-ready modern Go (1.26+) fluency. Every day builds a
 real artifact; no tutorials, no typing along with docs. See `STRATEGY.md` for
 the reasoning behind this design.
 
 ## Prerequisites
 
-- Go 1.22 or later (`go version`)
+- Go 1.26 or later (`go version`; 1.27.3 recommended — releases older than 1.26 no longer get security fixes, see the [release policy](https://go.dev/doc/devel/release))
 - Docker Desktop (required from Day 11 onward for containerization and Day 16 AWS ECS)
-- `buf` CLI v1.x for Phase 3 gRPC codegen (`brew install bufbuild/buf/buf`)
+- `buf` CLI v1.x (tested with v1.75.0) for Phase 3 gRPC codegen (`brew install bufbuild/buf/buf`)
 - AWS CLI + an AWS account with ECS/ALB permissions (Day 16 only)
 
 ## Workspace bring-up
@@ -19,6 +19,12 @@ cd golang_mastery
 go work sync          # verify the four-module workspace is healthy
 go build ./...        # should build clean after each phase is scaffolded
 ```
+
+`phase3_grpc/gen/` must be generated with `buf generate` (run it in
+`phase3_grpc/`) before building phase3 or phase4. Note that `go mod tidy`
+inside `phase4_gateway` fails outside the workspace because it imports phase3's
+generated package — use `go work sync` / `go build ./...` from the workspace
+root instead.
 
 The `go.work` file links all four phase modules so later phases can reference
 earlier deliverables without publishing anything to a registry.

@@ -15,8 +15,17 @@ func Handler(upstream *Upstream) http.Handler {
 		panic(fmt.Sprintf("invalid upstream URL %q: %v", upstream.BaseURL, err))
 	}
 
-	rp := httputil.NewSingleHostReverseProxy(target)
-	rp.Transport = Transport()
+	// Rewrite replaces the deprecated Director hook (Go 1.26): it runs after
+	// hop-by-hop headers are removed and drops client-sent X-Forwarded-*
+	// headers, so clients can neither strip nor spoof what the gateway sets.
+	rp := &httputil.ReverseProxy{
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			pr.SetURL(target)
+			pr.SetXForwarded() // X-Forwarded-For/-Host/-Proto from the real client
+			pr.Out.Header.Set("X-Gateway", "phase4-gateway")
+		},
+		Transport: Transport(),
+	}
 
 	rp.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		slog.Error("proxy error",
@@ -25,14 +34,6 @@ func Handler(upstream *Upstream) http.Handler {
 			"err", err,
 		)
 		http.Error(w, "bad gateway", http.StatusBadGateway)
-	}
-
-	// Rewrite strips the path prefix so upstream sees clean paths
-	original := rp.Director
-	rp.Director = func(req *http.Request) {
-		original(req)
-		req.Header.Set("X-Forwarded-Host", req.Host)
-		req.Header.Set("X-Gateway", "phase4-gateway")
 	}
 
 	return rp

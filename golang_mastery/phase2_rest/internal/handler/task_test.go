@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,11 @@ import (
 	"github.com/yourname/golang-mastery/phase2-rest/internal/model"
 	"github.com/yourname/golang-mastery/phase2-rest/internal/repository"
 )
+
+func TestMain(m *testing.M) {
+	os.Setenv("JWT_SECRET", "test-secret-0123456789abcdef0123456789abcdef")
+	os.Exit(m.Run())
+}
 
 func setupRouter() (*gin.Engine, *repository.MemoryTaskRepository) {
 	gin.SetMode(gin.TestMode)

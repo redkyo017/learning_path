@@ -52,7 +52,7 @@ Key rules:
 - Field numbers 16–2047 occupy two bytes.
 - Field numbers 19000–19999 are reserved by the Protobuf runtime — never use them.
 - Every field in proto3 is implicitly optional; the default value for all scalar types is the zero value.
-- Explicit `optional` keyword (proto3 optional) adds a `HasX()` method in generated Go so you can distinguish "absent" from "zero value set".
+- Explicit `optional` keyword (proto3 optional) gives the field explicit presence. With the default Open Struct API (proto3 and edition 2023), a scalar `optional int32` is generated as a pointer, `*int32`, so check presence with `!= nil` ([Go generated code](https://protobuf.dev/reference/go/go-generated/)). `HasX()`/`ClearX()` methods exist only in the Opaque and Hybrid APIs (see Editions below).
 
 ### Enums
 
@@ -67,7 +67,7 @@ enum Status {
 
 Rules:
 - The first value must be 0. Name it `FOO_UNSPECIFIED`, not `FOO_NONE` (buf lint enforces this).
-- An unknown enum value decodes to 0 on proto3 — your code must handle `UNSPECIFIED` gracefully.
+- proto3 enums are [open](https://protobuf.dev/programming-guides/enum/): a numeric value your code does not know is kept as-is in the Go field (it does not decode to 0), so a newer peer's value arrives as an unrecognised number. Your `switch` needs a `default` branch, and `UNSPECIFIED` must be handled gracefully too.
 
 ### Services and RPCs
 
@@ -114,10 +114,10 @@ With raw `protoc` you had to:
 
 `buf` solves all of this:
 - Single binary, declarative config, no `--proto_path` gymnastics.
-- Plugins are version-pinned in `buf.gen.yaml` and fetched from the Buf Schema Registry (BSR) or locally.
+- Remote plugins are fetched from the Buf Schema Registry (BSR) and can be version-pinned in `buf.gen.yaml` (pinning is optional, but you should do it — see below).
 - `buf lint` enforces an opinionated style guide (field naming, enum prefixes, package naming).
 - `buf breaking` detects wire-incompatible changes automatically.
-- `buf dep update` manages WKT and third-party `.proto` imports.
+- `buf dep update` (not the old `buf mod update`) manages third-party `.proto` dependencies declared under `deps:`. Well-known types need no dependency: they are built into buf.
 
 ### buf.yaml — module definition
 
@@ -127,15 +127,18 @@ modules:
   - path: proto
 lint:
   use:
-    - DEFAULT
+    - STANDARD      # renamed from DEFAULT; the old name is still accepted
 breaking:
   use:
     - FILE          # catches all wire-breaking changes
-deps:
-  - buf.build/googleapis/googleapis   # WKTs and google/api/annotations
 ```
 
-Place this at the repo root. `proto/` is the directory that contains your `.proto` files.
+Place this at the repo root. `proto/` is the directory that contains your `.proto` files. This matches the lab's `buf.yaml`.
+
+Two notes ([buf.yaml v2 reference](https://buf.build/docs/configuration/v2/buf-yaml/)):
+
+- `STANDARD` is the current name of the default lint category; `DEFAULT` still works but is the old spelling.
+- There is no `deps:` block because the well-known types (`google/protobuf/*.proto`) are built into buf. You only need `buf.build/googleapis/googleapis` under `deps:` if you import `google/api/*` (for example `google/api/annotations.proto`); after adding it, run `buf dep update` to write the lock file.
 
 ### buf.gen.yaml — code generation
 
@@ -144,16 +147,17 @@ version: v2
 inputs:
   - directory: proto
 plugins:
-  - remote: buf.build/protocolbuffers/go        # generates .pb.go
+  - remote: buf.build/protocolbuffers/go:v1.36.12   # generates .pb.go
     out: gen/go
     opt:
       - paths=source_relative
-  - remote: buf.build/grpc/go                   # generates _grpc.pb.go
+  - remote: buf.build/grpc/go:v1.6.2                # generates _grpc.pb.go
     out: gen/go
     opt:
       - paths=source_relative
-      - require_unimplemented_servers=false
 ```
+
+Pin the plugin versions with `:vX.Y.Z` ([buf.gen.yaml v2 reference](https://buf.build/docs/configuration/v2/buf-gen-yaml/)). Unpinned, `remote:` plugins float to the latest version, so a regenerate next month can produce code that needs a newer runtime. The rule: **the generator must not be newer than the runtime in `go.mod`** — here `protoc-gen-go` v1.36.12 matches `google.golang.org/protobuf v1.36.12`, and the generated code is compiled against that runtime. Note that no `require_unimplemented_servers` option is set: the default (embedding `Unimplemented…Server`) is the behaviour we want.
 
 Run with:
 
@@ -171,7 +175,7 @@ buf breaking --against .git#branch=main   # compare current tree vs main
 |--------|-------------|-----|
 | Add a new field with a new number | Yes | Old clients ignore unknown fields |
 | Rename a field | Yes | Wire format uses number, not name |
-| Add a new enum value | Yes (with care) | Old clients decode unknown value as 0 |
+| Add a new enum value | Yes (with care) | Old clients keep the unknown number (proto3 enums are open) — they must handle it |
 | Add a new RPC to a service | Yes | Old clients simply don't call it |
 | Delete a field (number reserved) | Yes | Old clients never receive it |
 | Delete a field (number NOT reserved) | **Breaking** | Number may be reused — silent corruption |
@@ -193,14 +197,18 @@ In the 1.16–1.18 era:
 - **`protoc-gen-go` and `protoc-gen-go-grpc` were separate, loosely versioned.** `buf` pins both via `buf.gen.yaml` and handles fetching.
 - **There was no standard breaking-change enforcement.** Teams relied on code review or custom scripts.
 - **`buf` existed but was immature.** As of 2024–2025 it is the industry standard. The Buf Schema Registry (BSR) is the equivalent of npm/pkg.go.dev for `.proto` files.
-- **`google.golang.org/grpc/cmd/protoc-gen-go-grpc` v1.3+ changed the generated interface.** If you copy-paste old generated code you'll find the server interface changed — `require_unimplemented_servers` is now on by default (your server must embed `UnimplementedXxxServer`).
+- **`google.golang.org/grpc/cmd/protoc-gen-go-grpc` changed the generated interface.** If you copy-paste old generated code you'll find the server interface changed — `require_unimplemented_servers` has been on by default since `protoc-gen-go-grpc` v1.0.0 (your server must embed `UnimplementedXxxServer`). [v1.5.0](https://github.com/grpc/grpc-go/releases/tag/cmd%2Fprotoc-gen-go-grpc%2Fv1.5.0) made generic stream types the default for streaming methods and made `Register…Server` panic when `Unimplemented…Server` is embedded in a way that would panic on unimplemented calls — embed it **by value**, not by pointer.
+
+### Editions
+
+proto3 remains perfectly fine and is what this course uses. The newer syntax is [Protobuf Editions](https://protobuf.dev/editions/overview/): `edition = "2023"` replaces `syntax = "proto3"` and keeps the Go Open Struct API (exported fields, pointers for explicit presence). Edition 2024 is the latest released edition, and for Go it defaults to the Opaque API: struct fields are hidden and you use accessors (`GetX`, `SetX`, `HasX`, `ClearX`) — see the [Go blog post](https://go.dev/blog/protobuf-opaque). The Hybrid API keeps fields exported and adds the accessors, which is the recommended way to migrate. `protoc-gen-go-grpc` supports edition 2024 since v1.6.0. Code you write against `HasX()` today will only compile if your generated code uses Hybrid or Opaque.
 
 ---
 
 ## Key concepts to memorize
 
 - Field numbers are the wire identity of a field — names are only for source code
-- proto3 zero value for all scalars; use `proto3 optional` when you need nil distinction
+- proto3 zero value for all scalars; use `proto3 optional` (a `*T` field in the Open API) when you need nil distinction
 - WKT import path pattern: `google/protobuf/timestamp.proto`; Go package `timestamppb`
 - `buf.yaml` = module definition + lint + breaking rules
 - `buf.gen.yaml` = code generation config
@@ -225,7 +233,7 @@ In the 1.16–1.18 era:
 
 **3. Skipping `STATUS_UNSPECIFIED = 0`**
 
-*Why it matters:* If you start your enum at `STATUS_ACTIVE = 1`, then any message where `status` was never set (proto3 default = 0) will have an unrecognised value. Deserialisers will decode it as 0 and your switch statement will hit the default case silently.
+*Why it matters:* If you start your enum at `STATUS_ACTIVE = 1`, then any message where `status` was never set (proto3 default = 0) will have an unrecognised value. Unset fields read as 0, which is not a defined value, so your switch statement will hit the default case silently.
 
 *How to avoid:* Always define a `FOO_UNSPECIFIED = 0` enum value. buf lint will fail if you don't.
 

@@ -13,18 +13,19 @@
         {"containerPort": 50051, "protocol": "tcp"},
         {"containerPort": 9090, "protocol": "tcp"}
       ],
-      "environment": [
-        {"name": "JWT_SECRET", "value": "replace-with-ssm-in-prod"}
+      "secrets": [
+        {"name": "JWT_SECRET", "valueFrom": "arn:aws:ssm:YOUR_REGION:YOUR_ACCOUNT:parameter/phase3-grpc/jwt-secret"}
       ],
       "healthCheck": {
         "command": [
-          "CMD", "grpc-health-probe",
+          "CMD", "/bin/grpc-health-probe",
           "-addr=:50051",
           "-service=task.v1.TaskService"
         ],
         "interval": 10,
         "timeout": 5,
-        "retries": 3
+        "retries": 3,
+        "startPeriod": 15
       },
       "logConfiguration": {
         "logDriver": "awslogs",

@@ -193,10 +193,17 @@ go tool trace trace.out
 
 | What you see | What it means |
 |---|---|
-| Long GC stop-the-world events | Allocating too much; reduce alloc_objects or increase `GOGC` |
-| High scheduler latency | Too many goroutines competing for `GOMAXPROCS` threads; or `GOMAXPROCS` set too low (common in containers) |
+| Long GC stop-the-world events | Allocating too much; reduce alloc_objects or increase `GOGC` (in containers pair it with `GOMEMLIMIT`, Go 1.19, so the larger heap cannot exceed the memory limit) |
+| High scheduler latency | Too many goroutines competing for `GOMAXPROCS` threads; or `GOMAXPROCS` set too *high* (historically common in containers, where it defaulted to the host's CPU count and caused CFS throttling; the default respects the cgroup CPU limit since Go 1.25, unless you set it manually) |
 | Goroutines blocked on network | Normal if you have many concurrent upstream calls; abnormal if connections are being created instead of reused |
 | Long sync blocking | Lock contention or unbuffered channel waits |
+
+### Newer runtime tooling
+
+- **Flight recorder (Go 1.25):** `runtime/trace.FlightRecorder` keeps the last few seconds of execution trace in an in-memory ring buffer, so a service can call `WriteTo` when something goes wrong (a slow request, a timeout) instead of tracing continuously ([Go 1.25 notes](https://go.dev/doc/go1.25)).
+- **Green Tea GC (Go 1.26):** now the default collector; the notes expect 10-40% less GC overhead for GC-heavy programs. Opt out at build time with `GOEXPERIMENT=nogreenteagc` if you need to compare ([Go 1.26 notes](https://go.dev/doc/go1.26)).
+- **PGO (Go 1.21):** put a representative CPU profile at `default.pgo` in the main package directory and `go build` uses it automatically (`-pgo=auto` is the default) to guide inlining and devirtualization ([PGO guide](https://go.dev/doc/pgo)).
+- **`GOMEMLIMIT` (Go 1.19):** a soft memory limit that makes the GC work harder as the heap approaches it; set it somewhat below the container limit rather than only raising `GOGC`.
 
 ---
 
@@ -206,12 +213,13 @@ Use when: you have isolated a suspected function and want to measure it precisel
 
 ### Write a benchmark
 
+`for b.Loop()` (Go 1.24) replaces the old `for i := 0; i < b.N; i++` + `b.ResetTimer()` form: setup before the loop runs once and is excluded from timing, and since Go 1.26 it no longer blocks inlining ([Go 1.24 notes](https://go.dev/doc/go1.24#testing), [Go 1.26 notes](https://go.dev/doc/go1.26)).
+
 ```go
 // In mypackage/handler_test.go
 func BenchmarkParseRequest(b *testing.B) {
-    payload := []byte(`{"id": "u_123", "name": "Alice"}`)
-    b.ResetTimer() // reset timer after any setup
-    for i := 0; i < b.N; i++ {
+    payload := []byte(`{"id": "u_123", "name": "Alice"}`) // setup before the loop is excluded from timing
+    for b.Loop() {
         _, err := parseRequest(payload)
         if err != nil {
             b.Fatal(err)
@@ -223,8 +231,7 @@ func BenchmarkParseRequest(b *testing.B) {
 func BenchmarkParseRequestMem(b *testing.B) {
     payload := []byte(`{"id": "u_123", "name": "Alice"}`)
     b.ReportAllocs() // show allocs/op and bytes/op
-    b.ResetTimer()
-    for i := 0; i < b.N; i++ {
+    for b.Loop() {
         parseRequest(payload)
     }
 }

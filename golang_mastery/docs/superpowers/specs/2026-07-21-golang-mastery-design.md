@@ -1,6 +1,6 @@
 # Go Mastery Plan — Design Spec
 
-**Date:** 2026-07-21  
+**Date:** 2026-07-21 (refreshed 2026-10-22 — see Target Versions & Sources and `REFRESH_LOG.md`)  
 **Duration:** 20+ days (extendable), 5–6 hrs/day  
 **Audience:** Returning senior Go engineer (3–4 years away, was on Go 1.16–1.18)
 
@@ -10,7 +10,7 @@
 
 The learner is a senior backend/Go engineer who moved into engineering management and is now returning to individual contributor work. The goal is to sharpen Go skills as fast as possible — not from scratch, but by:
 
-1. Closing the 1.16→1.22+ ecosystem gap (generics, `slog`, `slices`/`maps`, workspace mode, new toolchain)
+1. Closing the 1.16→modern-Go ecosystem gap (target Go 1.26+, see Target Versions) (generics, `slog`, `slices`/`maps`, workspace mode, new toolchain)
 2. Re-establishing Go muscle memory through daily hands-on builds
 3. Reaching production-ready depth in microservices and cloud-native Go (AWS)
 4. Delivering a portfolio-quality capstone: an API gateway
@@ -276,9 +276,9 @@ Each extension is self-contained and slots in without modifying prior phases.
 
 | Module | Content | Connects to |
 |---|---|---|
-| E1 — Kafka Integration | Publish gateway request events to Kafka; async audit log pattern | Existing Kafka mastery plan |
+| E1 — Kafka Integration | Publish gateway request events to Kafka; async audit log pattern. Client: `github.com/twmb/franz-go` (pure Go, actively maintained); note `confluent-kafka-go` requires cgo | Existing Kafka mastery plan |
 | E2 — Kubernetes Deployment | Helm chart for full stack (gateway + REST + gRPC), HPA, pod disruption budgets | Natural next cloud-native step |
-| E3 — AWS SDK v2 | Gateway config from SSM/Secrets Manager, upstream discovery via AWS Cloud Map | Existing AWS network plan |
+| E3 — AWS SDK v2 | Gateway config from SSM/Secrets Manager, upstream discovery via AWS Cloud Map. Use only `aws-sdk-go-v2` — [aws-sdk-go v1 reached end-of-support on 2025-07-31](https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-aws-sdk-for-go-v1-on-july-31-2025/) | Existing AWS network plan |
 | E4 — Performance Profiling | `pprof` endpoints, benchmark tests, escape analysis, goroutine leak detection under load | Performance specialization |
 
 ---
@@ -301,7 +301,7 @@ These are the patterns that waste 80% of returning engineers' time:
 
 By end of Phase 4, the learner can:
 
-- [ ] Write idiomatic modern Go (1.22+) that a senior Go engineer would approve in code review
+- [ ] Write idiomatic modern Go (1.26+) that a senior Go engineer would approve in code review
 - [ ] Build and deploy a production-quality gRPC microservice on AWS ECS
 - [ ] Build and deploy an API gateway with full observability
 - [ ] Explain Go's concurrency model, goroutine scheduler, and context propagation under interview conditions
@@ -325,3 +325,30 @@ golang_mastery/
 ├── phase4_gateway/         # Phase 4 deliverable: API gateway
 └── go.work                 # workspace file linking all four modules
 ```
+
+---
+
+## Target Versions & Sources
+
+**As of 2026-10-22** (first refresh; the original 2026-07-21 spec pinned Go 1.22 and the versions in the "was" column). Versions were checked against the module proxy (`go get …@latest`) and the sources linked; the labs build, vet and test with these on go1.27.3, and `govulncheck` v1.9.0 (DB 2026-10-21) reports no reachable vulnerabilities.
+
+| Component | Target | Was | Source |
+|---|---|---|---|
+| Go toolchain | **Go 1.26+** in `go.mod`/`go.work` (`go 1.26.0`), **go1.27.3 recommended**; ≤1.25 no longer receive security fixes | go 1.22 / toolchain go1.22.0 | [go.dev/dl](https://go.dev/dl/), [release history](https://go.dev/doc/devel/release), [Go 1.27 notes](https://go.dev/doc/go1.27) |
+| gin-gonic/gin | v1.12.0 | v1.9.1 | [releases](https://github.com/gin-gonic/gin/releases) |
+| golang-jwt/jwt/v5 | v5.3.1 | v5.2.1 (GO-2025-3553) | [pkg.go.dev](https://pkg.go.dev/github.com/golang-jwt/jwt/v5) |
+| jackc/pgx/v5 | v5.11.0 | v5.6.0 (GO-2026-5004) | [pkg.go.dev](https://pkg.go.dev/github.com/jackc/pgx/v5) |
+| golang-migrate/migrate/v4 | v4.20.1 | v4.17.1 | [releases](https://github.com/golang-migrate/migrate/releases) |
+| testcontainers-go (+ modules/postgres) | v0.44.0 (`postgres.Run`) | v0.30.0 | [postgres module](https://golang.testcontainers.org/modules/postgres/) |
+| prometheus/client_golang | v1.25.0 (needs Go 1.26) | v1.19.0 | [releases](https://github.com/prometheus/client_golang/releases) |
+| google.golang.org/grpc | v1.84.0 | v1.64.0 (4 advisories) | [releases](https://github.com/grpc/grpc-go/releases) |
+| google.golang.org/protobuf | v1.36.12 | v1.34.0 | [protobuf-go](https://pkg.go.dev/google.golang.org/protobuf) |
+| buf CLI / remote plugins | buf v1.75.0; `protocolbuffers/go:v1.36.12`, `grpc/go:v1.6.2` (pinned) | buf 1.x, plugins unpinned | [buf.gen.yaml v2](https://buf.build/docs/configuration/v2/buf-gen-yaml/) |
+| go.opentelemetry.io/otel | v1.47.0 (semconv v1.37.0; contrib otelgrpc/otelgin v0.72.0) | v1.27.0 | [releases](https://github.com/open-telemetry/opentelemetry-go/releases) |
+| golang.org/x/net, x/text, x/sync, x/time | v0.61.0, v0.43.0, v0.24.0, v0.16.0 | v0.22.0, v0.14.0, v0.7.0, v0.5.0 | [vuln DB](https://pkg.go.dev/vuln/) |
+| quic-go (indirect via gin) | v0.59.1 | v0.59.0 (GO-2026-5676) | [GO-2026-5676](https://pkg.go.dev/vuln/GO-2026-5676) |
+| Container images | `golang:1.27-alpine`, `gcr.io/distroless/static-debian13:nonroot`, `alpine:3.24`, `postgres:18-alpine`, grpc-health-probe v0.4.60 | golang:1.22/1.23-alpine, static-debian12, alpine:3.20, postgres:16-alpine, probe v0.4.28 | [golang](https://hub.docker.com/_/golang), [distroless](https://github.com/GoogleContainerTools/distroless), [probe](https://github.com/grpc-ecosystem/grpc-health-probe/releases) |
+| AWS (Day 16) | ALB target group protocol version `GRPC` + gRPC health check; Fargate platform LATEST (1.4.0); aws-sdk-go-v2 only | — | [ALB target groups](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html#target-group-protocol-version), [SDK v1 EOS](https://aws.amazon.com/blogs/developer/announcing-end-of-support-for-aws-sdk-for-go-v1-on-july-31-2025/) |
+
+Re-check this table on the next refresh: Go ships a minor release every February and August, and several modules above now track "latest two Go releases".
+

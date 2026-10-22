@@ -24,6 +24,10 @@ import (
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	if err := interceptor.CheckSecret(); err != nil {
+		slog.Error("config", "err", err)
+		os.Exit(1)
+	}
 
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
@@ -79,6 +83,9 @@ func main() {
 	stop()
 
 	slog.Info("shutting down")
+	// Report NOT_SERVING first so health checks fail and the load balancer
+	// stops routing new RPCs here, then drain in-flight ones.
+	healthSrv.Shutdown()
 	s.GracefulStop()
 	shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
